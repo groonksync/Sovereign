@@ -13,7 +13,23 @@ let state = {
     loans: [],
     currentView: 'dashboard',
     selectedLoanId: null,
+    isDarkMode: localStorage.getItem('sovereign-theme') === 'dark'
 };
+
+function applyTheme() {
+    if (state.isDarkMode) {
+        document.body.classList.add('dark-mode');
+    } else {
+        document.body.classList.remove('dark-mode');
+    }
+}
+
+function toggleTheme() {
+    state.isDarkMode = !state.isDarkMode;
+    localStorage.setItem('sovereign-theme', state.isDarkMode ? 'dark' : 'light');
+    applyTheme();
+    render();
+}
 
 async function loadState() {
     try {
@@ -25,6 +41,7 @@ async function loadState() {
         if (error) throw error;
         state.loans = data || [];
         console.log("[Sovereign Cloud] Datos cargados:", state.loans.length);
+        applyTheme();
     } catch (error) {
         console.error("[Sovereign Cloud] Error cargando datos:", error.message);
     }
@@ -101,6 +118,14 @@ function renderDashboard() {
     const totalAssets = state.loans.reduce((acc, loan) => acc + parseFloat(loan.amount || 0), 0);
     const activeContracts = state.loans.length;
     const avgInterest = state.loans.length > 0 ? (state.loans.reduce((acc, l) => acc + parseFloat(l.interest), 0) / state.loans.length).toFixed(1) : 0;
+    
+    // Cálculo de ganancias reales (Solo cuotas pagadas)
+    const totalInterestEarned = state.loans.reduce((acc, loan) => {
+        const paidInterest = loan.installments
+            .filter(inst => inst.paid)
+            .reduce((sum, inst) => sum + parseFloat(inst.amount), 0);
+        return acc + paidInterest;
+    }, 0);
 
     return `
         <header class="main-header">
@@ -112,6 +137,9 @@ function renderDashboard() {
                 </div>
             </div>
             <div class="header-actions">
+                <button class="btn-icon theme-toggle" onclick="window.app.toggleTheme()" title="Cambiar Tema">
+                    ${state.isDarkMode ? '☀️' : '🌙'}
+                </button>
                 <a href="https://drive.google.com/drive/folders/12VwI7kKvTy50t_Q13UngiSHEZ77KpQwu?usp=sharing" target="_blank" class="btn-icon">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                 </a>
@@ -124,15 +152,23 @@ function renderDashboard() {
         <section class="summary-card">
             <div class="card-glass"></div>
             <div class="card-content">
-                <span class="label">Total de Activos Gestionados</span>
-                <h2 class="amount">${formatCurrency(totalAssets)}</h2>
+                <div class="summary-main-grid">
+                    <div class="summary-item">
+                        <span class="label">Capital Prestado</span>
+                        <h2 class="amount">${formatCurrency(totalAssets)}</h2>
+                    </div>
+                    <div class="summary-item earnings">
+                        <span class="label">Intereses Ganados</span>
+                        <h2 class="amount highlight">${formatCurrency(totalInterestEarned)}</h2>
+                    </div>
+                </div>
                 <div class="stats-row">
                     <div class="stat">
                         <span class="stat-label">Contratos Activos</span>
                         <span class="stat-value">${activeContracts}</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-label">TAE Promedio</span>
+                        <span class="stat-label">Rendimiento Prom.</span>
                         <span class="stat-value">${avgInterest}%</span>
                     </div>
                 </div>
@@ -598,7 +634,8 @@ window.app = {
     handleDelete,
     handleToggleInstallment,
     handleExtendLoan,
-    exportToPDF
+    exportToPDF,
+    toggleTheme
 };
 
 // Start App
