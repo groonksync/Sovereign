@@ -122,17 +122,15 @@ const formatDate = (dateStr) => {
     return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
-function calculateDaysUntil(dateStr) {
-    if (!dateStr) return 0;
+function calculateDaysToNext(startDate) {
+    if (!startDate || isNaN(startDate.getTime())) return 0;
     const today = new Date();
-    const start = new Date(dateStr);
-    if (isNaN(start.getTime())) return 0; // Seguridad para fechas inválidas
-
-    const target = new Date(today.getFullYear(), today.getMonth(), start.getDate());
+    const target = new Date(today.getFullYear(), today.getMonth(), startDate.getDate());
     if (target < today) target.setMonth(target.getMonth() + 1);
     const diff = target - today;
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
+
 
 function calculateMonths(start, end) {
     if (!start || !end) return 1;
@@ -1003,7 +1001,7 @@ function renderDebts() {
                         <div class="loan-card ${isClosing ? 'near-due' : ''}" onclick="window.app.${navAction}">
                             <div class="loan-info">
                                 <div class="debtor-icon ${debt.isProtocol ? 'protocol-icon' : 'debt-icon'}">
-                                    ${debt.isProtocol ? 'P' : (debt.photo ? `<img src="${debt.photo}" class="avatar-mini">` : debt.person.substring(0, 2).toUpperCase())}
+                                    ${debt.isProtocol ? 'P' : (debt.photo ? `<img src="${debt.photo}" class="avatar-mini">` : (debt.person || '??').substring(0, 2).toUpperCase())}
                                 </div>
                                 <div class="loan-details">
                                     <h3>${debt.person} ${debt.isProtocol ? '<span class="badge-protocol">Protocolo</span>' : ''}</h3>
