@@ -348,7 +348,7 @@ function renderDetails() {
                 </div>
             </section>
 
-            <button class="btn-primary full-width" onclick="alert('Exportando Informe PDF Sovereign...')">Exportar PDF del Contrato</button>
+            <button class="btn-primary full-width" onclick="window.app.exportToPDF('${loan.id}')">Exportar PDF del Contrato</button>
         </div>
     `;
 }
@@ -457,13 +457,109 @@ async function handleDelete(id) {
     }
 }
 
+async function exportToPDF(loanId) {
+    const loan = state.loans.find(l => l.id === loanId);
+    if (!loan) return;
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // --- ESTILOS Y COLORES ---
+        const primaryColor = [16, 185, 129]; // Emerald 500
+        const darkColor = [31, 41, 55];
+        
+        // --- ENCABEZADO ---
+        doc.setFillColor(...darkColor);
+        doc.rect(0, 0, 210, 40, 'F');
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text("SOVEREIGN PROTOCOL", 20, 20);
+        doc.setFontSize(10);
+        doc.text("EXTRACTO OFICIAL DE LIQUIDACIÓN DE ACTIVOS", 20, 30);
+        
+        // --- DATOS DEL CLIENTE ---
+        doc.setTextColor(...darkColor);
+        doc.setFontSize(14);
+        doc.text("PERFIL DEL DEUDOR", 20, 55);
+        doc.setDrawColor(...primaryColor);
+        doc.line(20, 57, 190, 57);
+        
+        doc.setFontSize(11);
+        doc.text(`Nombre: ${loan.debtor}`, 20, 65);
+        doc.text(`Referencia/Tel: ${loan.ref}`, 20, 72);
+        doc.text(`Tasa de Interés: ${loan.interest}% Mensual`, 20, 79);
+        
+        // --- PLAZOS ---
+        doc.setFontSize(14);
+        doc.text("ARQUITECTURA DEL PRÉSTAMO", 20, 95);
+        doc.line(20, 97, 190, 97);
+        
+        doc.setFontSize(11);
+        const months = calculateMonths(loan.start_date, loan.end_date);
+        doc.text(`Fecha de Inicio: ${formatDate(loan.start_date)}`, 20, 105);
+        doc.text(`Fecha de Vencimiento: ${formatDate(loan.end_date)}`, 20, 112);
+        doc.text(`Duración Total: ${months} Mes(es)`, 20, 119);
+        doc.text(`Capital Principal: ${formatCurrency(loan.amount)}`, 20, 126);
+
+        // --- TABLA DE PAGOS ---
+        doc.setFontSize(14);
+        doc.text("CRONOGRAMA DE PAGOS DE INTERÉS", 20, 145);
+        
+        const tableBody = loan.installments.map(inst => [
+            `Mes ${inst.month}`,
+            formatDate(inst.dueDate),
+            formatCurrency(inst.amount),
+            inst.paid ? 'COBRADO' : 'PENDIENTE'
+        ]);
+
+        doc.autoTable({
+            startY: 150,
+            head: [['Mes', 'Fecha Límite', 'Monto Interés', 'Estado de Cobro']],
+            body: tableBody,
+            headStyles: { fillColor: primaryColor },
+            styles: { fontSize: 10 },
+            margin: { left: 20, right: 20 }
+        });
+
+        const finalY = doc.lastAutoTable.finalY + 15;
+
+        // --- GARANTÍAS ---
+        doc.setFontSize(14);
+        doc.text("GARANTÍAS Y AVALES", 20, finalY);
+        doc.line(20, finalY + 2, 190, finalY + 2);
+        
+        doc.setFontSize(11);
+        doc.text(`Garante: ${loan.guarantor}`, 20, finalY + 10);
+        const splitCollateral = doc.splitTextToSize(`Garantía: ${loan.collateral || 'Sin descripción'}`, 170);
+        doc.text(splitCollateral, 20, finalY + 17);
+
+        // --- FIRMAS ---
+        const signatureY = 270;
+        doc.line(20, signatureY, 80, signatureY);
+        doc.text("Firma del Deudor", 35, signatureY + 5);
+        
+        doc.line(130, signatureY, 190, signatureY);
+        doc.text("Firma del Acreedor", 145, signatureY + 5);
+
+        // --- GUARDAR ---
+        doc.save(`Extracto_${loan.debtor.replace(/\s+/g, '_')}.pdf`);
+
+    } catch (error) {
+        console.error("[Sovereign PDF] Error generando archivo:", error);
+        alert("Error al generar el PDF. Verifica tu conexión.");
+    }
+}
+
 // --- INITIALIZATION ---
 window.app = {
     navigate,
     handleSave,
     handleDelete,
     handleToggleInstallment,
-    handleExtendLoan
+    handleExtendLoan,
+    exportToPDF
 };
 
 // Start App
