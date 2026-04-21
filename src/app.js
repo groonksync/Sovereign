@@ -124,12 +124,44 @@ function calculateDaysUntil(dateStr) {
 }
 
 function calculateMonths(start, end) {
+    if (!start || !end) return 1;
     const startDate = new Date(start);
     const endDate = new Date(end);
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return 1;
     let months = (endDate.getFullYear() - startDate.getFullYear()) * 12;
     months -= startDate.getMonth();
     months += endDate.getMonth();
     return months <= 0 ? 1 : months;
+}
+
+function generateHistoricalMonths(exp) {
+    const months = [];
+    const start = new Date(exp.payDate);
+    if (isNaN(start.getTime())) return [];
+
+    const limit = new Date(); // Hasta hoy
+    let current = new Date(start.getFullYear(), start.getMonth(), 1);
+    
+    // Generar últimos 6 meses o desde el inicio
+    const count = 6; 
+    const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+    for (let i = 0; i < count; i++) {
+        const d = new Date(limit.getFullYear(), limit.getMonth() - i, 1);
+        if (d < current) break;
+        
+        months.push({
+            id: `${d.getFullYear()}-${d.getMonth() + 1}`,
+            name: `${monthNames[d.getMonth()]} ${d.getFullYear()}`,
+            day: start.getDate()
+        });
+    }
+    return months;
+}
+
+function isMonthPaid(exp, monthId) {
+    if (!exp.installments) return false;
+    return exp.installments.some(i => i.id === monthId && i.paid);
 }
 
 function generateInstallments(amount, interestRate, months, startDate) {
