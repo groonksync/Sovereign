@@ -42,13 +42,13 @@ async function loadState() {
         if (error) throw error;
         const allData = data || [];
         
-        // Separar Por Categoría
-        state.loans = allData.filter(l => !l.is_miscellaneous);
-        state.debts = allData.filter(l => l.is_miscellaneous).map(d => ({
+        // Separar Por Categoría basándose en la existencia de cuotas
+        state.loans = allData.filter(l => l.installments && l.installments.length > 0);
+        state.debts = allData.filter(l => !l.installments || l.installments.length === 0).map(d => ({
             id: d.id,
             person: d.debtor,
             amount: d.amount,
-            reason: d.collateral,
+            reason: d.collateral || d.ref,
             start_date: d.start_date,
             end_date: d.end_date
         }));
@@ -550,12 +550,13 @@ async function handleSaveDebt(event) {
     const formData = new FormData(event.target);
     const newDebt = {
         id: Date.now().toString(),
-        debtor: formData.get('person'), // Map to standard columns
+        debtor: formData.get('person'),
         amount: formData.get('amount'),
-        collateral: formData.get('reason'), // Map to standard columns
+        collateral: formData.get('reason'),
         start_date: formData.get('startDate'),
         end_date: formData.get('endDate'),
-        is_miscellaneous: true // Discriminator
+        installments: null, // Discriminador natural: las deudas varias no tienen cuotas
+        ref: 'DEUDA_DIARIA'
     };
 
     try {
@@ -596,8 +597,7 @@ function handleSave(event) {
         debtor: formData.get('debtor'),
         guarantor: formData.get('guarantor'),
         collateral: formData.get('collateral'),
-        installments: installments,
-        is_miscellaneous: false // Official Protocol
+        installments: installments
     };
 
     state.loans.unshift(newLoan);
