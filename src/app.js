@@ -51,7 +51,7 @@ async function loadState() {
             reason: d.collateral,
             start_date: d.start_date,
             end_date: d.end_date,
-            interest_rate: d.interest_rate || 0,
+            interest: d.interest || 0,
             photo: d.guarantor 
         }));
 
@@ -192,7 +192,7 @@ function extractProtocolInterests() {
             person: loan.debtor,
             amount: pending.amount,
             reason: `Interés Préstamo #${loan.id.substring(0,4)}`,
-            interest_rate: loan.interest_rate,
+            interest: loan.interest,
             start_date: loan.start_date,
             isProtocol: true,
             originalLoanId: loan.id
@@ -911,8 +911,8 @@ function renderDebtEdit() {
                         <input type="date" name="startDate" value="${debt.start_date}" required>
                     </div>
                     <div class="form-group">
-                        <label>Tasa Int. Mensual (%)</label>
-                        <input type="number" name="interestRate" value="${debt.interest_rate || 0}" step="0.1" required>
+                        <label>Tasa Interés (%) - Opcional</label>
+                        <input type="number" name="interestRate" value="${debt.interest || 0}" step="0.1">
                     </div>
                 </div>
                 <div class="form-group">
@@ -937,7 +937,7 @@ function renderDebts() {
     // Card 1: Total intereses a recaudar (Manuales + Protocolo)
     const totalMonthlyInterest = combinedDebts.reduce((acc, d) => {
         if (d.isProtocol) return acc + parseFloat(d.amount); // La cuota ya es el interés
-        const rate = parseFloat(d.interest_rate || 0) / 100;
+        const rate = parseFloat(d.interest || 0) / 100;
         return acc + (parseFloat(d.amount || 0) * rate);
     }, 0);
 
@@ -1011,7 +1011,7 @@ function renderDebts() {
                                 </div>
                                 <div class="loan-amount">
                                     <span class="current">${formatCurrency(debt.amount)}</span>
-                                    <span class="rate">${debt.isProtocol ? 'Interés' : `+${debt.interest_rate}%`}</span>
+                                    <span class="rate">${debt.isProtocol ? 'Interés' : (parseFloat(debt.interest) > 0 ? `+${debt.interest}%` : 'Sin Int.')}</span>
                                 </div>
                             </div>
                         </div>
@@ -1058,8 +1058,8 @@ function renderDebtRegister() {
                         <input type="date" name="startDate" required>
                     </div>
                     <div class="form-group">
-                        <label>Tasa Interés (%)</label>
-                        <input type="number" name="interestRate" placeholder="0" step="0.1" required>
+                        <label>Tasa Interés (%) - Opcional</label>
+                        <input type="number" name="interestRate" placeholder="0" step="0.1">
                     </div>
                 </div>
                 <div class="form-group">
@@ -1084,7 +1084,7 @@ async function handleSaveDebt(event) {
             debtor: formData.get('person'),
             amount: formData.get('amount'),
             collateral: formData.get('reason'),
-            interest_rate: formData.get('interestRate'),
+            interest: formData.get('interestRate') || 0,
             start_date: formData.get('startDate'),
             end_date: formData.get('endDate') || null,
             installments: null,
@@ -1100,7 +1100,8 @@ async function handleSaveDebt(event) {
             amount: newDebt.amount,
             reason: newDebt.collateral,
             start_date: newDebt.start_date,
-            end_date: newDebt.end_date
+            end_date: newDebt.end_date,
+            interest: newDebt.interest
         });
         navigate('debts');
     } catch (error) {
@@ -1428,7 +1429,7 @@ window.app = {
             debtor: formData.get('person'),
             amount: formData.get('amount'),
             collateral: formData.get('reason'),
-            interest_rate: formData.get('interestRate'),
+            interest: formData.get('interestRate') || 0,
             start_date: formData.get('startDate'),
             end_date: formData.get('endDate')
         };
@@ -1439,7 +1440,7 @@ window.app = {
                 person: updates.debtor, 
                 amount: updates.amount, 
                 reason: updates.collateral, 
-                interest_rate: updates.interest_rate,
+                interest: updates.interest,
                 start_date: updates.start_date,
                 end_date: updates.end_date 
             });
