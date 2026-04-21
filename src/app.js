@@ -11,7 +11,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // --- INITIAL STATE & DATA MANAGEMENT ---
 let state = {
     loans: [],
-    debts: [], // Deudas Varias
+    debts: [], 
+    expenses: [], // Mis Pagos
     currentView: 'dashboard',
     selectedLoanId: null,
     isDarkMode: localStorage.getItem('sovereign-theme') === 'dark'
@@ -42,18 +43,29 @@ async function loadState() {
         if (error) throw error;
         const allData = data || [];
         
-        // Separar Por Categoría basándose en la existencia de cuotas
-        state.loans = allData.filter(l => l.installments && l.installments.length > 0);
-        state.debts = allData.filter(l => !l.installments || l.installments.length === 0).map(d => ({
+        // Separar Por Categoría basándose en discriminadores
+        state.loans = allData.filter(l => l.installments && l.installments.length > 0 && l.ref !== 'MI_PAGO');
+        
+        state.debts = allData.filter(l => (!l.installments || l.installments.length === 0) && l.ref === 'DEUDA_DIARIA').map(d => ({
             id: d.id,
             person: d.debtor,
             amount: d.amount,
-            reason: d.collateral || d.ref,
+            reason: d.collateral,
             start_date: d.start_date,
-            end_date: d.end_date
+            end_date: d.end_date,
+            photo: d.guarantor // Usamos guarantor para guardar el Base64 de la foto
         }));
 
-        console.log("[Sovereign Cloud] Activos cargados:", allData.length);
+        state.expenses = allData.filter(l => l.ref === 'MI_PAGO').map(e => ({
+            id: e.id,
+            name: e.debtor,
+            amount: e.amount,
+            category: e.guarantor, // Categoría guardada aquí (Service, Bank, Cart)
+            payDate: e.start_date,
+            refNumber: e.collateral
+        }));
+
+        console.log("[Sovereign Cloud] Ecosistema cargado:", allData.length);
         applyTheme();
     } catch (error) {
         console.error("[Sovereign Cloud] Error cargando datos:", error.message);
@@ -417,9 +429,12 @@ function render() {
     switch (state.currentView) {
         case 'dashboard': content = renderDashboard(); break;
         case 'debts': content = renderDebts(); break;
+        case 'expenses': content = renderExpenses(); break;
         case 'register': content = renderRegister(); break;
         case 'debtRegister': content = renderDebtRegister(); break;
+        case 'expenseRegister': content = renderExpenseRegister(); break;
         case 'details': content = renderDetails(); break;
+        case 'debtDetail': content = renderDebtDetail(); break;
         default: content = renderDashboard();
     }
 
@@ -428,21 +443,201 @@ function render() {
 }
 
 function renderTabBar() {
+    const categories = {
+        'dashboard': { label: 'Protocolo', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>' },
+        'debts': { label: 'Deudores', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' },
+        'expenses': { label: 'Pagos', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>' }
+    };
+
     return `
         <nav class="bottom-tab-bar">
             <button class="tab-item ${state.currentView === 'dashboard' ? 'active' : ''}" onclick="window.app.navigate('dashboard')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-                <span>Protocolo</span>
+                ${categories.dashboard.icon}
+                <span>${categories.dashboard.label}</span>
             </button>
             <button class="tab-item ${state.currentView === 'debts' ? 'active' : ''}" onclick="window.app.navigate('debts')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                <span>Deudas Varias</span>
+                ${categories.debts.icon}
+                <span>${categories.debts.label}</span>
+            </button>
+            <button class="tab-item ${state.currentView === 'expenses' ? 'active' : ''}" onclick="window.app.navigate('expenses')">
+                ${categories.expenses.icon}
+                <span>${categories.expenses.label}</span>
             </button>
             <button class="tab-item" onclick="window.open('https://drive.google.com/drive/folders/12VwI7kKvTy50t_Q13UngiSHEZ77KpQwu?usp=sharing')">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                <span>Archivo</span>
+                <span>Drive</span>
             </button>
         </nav>
+    `;
+}
+
+function renderExpenses() {
+    const totalMonthlyExpenses = state.expenses.reduce((acc, e) => acc + parseFloat(e.amount || 0), 0);
+    const categories = {
+        'internet': { title: 'Servicios Digitales', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>' },
+        'banco': { title: 'Compromisos Bancarios', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"></path><path d="M3 10h18"></path><path d="M5 6l7-3 7 3"></path><path d="M4 10v11"></path><path d="M20 10v11"></path><path d="M8 14v3"></path><path d="M12 14v3"></path><path d="M16 14v3"></path></svg>' },
+        'producto': { title: 'Artículos y Productos', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>' }
+    };
+
+    return `
+        <header class="main-header">
+            <div class="user-info">
+                <div class="avatar">MP</div>
+                <div class="greeting">
+                    <span>Control de</span>
+                    <h1>Mis Pagos</h1>
+                </div>
+            </div>
+        </header>
+
+        <section class="summary-card dark-gradient">
+            <div class="card-content">
+                <span class="label">Total Mensual Proyectado</span>
+                <h2 class="amount">${formatCurrency(totalMonthlyExpenses)}</h2>
+                <p style="font-size: 0.65rem; opacity: 0.8; margin-top: -10px;">Obligaciones y suscripciones activas</p>
+            </div>
+        </section>
+
+        <main class="ledger-section">
+            <div class="loan-list">
+                ${state.expenses.length === 0 ? `
+                    <div class="empty-state">
+                        <p>No tienes pagos programados registrados.</p>
+                        <button class="btn-primary" onclick="window.app.navigate('expenseRegister')">Agregar Primer Pago</button>
+                    </div>
+                ` : state.expenses.map(exp => `
+                    <div class="loan-card" onclick="window.app.handleDeleteUniversal('${exp.id}', 'expenses')">
+                        <div class="loan-info">
+                            <div class="debtor-icon expense-icon">${categories[exp.category]?.icon || '💰'}</div>
+                            <div class="loan-details">
+                                <h3>${exp.name}</h3>
+                                <p>${categories[exp.category]?.title || 'Otros'}</p>
+                            </div>
+                            <div class="loan-amount">
+                                <span class="current">${formatCurrency(exp.amount)}</span>
+                            </div>
+                        </div>
+                        <div class="progress-labels" style="margin-top: 8px;">
+                            <span>Día de pago: ${exp.payDate || 'Pendiente'}</span>
+                            <span class="status positive">Recurrente</span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </main>
+
+        <button class="fab" onclick="window.app.navigate('expenseRegister')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+    `;
+}
+
+function renderExpenseRegister() {
+    return `
+        <header class="view-header">
+            <button class="back-btn" onclick="window.app.navigate('expenses')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h1>Nuevo Compromiso</h1>
+        </header>
+
+        <form id="expense-form" class="sovereign-form" onsubmit="window.app.handleSaveExpense(event)">
+            <section class="form-section">
+                <div class="form-group">
+                    <label>Nombre del Servicio / Artículo</label>
+                    <input type="text" name="name" placeholder="Ej: Adobe Cloud, Google One..." required>
+                </div>
+                <div class="form-group">
+                    <label>Monto a Pagar (Bs.)</label>
+                    <input type="number" name="amount" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Categoría del Gasto</label>
+                    <select name="category" class="custom-select" required>
+                        <option value="internet">Suscripción / Internet</option>
+                        <option value="banco">Pago Bancario / Crédito</option>
+                        <option value="producto">Producto / Artículo</option>
+                    </select>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha de Pago</label>
+                        <input type="date" name="payDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Referencia / ID (Opcional)</label>
+                        <input type="text" name="refNumber" placeholder="Nº de contrato/cuenta">
+                    </div>
+                </div>
+            </section>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Registrar Pago</button>
+                <button type="button" class="btn-secondary" onclick="window.app.navigate('expenses')">Cancelar</button>
+            </div>
+        </form>
+    `;
+}
+
+function renderDebtDetail() {
+    const debt = state.debts.find(d => d.id === state.selectedLoanId);
+    if (!debt) return navigate('debts');
+
+    return `
+        <header class="view-header">
+            <button class="back-btn" onclick="window.app.navigate('debts')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h1>Detalle de Deuda</h1>
+            <button class="delete-btn" onclick="window.app.handleDeleteUniversal('${debt.id}', 'debts')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+        </header>
+
+        <div class="details-container">
+            <div class="loan-metrics-card gold-gradient">
+                <div class="profile-row">
+                    <div class="profile-info">
+                        <h3 style="font-size: 1.2rem;">${debt.person}</h3>
+                        <p style="font-size: 0.8rem; opacity: 0.8;">${debt.reason}</p>
+                    </div>
+                    <div class="debtor-icon debt-icon large">
+                        ${debt.photo ? `<img src="${debt.photo}" class="avatar-large">` : debt.person.substring(0, 2).toUpperCase()}
+                    </div>
+                </div>
+                <div class="metric-grid" style="margin-top: 20px;">
+                    <div class="m-item">
+                        <span class="m-label">Monto Adeudado</span>
+                        <span class="m-val">${formatCurrency(debt.amount)}</span>
+                    </div>
+                    <div class="m-item">
+                        <span class="m-label">Vencimiento</span>
+                        <span class="m-val">${formatDate(debt.end_date)}</span>
+                    </div>
+                </div>
+            </div>
+
+            <section class="form-section">
+                <h3 class="section-title">Evidencia de Deuda</h3>
+                <div class="photo-upload-grid">
+                    <div class="upload-item">
+                        <input type="file" id="debt-photo-input" accept="image/*" capture="camera" hidden onchange="window.app.handlePhotoCapture(event, '${debt.id}')">
+                        <label for="debt-photo-input" class="upload-label" style="height: 120px;">
+                            ${debt.photo ? `<img src="${debt.photo}" class="preview-img">` : `
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                                <span>Actualizar Foto</span>
+                            `}
+                        </label>
+                    </div>
+                    <div class="upload-item" style="display: flex; align-items: center; justify-content: center;">
+                         <p style="font-size: 0.7rem; opacity: 0.6; text-align: center;">Captura una prueba física o el rostro del deudor</p>
+                    </div>
+                </div>
+            </section>
+        </div>
     `;
 }
 
@@ -476,13 +671,14 @@ function renderDebts() {
                         <button class="btn-primary" onclick="window.app.navigate('debtRegister')">Registrar Deuda</button>
                     </div>
                 ` : state.debts.map(debt => `
-                    <div class="loan-card" onclick="alert('${debt.reason}')">
+                    <div class="loan-card" onclick="window.app.navigate('debtDetail', '${debt.id}')">
                         <div class="loan-info">
-                            <div class="debtor-icon debt-icon">${debt.person.substring(0, 2).toUpperCase()}</div>
+                            <div class="debtor-icon debt-icon">
+                                ${debt.photo ? `<img src="${debt.photo}" class="avatar-mini">` : debt.person.substring(0, 2).toUpperCase()}
+                            </div>
                             <div class="loan-details">
                                 <h3>${debt.person}</h3>
                                 <p>${debt.reason}</p>
-                                <p style="font-size: 0.65rem;">Vence: ${formatDate(debt.end_date)}</p>
                             </div>
                             <div class="loan-amount">
                                 <span class="current">${formatCurrency(debt.amount)}</span>
@@ -798,7 +994,55 @@ window.app = {
     handleExtendLoan,
     exportToPDF,
     toggleTheme,
-    handleSaveDebt
+    handleSaveDebt,
+    handleSaveExpense: async (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const newExpense = {
+            id: Date.now().toString(),
+            debtor: formData.get('name'),
+            amount: formData.get('amount'),
+            guarantor: formData.get('category'),
+            start_date: formData.get('payDate'),
+            collateral: formData.get('refNumber'),
+            ref: 'MI_PAGO',
+            installments: null
+        };
+        try {
+            await sb.from('loans').insert([newExpense]);
+            state.expenses.unshift({
+                id: newExpense.id,
+                name: newExpense.debtor,
+                amount: newExpense.amount,
+                category: newExpense.guarantor,
+                payDate: newExpense.start_date,
+                refNumber: newExpense.collateral
+            });
+            navigate('expenses');
+        } catch (e) { alert(e.message); }
+    },
+    handleDeleteUniversal: async (id, viewToNavigate) => {
+        if (confirm('¿Eliminar registro?')) {
+            await sb.from('loans').delete().eq('id', id);
+            state.loans = state.loans.filter(l => l.id !== id);
+            state.debts = state.debts.filter(d => d.id !== id);
+            state.expenses = state.expenses.filter(e => e.id !== id);
+            navigate(viewToNavigate);
+        }
+    },
+    handlePhotoCapture: async (event, debtId) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const base64 = e.target.result;
+            await sb.from('loans').update({ guarantor: base64 }).eq('id', debtId);
+            const debt = state.debts.find(d => d.id === debtId);
+            if (debt) debt.photo = base64;
+            render();
+        };
+        reader.readAsDataURL(file);
+    }
 };
 
 // Start App
