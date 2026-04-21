@@ -224,7 +224,7 @@ function renderDashboard() {
     
     // Cálculo de ganancias reales (Solo cuotas pagadas)
     const totalInterestEarned = state.loans.reduce((acc, loan) => {
-        const paidInterest = loan.installments
+        const paidInterest = (loan.installments || [])
             .filter(inst => inst.paid)
             .reduce((sum, inst) => sum + parseFloat(inst.amount), 0);
         return acc + paidInterest;
@@ -520,7 +520,7 @@ function renderDetails() {
                     <button class="btn-text" onclick="window.app.handleExtendLoan('${loan.id}')">+ Ampliar Plazo</button>
                 </div>
                 <div class="payment-schedule">
-                    ${loan.installments.map(inst => `
+                    ${(loan.installments || []).map(inst => `
                         <div class="payment-row ${inst.paid ? 'is-paid' : ''}">
                             <div class="p-info">
                                 <span class="p-month">Mes ${inst.month}</span>
