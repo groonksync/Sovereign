@@ -17,14 +17,14 @@
 body.dark-mode {
     --primary-emerald: #10B981;
     --primary-light: #34D399;
-    --background-bone: #0F172A;
-    --surface-white: #1E293B;
-    --slate-gray: #94A3B8;
-    --text-main: #F1F5F9;
-    --text-muted: #94A3B8;
+    --background-bone: #000000;
+    --surface-white: #0A0A0A;
+    --slate-gray: #A0AEC0;
+    --text-main: #FFFFFF;
+    --text-muted: #718096;
     --warning-gold: #F59E0B;
-    --border-light: 1px solid rgba(255, 255, 255, 0.1);
-    --card-bg: #1E293B;
+    --border-light: 1px solid rgba(255, 255, 255, 0.08);
+    --card-bg: #0A0A0A;
 }
 
 * {
