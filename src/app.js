@@ -66,8 +66,18 @@ async function loadState() {
             installments: e.installments || []
         }));
 
-        // Protocolo es el "Catch-all": Cualquier cosa que no sea deuda o gasto va aquí
-        state.loans = allData.filter(l => l.ref !== 'DEUDA_DIARIA' && l.ref !== 'MI_PAGO');
+        // Protocolo (Mapeo v5.9 estable)
+        state.loans = allData.filter(l => l.ref !== 'DEUDA_DIARIA' && l.ref !== 'MI_PAGO').map(l => ({
+            id: l.id,
+            debtor: l.debtor,
+            amount: l.amount,
+            interest: l.interest_rate,
+            start_date: l.start_date,
+            end_date: l.end_date,
+            collateral: l.collateral,
+            guarantor: l.guarantor,
+            installments: l.installments || []
+        }));
 
         console.log("[Sovereign Cloud] Ecosistema auditado:", allData.length);
         applyTheme();
@@ -399,62 +409,6 @@ function renderRegister() {
             </div>
         </form>
     `;
-function renderLoanEdit() {
-    const loan = state.loans.find(l => l.id === state.selectedLoanId);
-    if (!loan) return navigate('dashboard');
-
-    return `
-        <header class="view-header">
-            <button class="back-btn" onclick="window.app.navigate('details', '${loan.id}')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            </button>
-            <h1>Editar Activo</h1>
-        </header>
-
-        <form id="edit-loan-form" class="sovereign-form" onsubmit="window.app.handleUpdateLoan(event, '${loan.id}')">
-            <section class="form-section">
-                <div class="form-group">
-                    <label>Nombre del Deudor</label>
-                    <input type="text" name="debtor" value="${loan.debtor}" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Monto Capital (Bs.)</label>
-                        <input type="number" name="amount" value="${loan.amount}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Tasa Int. Mensual (%)</label>
-                        <input type="number" name="interest" value="${loan.interest}" step="0.1" required>
-                    </div>
-                </div>
-            </section>
-
-            <section class="form-section">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Fecha Inicio</label>
-                        <input type="date" name="startDate" value="${loan.start_date}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Finalización</label>
-                        <input type="date" name="endDate" value="${loan.end_date}" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Colateral y Garantías</label>
-                    <textarea name="collateral" required>${loan.collateral || ''}</textarea>
-                </div>
-                <div class="form-group">
-                    <label>Garante / Aval</label>
-                    <input type="text" name="guarantor" value="${loan.guarantor || ''}" required>
-                </div>
-            </section>
-
-            <div class="form-actions">
-                <button type="submit" class="btn-primary">Actualizar Préstamo</button>
-                <button type="button" class="btn-secondary" onclick="window.app.navigate('details', '${loan.id}')">Cancelar</button>
-            </div>
-        </form>
     `;
 }
 
@@ -468,14 +422,9 @@ function renderDetails() {
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
             <h1>Gestión de Activos</h1>
-            <div style="display: flex; gap: 10px;">
-                <button class="menu-btn" onclick="window.app.navigate('loanEdit', '${loan.id}')">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                </button>
-                <button class="delete-btn" onclick="window.app.handleDelete('${loan.id}')">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
-            </div>
+            <button class="delete-btn" onclick="window.app.handleDelete('${loan.id}')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
         </header>
 
         <div class="details-container">
@@ -576,7 +525,6 @@ function render() {
             case 'debtRegister': content = renderDebtRegister(); break;
             case 'expenseRegister': content = renderExpenseRegister(); break;
             case 'details': content = renderDetails(); break;
-            case 'loanEdit': content = renderLoanEdit(); break;
             case 'debtDetail': content = renderDebtDetail(); break;
             case 'debtEdit': content = renderDebtEdit(); break;
             case 'expenseDetail': content = renderExpenseDetail(); break;
