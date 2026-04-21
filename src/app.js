@@ -220,7 +220,7 @@ function navigate(view, id = null) {
 function renderDashboard() {
     const totalAssets = state.loans.reduce((acc, loan) => acc + parseFloat(loan.amount || 0), 0);
     const activeContracts = state.loans.length;
-    const avgInterest = state.loans.length > 0 ? (state.loans.reduce((acc, l) => acc + parseFloat(l.interest), 0) / state.loans.length).toFixed(1) : 0;
+    const avgInterest = state.loans.length > 0 ? (state.loans.reduce((acc, l) => acc + parseFloat(l.interest_rate || l.interest || 0), 0) / state.loans.length).toFixed(1) : 0;
     
     // Cálculo de ganancias reales (Solo cuotas pagadas)
     const totalInterestEarned = state.loans.reduce((acc, loan) => {
