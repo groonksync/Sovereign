@@ -151,7 +151,7 @@ function renderDashboard() {
                             <div class="debtor-icon">${loan.debtor.substring(0, 2).toUpperCase()}</div>
                             <div class="loan-details">
                                 <h3>${loan.debtor}</h3>
-                                <p>Vence: ${formatDate(loan.endDate)}</p>
+                                <p>Vence: ${formatDate(loan.end_date)}</p>
                             </div>
                             <div class="loan-amount">
                                 <span class="current">${formatCurrency(loan.amount)}</span>
@@ -287,7 +287,7 @@ function renderDetails() {
                     </div>
                     <div class="m-item">
                         <span class="m-label">Vence</span>
-                        <span class="m-val">${formatDate(loan.endDate)}</span>
+                        <span class="m-val">${formatDate(loan.end_date)}</span>
                     </div>
                 </div>
                 <div class="progress-row">
@@ -386,8 +386,8 @@ function handleSave(event) {
         amount: amount,
         interest: interest,
         ref: formData.get('ref'),
-        startDate: startDate,
-        endDate: endDate,
+        start_date: startDate,
+        end_date: endDate,
         debtor: formData.get('debtor'),
         guarantor: formData.get('guarantor'),
         collateral: formData.get('collateral'),
@@ -414,14 +414,14 @@ async function handleToggleInstallment(loanId, installmentId) {
 async function handleExtendLoan(loanId) {
     const loan = state.loans.find(l => l.id === loanId);
     if (loan) {
-        const lastDate = new Date(loan.endDate);
+        const lastDate = new Date(loan.end_date);
         lastDate.setMonth(lastDate.getMonth() + 1);
-        loan.endDate = lastDate.toISOString().split('T')[0];
+        loan.end_date = lastDate.toISOString().split('T')[0];
         
         const nextMonth = loan.installments.length + 1;
         const monthlyInterest = (parseFloat(loan.amount) * parseFloat(loan.interest)) / 100;
         
-        const due = new Date(loan.startDate);
+        const due = new Date(loan.start_date);
         due.setMonth(due.getMonth() + nextMonth);
 
         loan.installments.push({
