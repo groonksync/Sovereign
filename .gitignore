@@ -1,0 +1,13 @@
+# Sovereign Project - Ignore List
+base_datos/
+ngrok
+ngrok.zip
+.DS_Store
+*.sh
+*.command
+Sovereign_Start.command
+server.py
+build_ipa.sh
+ExportOptions.plist
+sw.js
+manifest.json
