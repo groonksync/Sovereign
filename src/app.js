@@ -934,11 +934,15 @@ function renderDebts() {
     const protocolInterests = extractProtocolInterests();
     const combinedDebts = [...manualDebts, ...protocolInterests];
 
-    const totalCapitalDebt = combinedDebts.reduce((acc, d) => acc + parseFloat(d.amount || 0), 0);
+    // Card 1: Total intereses a recaudar (Manuales + Protocolo)
     const totalMonthlyInterest = combinedDebts.reduce((acc, d) => {
         if (d.isProtocol) return acc + parseFloat(d.amount); // La cuota ya es el interés
-        return acc + (parseFloat(d.amount || 0) * (parseFloat(d.interest_rate || 0)/100));
+        const rate = parseFloat(d.interest_rate || 0) / 100;
+        return acc + (parseFloat(d.amount || 0) * rate);
     }, 0);
+
+    // Card 2: Capital puro de deudores (Solo deudas manuales)
+    const totalManualCapital = manualDebts.reduce((acc, d) => acc + parseFloat(d.amount || 0), 0);
 
     // Alertas Proactivas (2 días)
     const today = new Date();
@@ -964,12 +968,12 @@ function renderDebts() {
         <section class="summary-card gold-gradient">
             <div class="summary-split" style="display: flex; gap: 15px;">
                 <div class="card-content" style="flex: 1;">
-                    <span class="label">Monto en Calle</span>
-                    <h2 class="amount" style="font-size: 1.1rem;">${formatCurrency(totalCapitalDebt)}</h2>
+                    <span class="label">Recaudación Intereses</span>
+                    <h2 class="amount" style="font-size: 1.1rem;">${formatCurrency(totalMonthlyInterest)}</h2>
                 </div>
                 <div class="card-content" style="flex: 1;">
-                    <span class="label">Total Intereses</span>
-                    <h2 class="amount" style="font-size: 1.1rem;">${formatCurrency(totalMonthlyInterest)}</h2>
+                    <span class="label">Capital Deudores</span>
+                    <h2 class="amount" style="font-size: 1.1rem;">${formatCurrency(totalManualCapital)}</h2>
                 </div>
             </div>
         </section>
@@ -991,6 +995,7 @@ function renderDebts() {
                     </div>
                 ` : combinedDebts.map(debt => {
                     const startDay = new Date(debt.start_date).getDate();
+                    const daysRemaining = calculateDaysToNext(new Date(debt.start_date));
                     const isClosing = upcoming.some(u => u.id === debt.id);
                     const navAction = debt.isProtocol ? `navigate('details', '${debt.originalLoanId}')` : `navigate('debtDetail', '${debt.id}')`;
                     
@@ -1002,7 +1007,7 @@ function renderDebts() {
                                 </div>
                                 <div class="loan-details">
                                     <h3>${debt.person} ${debt.isProtocol ? '<span class="badge-protocol">Protocolo</span>' : ''}</h3>
-                                    <p>${debt.reason} • <span class="text-warning">Día ${startDay}</span></p>
+                                    <p>${debt.reason} • <span class="text-warning">Día ${startDay} (${daysRemaining}d restantes)</span></p>
                                 </div>
                                 <div class="loan-amount">
                                     <span class="current">${formatCurrency(debt.amount)}</span>
