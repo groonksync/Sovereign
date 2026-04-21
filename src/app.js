@@ -40,13 +40,20 @@ async function loadState() {
             .order('created_at', { ascending: false });
         
         if (error) throw error;
-        state.loans = data || [];
+        const allData = data || [];
         
-        // Cargar Deudas Varias
-        const { data: debtData } = await sb.from('miscellaneous_debts').select('*');
-        state.debts = debtData || [];
+        // Separar Por Categoría
+        state.loans = allData.filter(l => !l.is_miscellaneous);
+        state.debts = allData.filter(l => l.is_miscellaneous).map(d => ({
+            id: d.id,
+            person: d.debtor,
+            amount: d.amount,
+            reason: d.collateral,
+            start_date: d.start_date,
+            end_date: d.end_date
+        }));
 
-        console.log("[Sovereign Cloud] Activos cargados:", state.loans.length + state.debts.length);
+        console.log("[Sovereign Cloud] Activos cargados:", allData.length);
         applyTheme();
     } catch (error) {
         console.error("[Sovereign Cloud] Error cargando datos:", error.message);
@@ -543,17 +550,25 @@ async function handleSaveDebt(event) {
     const formData = new FormData(event.target);
     const newDebt = {
         id: Date.now().toString(),
-        person: formData.get('person'),
+        debtor: formData.get('person'), // Map to standard columns
         amount: formData.get('amount'),
-        reason: formData.get('reason'),
+        collateral: formData.get('reason'), // Map to standard columns
         start_date: formData.get('startDate'),
         end_date: formData.get('endDate'),
+        is_miscellaneous: true // Discriminator
     };
 
     try {
-        const { error } = await sb.from('miscellaneous_debts').insert([newDebt]);
+        const { error } = await sb.from('loans').insert([newDebt]);
         if (error) throw error;
-        state.debts.unshift(newDebt);
+        state.debts.unshift({
+            id: newDebt.id,
+            person: newDebt.debtor,
+            amount: newDebt.amount,
+            reason: newDebt.collateral,
+            start_date: newDebt.start_date,
+            end_date: newDebt.end_date
+        });
         navigate('debts');
     } catch (error) {
         alert("Error guardando deuda: " + error.message);
@@ -582,6 +597,7 @@ function handleSave(event) {
         guarantor: formData.get('guarantor'),
         collateral: formData.get('collateral'),
         installments: installments,
+        is_miscellaneous: false // Official Protocol
     };
 
     state.loans.unshift(newLoan);
