@@ -543,8 +543,20 @@ async function exportToPDF(loanId) {
         doc.line(130, signatureY, 190, signatureY);
         doc.text("Firma del Acreedor", 145, signatureY + 5);
 
-        // --- GUARDAR ---
-        doc.save(`Extracto_${loan.debtor.replace(/\s+/g, '_')}.pdf`);
+        // --- COMPARTIR O GUARDAR ---
+        const pdfBlob = doc.output('blob');
+        const fileName = `Extracto_${loan.debtor.replace(/\s+/g, '_')}.pdf`;
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: 'Extracto de Préstamo Sovereign',
+                text: `Documento oficial para ${loan.debtor}`
+            });
+        } else {
+            doc.save(fileName);
+        }
 
     } catch (error) {
         console.error("[Sovereign PDF] Error generando archivo:", error);
