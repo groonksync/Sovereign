@@ -44,16 +44,14 @@ async function loadState() {
         const allData = data || [];
         
         // Separar Por Categoría basándose en discriminadores
-        state.loans = allData.filter(l => l.installments && l.installments.length > 0 && l.ref !== 'MI_PAGO');
-        
-        state.debts = allData.filter(l => (!l.installments || l.installments.length === 0) && l.ref === 'DEUDA_DIARIA').map(d => ({
+        state.debts = allData.filter(l => l.ref === 'DEUDA_DIARIA').map(d => ({
             id: d.id,
             person: d.debtor,
             amount: d.amount,
             reason: d.collateral,
             start_date: d.start_date,
             end_date: d.end_date,
-            photo: d.guarantor // Usamos guarantor para guardar el Base64 de la foto
+            photo: d.guarantor 
         }));
 
         state.expenses = allData.filter(l => l.ref === 'MI_PAGO').map(e => ({
@@ -62,12 +60,15 @@ async function loadState() {
             amount: e.amount,
             category: e.guarantor, 
             payDate: e.start_date,
-            endDate: e.end_date, // Puede ser null
+            endDate: e.end_date,
             refNumber: e.collateral,
-            installments: e.installments || [] // Historial de pagos
+            installments: e.installments || []
         }));
 
-        console.log("[Sovereign Cloud] Ecosistema cargado:", allData.length);
+        // Protocolo es el "Catch-all": Cualquier cosa que no sea deuda o gasto va aquí
+        state.loans = allData.filter(l => l.ref !== 'DEUDA_DIARIA' && l.ref !== 'MI_PAGO');
+
+        console.log("[Sovereign Cloud] Ecosistema auditado:", allData.length);
         applyTheme();
     } catch (error) {
         console.error("[Sovereign Cloud] Error cargando datos:", error.message);
@@ -101,9 +102,14 @@ async function updateLoan(loanId, updates) {
 
 // --- UTILS ---
 const formatCurrency = (amount) => {
-    return 'Bs. ' + new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2 }).format(amount);
+    const val = parseFloat(amount || 0);
+    return isNaN(val) ? 'Bs. 0.00' : 'Bs. ' + new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2 }).format(val);
 };
-const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+const formatDate = (dateStr) => {
+    if (!dateStr) return 'Pendiente';
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+};
 
 function calculateDaysUntil(dateStr) {
     if (!dateStr) return 0;
@@ -451,6 +457,7 @@ function render() {
             case 'expenseRegister': content = renderExpenseRegister(); break;
             case 'details': content = renderDetails(); break;
             case 'debtDetail': content = renderDebtDetail(); break;
+            case 'debtEdit': content = renderDebtEdit(); break;
             case 'expenseDetail': content = renderExpenseDetail(); break;
             case 'expenseEdit': content = renderExpenseEdit(); break;
             default: content = renderDashboard();
@@ -747,9 +754,14 @@ function renderDebtDetail() {
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
             <h1>Detalle de Deuda</h1>
-            <button class="delete-btn" onclick="window.app.handleDeleteUniversal('${debt.id}', 'debts')">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </button>
+            <div style="display:flex; gap:10px;">
+                <button class="menu-btn" onclick="window.app.navigate('debtEdit', '${debt.id}')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </button>
+                <button class="delete-btn" onclick="window.app.handleDeleteUniversal('${debt.id}', 'debts')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+            </div>
         </header>
 
         <div class="details-container">
@@ -793,6 +805,55 @@ function renderDebtDetail() {
                 </div>
             </section>
         </div>
+    `;
+}
+
+function renderDebtEdit() {
+    const debt = state.debts.find(d => d.id === state.selectedLoanId);
+    if (!debt) return navigate('debts');
+
+    return `
+        <header class="view-header">
+            <button class="back-btn" onclick="window.app.navigate('debtDetail', '${debt.id}')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h1>Editar Deudor</h1>
+        </header>
+
+        <form id="edit-debt-form" class="sovereign-form" onsubmit="window.app.handleUpdateDebt(event, '${debt.id}')">
+            <section class="form-section">
+                <div class="form-group">
+                    <label>Persona / Deudor</label>
+                    <input type="text" name="person" value="${debt.person}" required>
+                </div>
+                <div class="form-group">
+                    <label>Monto Adeudado (Bs.)</label>
+                    <input type="number" name="amount" value="${debt.amount}" required>
+                </div>
+                <div class="form-group">
+                    <label>Motivo de la Deuda</label>
+                    <textarea name="reason" rows="3" required>${debt.reason}</textarea>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha Inicio</label>
+                        <input type="date" name="startDate" value="${debt.start_date}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Plazo Límite</label>
+                        <input type="date" name="endDate" value="${debt.end_date || ''}">
+                    </div>
+                </div>
+            </section>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Guardar Cambios</button>
+                <button type="button" class="btn-secondary" onclick="window.app.navigate('debtDetail', '${debt.id}')">Cancelar</button>
+            </div>
+        </form>
     `;
 }
 
@@ -1206,6 +1267,29 @@ window.app = {
                 endDate: updates.end_date 
             });
             navigate('expenseDetail', id);
+        } catch (e) { alert(e.message); }
+    },
+    handleUpdateDebt: async (event, id) => {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const updates = {
+            debtor: formData.get('person'),
+            amount: formData.get('amount'),
+            collateral: formData.get('reason'),
+            start_date: formData.get('startDate'),
+            end_date: formData.get('endDate')
+        };
+        try {
+            await sb.from('loans').update(updates).eq('id', id);
+            const debt = state.debts.find(d => d.id === id);
+            if (debt) Object.assign(debt, { 
+                person: updates.debtor, 
+                amount: updates.amount, 
+                reason: updates.collateral, 
+                start_date: updates.start_date,
+                end_date: updates.end_date 
+            });
+            navigate('debtDetail', id);
         } catch (e) { alert(e.message); }
     },
     handleToggleExpenseMonth: async (expId, monthId) => {
