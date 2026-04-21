@@ -60,9 +60,11 @@ async function loadState() {
             id: e.id,
             name: e.debtor,
             amount: e.amount,
-            category: e.guarantor, // Categoría guardada aquí (Service, Bank, Cart)
+            category: e.guarantor, 
             payDate: e.start_date,
-            refNumber: e.collateral
+            endDate: e.end_date, // Puede ser null
+            refNumber: e.collateral,
+            installments: e.installments || [] // Historial de pagos
         }));
 
         console.log("[Sovereign Cloud] Ecosistema cargado:", allData.length);
@@ -435,6 +437,8 @@ function render() {
         case 'expenseRegister': content = renderExpenseRegister(); break;
         case 'details': content = renderDetails(); break;
         case 'debtDetail': content = renderDebtDetail(); break;
+        case 'expenseDetail': content = renderExpenseDetail(); break;
+        case 'expenseEdit': content = renderExpenseEdit(); break;
         default: content = renderDashboard();
     }
 
@@ -505,8 +509,10 @@ function renderExpenses() {
                         <p>No tienes pagos programados registrados.</p>
                         <button class="btn-primary" onclick="window.app.navigate('expenseRegister')">Agregar Primer Pago</button>
                     </div>
-                ` : state.expenses.map(exp => `
-                    <div class="loan-card" onclick="window.app.handleDeleteUniversal('${exp.id}', 'expenses')">
+                ` : state.expenses.map(exp => {
+                    const daysLeft = calculateDaysUntil(exp.payDate);
+                    return `
+                    <div class="loan-card" onclick="window.app.navigate('expenseDetail', '${exp.id}')">
                         <div class="loan-info">
                             <div class="debtor-icon expense-icon">${categories[exp.category]?.icon || '💰'}</div>
                             <div class="loan-details">
@@ -518,11 +524,11 @@ function renderExpenses() {
                             </div>
                         </div>
                         <div class="progress-labels" style="margin-top: 8px;">
-                            <span>Día de pago: ${exp.payDate || 'Pendiente'}</span>
-                            <span class="status positive">Recurrente</span>
+                            <span class="${daysLeft <= 3 ? 'text-warning' : ''}">Faltan ${daysLeft} días pago</span>
+                            <span class="status positive">Activo</span>
                         </div>
                     </div>
-                `).join('')}
+                `}).join('')}
             </div>
         </main>
 
@@ -564,7 +570,7 @@ function renderExpenseRegister() {
             <section class="form-section">
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Fecha de Pago</label>
+                        <label>Fecha de Inicio</label>
                         <input type="date" name="payDate" required>
                     </div>
                     <div class="form-group">
@@ -577,6 +583,137 @@ function renderExpenseRegister() {
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Registrar Pago</button>
                 <button type="button" class="btn-secondary" onclick="window.app.navigate('expenses')">Cancelar</button>
+            </div>
+        </form>
+    `;
+}
+
+function renderExpenseDetail() {
+    const exp = state.expenses.find(e => e.id === state.selectedLoanId);
+    if (!exp) return navigate('expenses');
+
+    const totalPaidTimes = exp.installments ? exp.installments.filter(i => i.paid).length : 0;
+    const totalInvested = totalPaidTimes * parseFloat(exp.amount);
+    const monthsActive = calculateMonths(exp.payDate, new Date().toISOString());
+    const daysUntilNext = calculateDaysUntil(exp.payDate);
+
+    return `
+        <header class="view-header">
+            <button class="back-btn" onclick="window.app.navigate('expenses')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h1>Auditoría de Pago</h1>
+            <button class="menu-btn" onclick="window.app.navigate('expenseEdit', '${exp.id}')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </button>
+        </header>
+
+        <div class="details-container">
+            <div class="loan-metrics-card dark-gradient">
+                <div class="metric-main">
+                    <span class="label">Monto Mensual</span>
+                    <h2 class="amount">${formatCurrency(exp.amount)}</h2>
+                </div>
+                <div class="metric-grid">
+                    <div class="m-item">
+                        <span class="m-label">Veces Pagado</span>
+                        <span class="m-val">${totalPaidTimes} Cuotas</span>
+                    </div>
+                    <div class="m-item">
+                        <span class="m-label">Total Invertido</span>
+                        <span class="m-val">${formatCurrency(totalInvested)}</span>
+                    </div>
+                </div>
+                <div class="progress-row">
+                    <div class="progress-bar-large"><div class="fill" style="width: 100%"></div></div>
+                    <span>Activo por ${monthsActive} meses</span>
+                </div>
+            </div>
+
+            <section class="detail-section">
+                <div class="alert-box ${daysUntilNext <= 3 ? 'warning' : 'info'}">
+                    <div class="alert-content">
+                        <strong>Próximo Pago:</strong> Faltan ${daysUntilNext} días para el vencimiento.
+                    </div>
+                </div>
+            </section>
+
+            <section class="detail-section">
+                <div class="section-flex">
+                    <h2 class="section-title">Historial de Mensualidades</h2>
+                    <span class="text-link">Auto-generado</span>
+                </div>
+                <div class="payment-schedule">
+                    ${generateHistoricalMonths(exp).map(m => `
+                        <div class="payment-row">
+                            <div class="p-info">
+                                <span class="p-month">${m.name}</span>
+                                <span class="p-date">Vencimiento: ${m.day}</span>
+                            </div>
+                            <div class="p-action">
+                                <button class="check-btn ${isMonthPaid(exp, m.id) ? 'checked' : ''}" 
+                                        onclick="window.app.handleToggleExpenseMonth('${exp.id}', '${m.id}')">
+                                    ${isMonthPaid(exp, m.id) ? 'Pagado' : 'Marcar'}
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </section>
+
+            <button class="btn-secondary full-width" onclick="window.app.handleDeleteUniversal('${exp.id}', 'expenses')">Eliminar Compromiso</button>
+        </div>
+    `;
+}
+
+function renderExpenseEdit() {
+    const exp = state.expenses.find(e => e.id === state.selectedLoanId);
+    if (!exp) return navigate('expenses');
+
+    return `
+        <header class="view-header">
+            <button class="back-btn" onclick="window.app.navigate('expenseDetail', '${exp.id}')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h1>Editar Compromiso</h1>
+        </header>
+
+        <form id="edit-expense-form" class="sovereign-form" onsubmit="window.app.handleUpdateExpense(event, '${exp.id}')">
+            <section class="form-section">
+                <div class="form-group">
+                    <label>Servicio / Nombre</label>
+                    <input type="text" name="name" value="${exp.name}" required>
+                </div>
+                <div class="form-group">
+                    <label>Precio Actual (Bs.)</label>
+                    <input type="number" name="amount" value="${exp.amount}" required>
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select name="category" class="custom-select" required>
+                        <option value="internet" ${exp.category === 'internet' ? 'selected' : ''}>Suscripción / Internet</option>
+                        <option value="banco" ${exp.category === 'banco' ? 'selected' : ''}>Pago Bancario / Crédito</option>
+                        <option value="producto" ${exp.category === 'producto' ? 'selected' : ''}>Producto / Artículo</option>
+                    </select>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha Inicio</label>
+                        <input type="date" name="payDate" value="${exp.payDate}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha Fin (Opcional)</label>
+                        <input type="date" name="endDate" value="${exp.endDate || ''}" placeholder="Dejar vacío para indefinido">
+                    </div>
+                </div>
+            </section>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Actualizar Cambios</button>
+                <button type="button" class="btn-secondary" onclick="window.app.navigate('expenseDetail', '${exp.id}')">Cancelar</button>
             </div>
         </form>
     `;
@@ -1022,13 +1159,52 @@ window.app = {
         } catch (e) { alert(e.message); }
     },
     handleDeleteUniversal: async (id, viewToNavigate) => {
-        if (confirm('¿Eliminar registro?')) {
+        if (confirm('¿Eliminar registro definitivamente?')) {
             await sb.from('loans').delete().eq('id', id);
             state.loans = state.loans.filter(l => l.id !== id);
             state.debts = state.debts.filter(d => d.id !== id);
             state.expenses = state.expenses.filter(e => e.id !== id);
             navigate(viewToNavigate);
         }
+    },
+    handleUpdateExpense: async (event, id) => {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const updates = {
+            debtor: formData.get('name'),
+            amount: formData.get('amount'),
+            guarantor: formData.get('category'),
+            start_date: formData.get('payDate'),
+            end_date: formData.get('endDate') || null,
+        };
+        try {
+            await sb.from('loans').update(updates).eq('id', id);
+            const exp = state.expenses.find(e => e.id === id);
+            if (exp) Object.assign(exp, { 
+                name: updates.debtor, 
+                amount: updates.amount, 
+                category: updates.guarantor, 
+                payDate: updates.start_date,
+                endDate: updates.end_date 
+            });
+            navigate('expenseDetail', id);
+        } catch (e) { alert(e.message); }
+    },
+    handleToggleExpenseMonth: async (expId, monthId) => {
+        const exp = state.expenses.find(e => e.id === expId);
+        if (!exp) return;
+        
+        if (!exp.installments) exp.installments = [];
+        const index = exp.installments.findIndex(i => i.id === monthId);
+        
+        if (index > -1) {
+            exp.installments[index].paid = !exp.installments[index].paid;
+        } else {
+            exp.installments.push({ id: monthId, paid: true });
+        }
+        
+        await sb.from('loans').update({ installments: exp.installments }).eq('id', expId);
+        render();
     },
     handlePhotoCapture: async (event, debtId) => {
         const file = event.target.files[0];
