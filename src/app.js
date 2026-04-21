@@ -399,11 +399,6 @@ function renderRegister() {
             </div>
         </form>
     `;
-}
-
-    `;
-}
-
 function renderLoanEdit() {
     const loan = state.loans.find(l => l.id === state.selectedLoanId);
     if (!loan) return navigate('dashboard');
