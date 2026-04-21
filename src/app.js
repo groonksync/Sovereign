@@ -409,7 +409,6 @@ function renderRegister() {
             </div>
         </form>
     `;
-    `;
 }
 
 function renderDetails() {
