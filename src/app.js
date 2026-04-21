@@ -105,6 +105,18 @@ const formatCurrency = (amount) => {
 };
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
 
+function calculateDaysUntil(dateStr) {
+    if (!dateStr) return 0;
+    const today = new Date();
+    const start = new Date(dateStr);
+    if (isNaN(start.getTime())) return 0; // Seguridad para fechas inválidas
+
+    const target = new Date(today.getFullYear(), today.getMonth(), start.getDate());
+    if (target < today) target.setMonth(target.getMonth() + 1);
+    const diff = target - today;
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
 function calculateMonths(start, end) {
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -426,20 +438,26 @@ function renderDetails() {
 
 function render() {
     const app = document.getElementById('app');
+    if (!app) return;
     let content = '';
 
-    switch (state.currentView) {
-        case 'dashboard': content = renderDashboard(); break;
-        case 'debts': content = renderDebts(); break;
-        case 'expenses': content = renderExpenses(); break;
-        case 'register': content = renderRegister(); break;
-        case 'debtRegister': content = renderDebtRegister(); break;
-        case 'expenseRegister': content = renderExpenseRegister(); break;
-        case 'details': content = renderDetails(); break;
-        case 'debtDetail': content = renderDebtDetail(); break;
-        case 'expenseDetail': content = renderExpenseDetail(); break;
-        case 'expenseEdit': content = renderExpenseEdit(); break;
-        default: content = renderDashboard();
+    try {
+        switch (state.currentView) {
+            case 'dashboard': content = renderDashboard(); break;
+            case 'debts': content = renderDebts(); break;
+            case 'expenses': content = renderExpenses(); break;
+            case 'register': content = renderRegister(); break;
+            case 'debtRegister': content = renderDebtRegister(); break;
+            case 'expenseRegister': content = renderExpenseRegister(); break;
+            case 'details': content = renderDetails(); break;
+            case 'debtDetail': content = renderDebtDetail(); break;
+            case 'expenseDetail': content = renderExpenseDetail(); break;
+            case 'expenseEdit': content = renderExpenseEdit(); break;
+            default: content = renderDashboard();
+        }
+    } catch (e) {
+        console.error("Render Error:", e);
+        content = `<div class="empty-state"><p>Error al cargar la vista. Intente de nuevo.</p></div>`;
     }
 
     app.innerHTML = content + renderTabBar();

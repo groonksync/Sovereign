@@ -216,10 +216,26 @@ body.dark-mode .form-group input, body.dark-mode .form-group textarea { backgrou
 
 /* FAB */
 .fab {
-    position: fixed; bottom: 30px; right: 30px; width: 56px; height: 56px;
-    background-color: var(--primary-emerald); border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; border: none;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); cursor: pointer; z-index: 100;
+    position: fixed;
+    bottom: 95px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--primary-emerald);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    border: none;
+    cursor: pointer;
+    z-index: 1000;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fab:active {
+    transform: scale(0.9);
 }
 
 .empty-state { text-align: center; padding: 50px 20px; }
