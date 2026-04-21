@@ -196,8 +196,8 @@ function renderRegister() {
                     <input type="number" step="0.1" name="interest" placeholder="0.0" required>
                 </div>
                 <div class="form-group">
-                    <label>Número de Referencia</label>
-                    <input type="text" name="ref" value="REF-${Math.floor(Math.random() * 100000)}" readonly>
+                    <label>Número de Referencia / Teléfono</label>
+                    <input type="text" name="ref" placeholder="Ej: +591 7XXXXXXX" required>
                 </div>
             </section>
 
