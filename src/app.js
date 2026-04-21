@@ -11,6 +11,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // --- INITIAL STATE & DATA MANAGEMENT ---
 let state = {
     loans: [],
+    debts: [], // Deudas Varias
     currentView: 'dashboard',
     selectedLoanId: null,
     isDarkMode: localStorage.getItem('sovereign-theme') === 'dark'
@@ -40,7 +41,12 @@ async function loadState() {
         
         if (error) throw error;
         state.loans = data || [];
-        console.log("[Sovereign Cloud] Datos cargados:", state.loans.length);
+        
+        // Cargar Deudas Varias
+        const { data: debtData } = await sb.from('miscellaneous_debts').select('*');
+        state.debts = debtData || [];
+
+        console.log("[Sovereign Cloud] Activos cargados:", state.loans.length + state.debts.length);
         applyTheme();
     } catch (error) {
         console.error("[Sovereign Cloud] Error cargando datos:", error.message);
@@ -152,16 +158,14 @@ function renderDashboard() {
         <section class="summary-card">
             <div class="card-glass"></div>
             <div class="card-content">
-                <div class="summary-main-grid">
-                    <div class="summary-item">
-                        <span class="label">Capital Prestado</span>
-                        <h2 class="amount">${formatCurrency(totalAssets)}</h2>
-                    </div>
-                    <div class="summary-item earnings">
-                        <span class="label">Intereses Ganados</span>
-                        <h2 class="amount highlight">${formatCurrency(totalInterestEarned)}</h2>
-                    </div>
+                <span class="label">Capital Prestado en Protocolo</span>
+                <h2 class="amount">${formatCurrency(totalAssets)}</h2>
+                
+                <div class="earnings-summary-box">
+                    <span class="label-xs">Ganancias por Interés (Cobrado)</span>
+                    <span class="val-xs bold highlight">${formatCurrency(totalInterestEarned)}</span>
                 </div>
+
                 <div class="stats-row">
                     <div class="stat">
                         <span class="stat-label">Contratos Activos</span>
@@ -405,13 +409,155 @@ function render() {
 
     switch (state.currentView) {
         case 'dashboard': content = renderDashboard(); break;
+        case 'debts': content = renderDebts(); break;
         case 'register': content = renderRegister(); break;
+        case 'debtRegister': content = renderDebtRegister(); break;
         case 'details': content = renderDetails(); break;
         default: content = renderDashboard();
     }
 
-    app.innerHTML = content;
+    app.innerHTML = content + renderTabBar();
     window.scrollTo(0, 0);
+}
+
+function renderTabBar() {
+    return `
+        <nav class="bottom-tab-bar">
+            <button class="tab-item ${state.currentView === 'dashboard' ? 'active' : ''}" onclick="window.app.navigate('dashboard')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+                <span>Protocolo</span>
+            </button>
+            <button class="tab-item ${state.currentView === 'debts' ? 'active' : ''}" onclick="window.app.navigate('debts')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span>Deudas Varias</span>
+            </button>
+            <button class="tab-item" onclick="window.open('https://drive.google.com/drive/folders/12VwI7kKvTy50t_Q13UngiSHEZ77KpQwu?usp=sharing')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                <span>Archivo</span>
+            </button>
+        </nav>
+    `;
+}
+
+function renderDebts() {
+    const totalDebtAmount = state.debts.reduce((acc, d) => acc + parseFloat(d.amount || 0), 0);
+    
+    return `
+        <header class="main-header">
+            <div class="user-info">
+                <div class="avatar">DV</div>
+                <div class="greeting">
+                    <span>Libro de</span>
+                    <h1>Deudas Varias</h1>
+                </div>
+            </div>
+        </header>
+
+        <section class="summary-card gold-gradient">
+            <div class="card-content">
+                <span class="label">Total por Cobrar (Extra)</span>
+                <h2 class="amount">${formatCurrency(totalDebtAmount)}</h2>
+                <p style="font-size: 0.65rem; opacity: 0.8; margin-top: -10px;">Gestionado fuera del protocolo principal</p>
+            </div>
+        </section>
+
+        <main class="ledger-section">
+            <div class="loan-list">
+                ${state.debts.length === 0 ? `
+                    <div class="empty-state">
+                        <p>No hay deudas misceláneas registradas.</p>
+                        <button class="btn-primary" onclick="window.app.navigate('debtRegister')">Registrar Deuda</button>
+                    </div>
+                ` : state.debts.map(debt => `
+                    <div class="loan-card" onclick="alert('${debt.reason}')">
+                        <div class="loan-info">
+                            <div class="debtor-icon debt-icon">${debt.person.substring(0, 2).toUpperCase()}</div>
+                            <div class="loan-details">
+                                <h3>${debt.person}</h3>
+                                <p>${debt.reason}</p>
+                                <p style="font-size: 0.65rem;">Vence: ${formatDate(debt.end_date)}</p>
+                            </div>
+                            <div class="loan-amount">
+                                <span class="current">${formatCurrency(debt.amount)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </main>
+
+        <button class="fab" onclick="window.app.navigate('debtRegister')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+    `;
+}
+
+function renderDebtRegister() {
+    return `
+        <header class="view-header">
+            <button class="back-btn" onclick="window.app.navigate('debts')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h1>Nueva Deuda Extra</h1>
+        </header>
+
+        <form id="debt-form" class="sovereign-form" onsubmit="window.app.handleSaveDebt(event)">
+            <section class="form-section">
+                <div class="form-group">
+                    <label>Nombre del Deudor</label>
+                    <input type="text" name="person" placeholder="Nombre completo" required>
+                </div>
+                <div class="form-group">
+                    <label>Monto Adeudado (Bs.)</label>
+                    <input type="number" name="amount" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Motivo de la Deuda</label>
+                    <textarea name="reason" placeholder="Ej: Venta de repuestos, préstamo personal..." required></textarea>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha Inicio</label>
+                        <input type="date" name="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Plazo Límite</label>
+                        <input type="date" name="endDate" required>
+                    </div>
+                </div>
+            </section>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Guardar Deuda</button>
+                <button type="button" class="btn-secondary" onclick="window.app.navigate('debts')">Cancelar</button>
+            </div>
+        </form>
+    `;
+}
+
+async function handleSaveDebt(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const newDebt = {
+        id: Date.now().toString(),
+        person: formData.get('person'),
+        amount: formData.get('amount'),
+        reason: formData.get('reason'),
+        start_date: formData.get('startDate'),
+        end_date: formData.get('endDate'),
+    };
+
+    try {
+        const { error } = await sb.from('miscellaneous_debts').insert([newDebt]);
+        if (error) throw error;
+        state.debts.unshift(newDebt);
+        navigate('debts');
+    } catch (error) {
+        alert("Error guardando deuda: " + error.message);
+    }
 }
 
 function handleSave(event) {
@@ -635,7 +781,8 @@ window.app = {
     handleToggleInstallment,
     handleExtendLoan,
     exportToPDF,
-    toggleTheme
+    toggleTheme,
+    handleSaveDebt
 };
 
 // Start App
