@@ -936,6 +936,9 @@ function renderDebts() {
     const manualDebts = state.debts;
     const protocolInterests = extractProtocolInterests();
     const combinedDebts = [...manualDebts, ...protocolInterests];
+    
+    const protocolEntries = combinedDebts.filter(d => d.isProtocol);
+    const manualEntries = combinedDebts.filter(d => !d.isProtocol);
 
     // Card 1: Total intereses a recaudar (Manuales + Protocolo)
     const totalMonthlyInterest = combinedDebts.reduce((acc, d) => {
@@ -991,41 +994,57 @@ function renderDebts() {
             ` : ''}
 
             <div class="loan-list">
+                ${protocolEntries.length > 0 ? `
+                    <div class="section-header" style="margin-top: 10px;">
+                        <h2 class="section-title">Intereses de Préstamos (Protocolo)</h2>
+                    </div>
+                    ${protocolEntries.map(debt => renderDebtCard(debt, upcoming)).join('')}
+                ` : ''}
+
+                ${manualEntries.length > 0 ? `
+                    <div class="section-header" style="margin-top: 25px;">
+                        <h2 class="section-title">Cartera de Deudores (Personal)</h2>
+                    </div>
+                    ${manualEntries.map(debt => renderDebtCard(debt, upcoming)).join('')}
+                ` : ''}
+
                 ${combinedDebts.length === 0 ? `
                     <div class="empty-state">
                         <p>No hay cobros pendientes.</p>
                         <button class="btn-primary" onclick="window.app.navigate('debtRegister')">Nueva Deuda</button>
                     </div>
-                ` : combinedDebts.map(debt => {
-                    const startDay = new Date(debt.start_date).getDate();
-                    const daysRemaining = calculateDaysToNext(new Date(debt.start_date));
-                    const isClosing = upcoming.some(u => u.id === debt.id);
-                    const navAction = debt.isProtocol ? `navigate('details', '${debt.originalLoanId}')` : `navigate('debtDetail', '${debt.id}')`;
-                    
-                    return `
-                        <div class="loan-card ${isClosing ? 'near-due' : ''}" onclick="window.app.${navAction}">
-                            <div class="loan-info">
-                                <div class="debtor-icon ${debt.isProtocol ? 'protocol-icon' : 'debt-icon'}">
-                                    ${debt.isProtocol ? 'P' : (debt.photo ? `<img src="${debt.photo}" class="avatar-mini">` : (debt.person || '??').substring(0, 2).toUpperCase())}
-                                </div>
-                                <div class="loan-details">
-                                    <h3>${debt.person} ${debt.isProtocol ? '<span class="badge-protocol">Protocolo</span>' : ''}</h3>
-                                    <p>${debt.reason} • <span class="text-warning">Día ${startDay} (${daysRemaining}d restantes)</span></p>
-                                </div>
-                                <div class="loan-amount">
-                                    <span class="current">${formatCurrency(debt.amount)}</span>
-                                    <span class="rate">${debt.isProtocol ? 'Interés' : (parseFloat(debt.interest) > 0 ? `+${debt.interest}%` : 'Sin Int.')}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
+                ` : ''}
             </div>
         </main>
 
         <button class="fab" onclick="window.app.navigate('debtRegister')">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </button>
+    `;
+}
+
+function renderDebtCard(debt, upcoming) {
+    const startDay = new Date(debt.start_date).getDate();
+    const daysRemaining = calculateDaysToNext(new Date(debt.start_date));
+    const isClosing = upcoming.some(u => u.id === debt.id);
+    const navAction = debt.isProtocol ? `navigate('details', '${debt.originalLoanId}')` : `navigate('debtDetail', '${debt.id}')`;
+    
+    return `
+        <div class="loan-card ${isClosing ? 'near-due' : ''}" onclick="window.app.${navAction}">
+            <div class="loan-info">
+                <div class="debtor-icon ${debt.isProtocol ? 'protocol-icon' : 'debt-icon'}">
+                    ${debt.isProtocol ? 'P' : (debt.photo ? `<img src="${debt.photo}" class="avatar-mini">` : (debt.person || '??').substring(0, 2).toUpperCase())}
+                </div>
+                <div class="loan-details">
+                    <h3>${debt.person} ${debt.isProtocol ? '<span class="badge-protocol">Protocolo</span>' : ''}</h3>
+                    <p>${debt.reason} • <span class="text-warning">Día ${startDay} (${daysRemaining}d restantes)</span></p>
+                </div>
+                <div class="loan-amount">
+                    <span class="current">${formatCurrency(debt.amount)}</span>
+                    <span class="rate">${debt.isProtocol ? 'Interés' : (parseFloat(debt.interest) > 0 ? `+${debt.interest}%` : 'Sin Int.')}</span>
+                </div>
+            </div>
+        </div>
     `;
 }
 
