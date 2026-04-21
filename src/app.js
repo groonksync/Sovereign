@@ -51,6 +51,7 @@ async function loadState() {
             reason: d.collateral,
             start_date: d.start_date,
             end_date: d.end_date,
+            interest_rate: d.interest_rate || 0,
             photo: d.guarantor 
         }));
 
@@ -875,9 +876,13 @@ function renderDebtEdit() {
                         <input type="date" name="startDate" value="${debt.start_date}" required>
                     </div>
                     <div class="form-group">
-                        <label>Plazo Límite</label>
-                        <input type="date" name="endDate" value="${debt.end_date || ''}">
+                        <label>Tasa Int. Mensual (%)</label>
+                        <input type="number" name="interestRate" value="${debt.interest_rate || 0}" step="0.1" required>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label>Plazo Límite (Opcional)</label>
+                    <input type="date" name="endDate" value="${debt.end_date || ''}">
                 </div>
             </section>
 
@@ -891,7 +896,25 @@ function renderDebtEdit() {
 
 function renderDebts() {
     const totalDebtAmount = state.debts.reduce((acc, d) => acc + parseFloat(d.amount || 0), 0);
-    
+    const totalMonthlyInterest = state.debts.reduce((acc, d) => acc + (parseFloat(d.amount || 0) * (parseFloat(d.interest_rate || 0) / 100)), 0);
+
+    // Detección de Cobros Próximos (Anticipación de 2 días)
+    const today = new Date();
+    const upcomingCollections = state.debts.filter(d => {
+        if (!d.start_date) return false;
+        const startDay = new Date(d.start_date).getDate();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        
+        let collectionDate = new Date(currentYear, currentMonth, startDay);
+        if (collectionDate < today) {
+            collectionDate = new Date(currentYear, currentMonth + 1, startDay);
+        }
+        
+        const diffDays = Math.ceil((collectionDate - today) / (1000 * 60 * 60 * 24));
+        return diffDays <= 2;
+    });
+
     return `
         <header class="main-header">
             <div class="user-info">
@@ -904,36 +927,55 @@ function renderDebts() {
         </header>
 
         <section class="summary-card gold-gradient">
-            <div class="card-content">
-                <span class="label">Total por Cobrar (Extra)</span>
-                <h2 class="amount">${formatCurrency(totalDebtAmount)}</h2>
-                <p style="font-size: 0.65rem; opacity: 0.8; margin-top: -10px;">Gestionado fuera del protocolo principal</p>
+            <div class="summary-split" style="display: flex; gap: 20px;">
+                <div class="card-content" style="flex: 1;">
+                    <span class="label">Capital Total</span>
+                    <h2 class="amount" style="font-size: 1.2rem;">${formatCurrency(totalDebtAmount)}</h2>
+                </div>
+                <div class="card-content" style="flex: 1;">
+                    <span class="label">Interés Mensual</span>
+                    <h2 class="amount" style="font-size: 1.2rem;">${formatCurrency(totalMonthlyInterest)}</h2>
+                </div>
             </div>
         </section>
 
         <main class="ledger-section">
+            ${upcomingCollections.length > 0 ? `
+                <div class="alert-box warning" style="margin: 0 15px 20px 15px;">
+                    <div class="alert-content">
+                        <strong>⚠️ Alerta de Cobro:</strong> 
+                        ${upcomingCollections.map(u => u.person).join(', ')} tienen cobros próximos.
+                    </div>
+                </div>
+            ` : ''}
+
             <div class="loan-list">
                 ${state.debts.length === 0 ? `
                     <div class="empty-state">
                         <p>No hay deudas misceláneas registradas.</p>
                         <button class="btn-primary" onclick="window.app.navigate('debtRegister')">Registrar Deuda</button>
                     </div>
-                ` : state.debts.map(debt => `
-                    <div class="loan-card" onclick="window.app.navigate('debtDetail', '${debt.id}')">
-                        <div class="loan-info">
-                            <div class="debtor-icon debt-icon">
-                                ${debt.photo ? `<img src="${debt.photo}" class="avatar-mini">` : debt.person.substring(0, 2).toUpperCase()}
-                            </div>
-                            <div class="loan-details">
-                                <h3>${debt.person}</h3>
-                                <p>${debt.reason}</p>
-                            </div>
-                            <div class="loan-amount">
-                                <span class="current">${formatCurrency(debt.amount)}</span>
+                ` : state.debts.map(debt => {
+                    const startDay = new Date(debt.start_date).getDate();
+                    const isClosing = upcomingCollections.some(u => u.id === debt.id);
+                    return `
+                        <div class="loan-card ${isClosing ? 'near-due' : ''}" onclick="window.app.navigate('debtDetail', '${debt.id}')">
+                            <div class="loan-info">
+                                <div class="debtor-icon debt-icon">
+                                    ${debt.photo ? `<img src="${debt.photo}" class="avatar-mini">` : debt.person.substring(0, 2).toUpperCase()}
+                                </div>
+                                <div class="loan-details">
+                                    <h3>${debt.person}</h3>
+                                    <p>${debt.reason} • <span class="text-warning">Día ${startDay}</span></p>
+                                </div>
+                                <div class="loan-amount">
+                                    <span class="current">${formatCurrency(debt.amount)}</span>
+                                    <span class="rate" style="font-size: 0.7rem; color: #fbbf24;">+${debt.interest_rate}%</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `).join('')}
+                    `;
+                }).join('')}
             </div>
         </main>
 
@@ -975,9 +1017,13 @@ function renderDebtRegister() {
                         <input type="date" name="startDate" required>
                     </div>
                     <div class="form-group">
-                        <label>Plazo Límite</label>
-                        <input type="date" name="endDate" required>
+                        <label>Tasa Interés (%)</label>
+                        <input type="number" name="interestRate" placeholder="0" step="0.1" required>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label>Plazo Límite (Opcional)</label>
+                    <input type="date" name="endDate">
                 </div>
             </section>
 
@@ -990,18 +1036,19 @@ function renderDebtRegister() {
 }
 
 async function handleSaveDebt(event) {
-    event.preventDefault();
-    const formData = new FormData(event.target);
-    const newDebt = {
-        id: Date.now().toString(),
-        debtor: formData.get('person'),
-        amount: formData.get('amount'),
-        collateral: formData.get('reason'),
-        start_date: formData.get('startDate'),
-        end_date: formData.get('endDate'),
-        installments: null, // Discriminador natural: las deudas varias no tienen cuotas
-        ref: 'DEUDA_DIARIA'
-    };
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const newDebt = {
+            id: Date.now().toString(),
+            debtor: formData.get('person'),
+            amount: formData.get('amount'),
+            collateral: formData.get('reason'),
+            interest_rate: formData.get('interestRate'),
+            start_date: formData.get('startDate'),
+            end_date: formData.get('endDate') || null,
+            installments: null,
+            ref: 'DEUDA_DIARIA'
+        };
 
     try {
         const { error } = await sb.from('loans').insert([newDebt]);
@@ -1308,6 +1355,7 @@ window.app = {
             debtor: formData.get('person'),
             amount: formData.get('amount'),
             collateral: formData.get('reason'),
+            interest_rate: formData.get('interestRate'),
             start_date: formData.get('startDate'),
             end_date: formData.get('endDate')
         };
@@ -1318,6 +1366,7 @@ window.app = {
                 person: updates.debtor, 
                 amount: updates.amount, 
                 reason: updates.collateral, 
+                interest_rate: updates.interest_rate,
                 start_date: updates.start_date,
                 end_date: updates.end_date 
             });
