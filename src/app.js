@@ -6,7 +6,7 @@
 // --- CLOUD CONFIGURATION (SUPABASE) ---
 const SUPABASE_URL = 'https://wcewgxkizvsnffhbqqet.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_W3JOdptOwRr5zyxFY2nApA_rf_FrNTO';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // --- INITIAL STATE & DATA MANAGEMENT ---
 let state = {
@@ -17,7 +17,7 @@ let state = {
 
 async function loadState() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await sb
             .from('loans')
             .select('*')
             .order('created_at', { ascending: false });
@@ -33,7 +33,7 @@ async function loadState() {
 
 async function saveLoan(loan) {
     try {
-        const { error } = await supabase
+        const { error } = await sb
             .from('loans')
             .insert([loan]);
         if (error) throw error;
@@ -45,7 +45,7 @@ async function saveLoan(loan) {
 
 async function updateLoan(loanId, updates) {
     try {
-        const { error } = await supabase
+        const { error } = await sb
             .from('loans')
             .update(updates)
             .eq('id', loanId);
@@ -443,7 +443,7 @@ async function handleExtendLoan(loanId) {
 async function handleDelete(id) {
     if (confirm('¿Está seguro de eliminar este activo del protocolo?')) {
         try {
-            const { error } = await supabase
+            const { error } = await sb
                 .from('loans')
                 .delete()
                 .eq('id', id);
