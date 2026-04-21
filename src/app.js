@@ -111,9 +111,14 @@ function renderDashboard() {
                     <h1>Arquitecto Soberano</h1>
                 </div>
             </div>
-            <button class="menu-btn" onclick="alert('Sistema de Auditoría Sovereign AES-256 Activo')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-            </button>
+            <div class="header-actions">
+                <a href="https://drive.google.com/drive/folders/12VwI7kKvTy50t_Q13UngiSHEZ77KpQwu?usp=sharing" target="_blank" class="btn-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                </a>
+                <button class="menu-btn" onclick="alert('Sistema de Auditoría Sovereign AES-256 Activo')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="12" x2="12" y2="12"></line><circle cx="12.01" cy="8" r="0.5" fill="currentColor"></circle></svg>
+                </button>
+            </div>
         </header>
 
         <section class="summary-card">
@@ -335,7 +340,10 @@ function renderDetails() {
             </section>
 
             <section class="detail-section">
-                <h2 class="section-title">Garantía y Aval</h2>
+                <div class="section-flex">
+                    <h2 class="section-title">Garantía y Aval</h2>
+                    <a href="https://drive.google.com/drive/folders/12VwI7kKvTy50t_Q13UngiSHEZ77KpQwu?usp=sharing" target="_blank" class="text-link">Ver Documentos ↗</a>
+                </div>
                 <div class="collateral-card">
                     <p class="collateral-desc">${loan.collateral || 'Sin descripción detallada'}</p>
                     <div class="guarantor-info">
@@ -413,7 +421,17 @@ async function handleToggleInstallment(loanId, installmentId) {
 
 async function handleExtendLoan(loanId) {
     const loan = state.loans.find(l => l.id === loanId);
-    if (loan) {
+    if (!loan) return;
+
+    const monthsInput = prompt("¿Cuántos meses desea ampliar el plazo?", "1");
+    const numMonths = parseInt(monthsInput);
+
+    if (isNaN(numMonths) || numMonths <= 0) {
+        alert("Por favor ingrese un número de meses válido.");
+        return;
+    }
+
+    for (let i = 0; i < numMonths; i++) {
         const lastDate = new Date(loan.end_date);
         lastDate.setMonth(lastDate.getMonth() + 1);
         loan.end_date = lastDate.toISOString().split('T')[0];
@@ -425,18 +443,27 @@ async function handleExtendLoan(loanId) {
         due.setMonth(due.getMonth() + nextMonth);
 
         loan.installments.push({
-            id: Date.now(),
+            id: Date.now() + i, // Unique ID for each
             month: nextMonth,
             amount: monthlyInterest,
             dueDate: due.toISOString(),
             paid: false
         });
+    }
 
-        await updateLoan(loanId, { 
-            end_date: loan.endDate, 
-            installments: loan.installments 
-        });
+    try {
+        await sb
+            .from('loans')
+            .update({ 
+                end_date: loan.end_date, 
+                installments: loan.installments 
+            })
+            .eq('id', loanId);
+        
         render();
+    } catch (error) {
+        console.error("[Sovereign Cloud] Error ampliando:", error.message);
+        alert("Error al ampliar el plazo. Intente de nuevo.");
     }
 }
 

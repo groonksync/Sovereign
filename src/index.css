@@ -187,7 +187,10 @@ body {
 
 /* --- PAYMENT SCHEDULE --- */
 .section-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.btn-text { background: none; border: none; color: var(--turquoise-accent); font-weight: 700; font-size: 0.7rem; text-transform: uppercase; cursor: pointer; letter-spacing: 0.5px; }
+.btn-text, .text-link { background: none; border: none; color: var(--turquoise-accent); font-weight: 700; font-size: 0.7rem; text-transform: uppercase; cursor: pointer; letter-spacing: 0.5px; text-decoration: none; }
+.text-link { font-size: 0.65rem; }
+
+.header-actions { display: flex; align-items: center; gap: 15px; }
 
 .payment-schedule { display: flex; flex-direction: column; gap: 10px; }
 .payment-row {
