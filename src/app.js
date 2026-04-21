@@ -122,6 +122,11 @@ const formatDate = (dateStr) => {
     return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
+function calculateDaysUntil(dateStr) {
+    if (!dateStr) return 0;
+    return calculateDaysToNext(new Date(dateStr));
+}
+
 function calculateDaysToNext(startDate) {
     if (!startDate || isNaN(startDate.getTime())) return 0;
     const today = new Date();
