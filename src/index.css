@@ -246,6 +246,41 @@ body.dark-mode .form-group input, body.dark-mode .form-group textarea { backgrou
 .btn-text, .text-link { background: none; border: none; color: var(--primary-emerald); font-weight: 700; font-size: 0.7rem; text-transform: uppercase; cursor: pointer; letter-spacing: 0.5px; text-decoration: none; }
 .text-link { font-size: 0.65rem; }
 
+/* --- UNIFIED DEBTS & PROTOCOL STYLES --- */
+.badge-protocol {
+    background: rgba(45, 212, 191, 0.15);
+    color: var(--primary-emerald);
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.protocol-icon {
+    background: var(--primary-emerald) !important;
+    color: white !important;
+    font-weight: 800;
+}
+
+.loan-card.near-due {
+    border-left: 4px solid var(--warning-gold);
+    animation: pulsate-border 2s infinite;
+}
+
+@keyframes pulsate-border {
+    0% { border-left-color: var(--warning-gold); }
+    50% { border-left-color: transparent; }
+    100% { border-left-color: var(--warning-gold); }
+}
+
+.summary-split .card-content {
+    border-left: 1px solid rgba(255,255,255,0.1);
+    padding-left: 15px;
+}
+.summary-split .card-content:first-child { border-left: none; padding-left: 0; }
+
 .payment-schedule { display: flex; flex-direction: column; gap: 10px; }
 .payment-row {
     background: var(--surface-white); padding: 12px 15px; border-radius: 8px;

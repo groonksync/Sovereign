@@ -165,6 +165,31 @@ function isMonthPaid(exp, monthId) {
     return exp.installments.some(i => i.id === monthId && i.paid);
 }
 
+function extractProtocolInterests() {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    return state.loans.map(loan => {
+        if (!loan.installments) return null;
+        
+        // Buscar la cuota pendiente más antigua o la del mes actual
+        const pending = loan.installments.find(i => !i.paid);
+        if (!pending) return null;
+
+        return {
+            id: `protocol-${loan.id}-${pending.id}`,
+            person: loan.debtor,
+            amount: pending.amount,
+            reason: `Interés Préstamo #${loan.id.substring(0,4)}`,
+            interest_rate: loan.interest_rate,
+            start_date: loan.start_date,
+            isProtocol: true,
+            originalLoanId: loan.id
+        };
+    }).filter(item => item !== null);
+}
+
 function generateInstallments(amount, interestRate, months, startDate) {
     const installments = [];
     const monthlyInterest = (parseFloat(amount) * parseFloat(interestRate)) / 100;
@@ -895,24 +920,24 @@ function renderDebtEdit() {
 }
 
 function renderDebts() {
-    const totalDebtAmount = state.debts.reduce((acc, d) => acc + parseFloat(d.amount || 0), 0);
-    const totalMonthlyInterest = state.debts.reduce((acc, d) => acc + (parseFloat(d.amount || 0) * (parseFloat(d.interest_rate || 0) / 100)), 0);
+    const manualDebts = state.debts;
+    const protocolInterests = extractProtocolInterests();
+    const combinedDebts = [...manualDebts, ...protocolInterests];
 
-    // Detección de Cobros Próximos (Anticipación de 2 días)
+    const totalCapitalDebt = combinedDebts.reduce((acc, d) => acc + parseFloat(d.amount || 0), 0);
+    const totalMonthlyInterest = combinedDebts.reduce((acc, d) => {
+        if (d.isProtocol) return acc + parseFloat(d.amount); // La cuota ya es el interés
+        return acc + (parseFloat(d.amount || 0) * (parseFloat(d.interest_rate || 0)/100));
+    }, 0);
+
+    // Alertas Proactivas (2 días)
     const today = new Date();
-    const upcomingCollections = state.debts.filter(d => {
+    const upcoming = combinedDebts.filter(d => {
         if (!d.start_date) return false;
         const startDay = new Date(d.start_date).getDate();
-        const currentMonth = today.getMonth();
-        const currentYear = today.getFullYear();
-        
-        let collectionDate = new Date(currentYear, currentMonth, startDay);
-        if (collectionDate < today) {
-            collectionDate = new Date(currentYear, currentMonth + 1, startDay);
-        }
-        
+        const collectionDate = new Date(today.getFullYear(), today.getMonth(), startDay);
         const diffDays = Math.ceil((collectionDate - today) / (1000 * 60 * 60 * 24));
-        return diffDays <= 2;
+        return diffDays >= 0 && diffDays <= 2;
     });
 
     return `
@@ -921,56 +946,57 @@ function renderDebts() {
                 <div class="avatar">DV</div>
                 <div class="greeting">
                     <span>Libro de</span>
-                    <h1>Deudas Varias</h1>
+                    <h1>Cobros y Deudas</h1>
                 </div>
             </div>
         </header>
 
         <section class="summary-card gold-gradient">
-            <div class="summary-split" style="display: flex; gap: 20px;">
+            <div class="summary-split" style="display: flex; gap: 15px;">
                 <div class="card-content" style="flex: 1;">
-                    <span class="label">Capital Total</span>
-                    <h2 class="amount" style="font-size: 1.2rem;">${formatCurrency(totalDebtAmount)}</h2>
+                    <span class="label">Monto en Calle</span>
+                    <h2 class="amount" style="font-size: 1.1rem;">${formatCurrency(totalCapitalDebt)}</h2>
                 </div>
                 <div class="card-content" style="flex: 1;">
-                    <span class="label">Interés Mensual</span>
-                    <h2 class="amount" style="font-size: 1.2rem;">${formatCurrency(totalMonthlyInterest)}</h2>
+                    <span class="label">Total Intereses</span>
+                    <h2 class="amount" style="font-size: 1.1rem;">${formatCurrency(totalMonthlyInterest)}</h2>
                 </div>
             </div>
         </section>
 
         <main class="ledger-section">
-            ${upcomingCollections.length > 0 ? `
+            ${upcoming.length > 0 ? `
                 <div class="alert-box warning" style="margin: 0 15px 20px 15px;">
                     <div class="alert-content">
-                        <strong>⚠️ Alerta de Cobro:</strong> 
-                        ${upcomingCollections.map(u => u.person).join(', ')} tienen cobros próximos.
+                        <strong>⏳ Recordatorio:</strong> ${upcoming.map(u => u.person).join(', ')} tienen cobros por liquidar pronto.
                     </div>
                 </div>
             ` : ''}
 
             <div class="loan-list">
-                ${state.debts.length === 0 ? `
+                ${combinedDebts.length === 0 ? `
                     <div class="empty-state">
-                        <p>No hay deudas misceláneas registradas.</p>
-                        <button class="btn-primary" onclick="window.app.navigate('debtRegister')">Registrar Deuda</button>
+                        <p>No hay cobros pendientes.</p>
+                        <button class="btn-primary" onclick="window.app.navigate('debtRegister')">Nueva Deuda</button>
                     </div>
-                ` : state.debts.map(debt => {
+                ` : combinedDebts.map(debt => {
                     const startDay = new Date(debt.start_date).getDate();
-                    const isClosing = upcomingCollections.some(u => u.id === debt.id);
+                    const isClosing = upcoming.some(u => u.id === debt.id);
+                    const navAction = debt.isProtocol ? `navigate('details', '${debt.originalLoanId}')` : `navigate('debtDetail', '${debt.id}')`;
+                    
                     return `
-                        <div class="loan-card ${isClosing ? 'near-due' : ''}" onclick="window.app.navigate('debtDetail', '${debt.id}')">
+                        <div class="loan-card ${isClosing ? 'near-due' : ''}" onclick="window.app.${navAction}">
                             <div class="loan-info">
-                                <div class="debtor-icon debt-icon">
-                                    ${debt.photo ? `<img src="${debt.photo}" class="avatar-mini">` : debt.person.substring(0, 2).toUpperCase()}
+                                <div class="debtor-icon ${debt.isProtocol ? 'protocol-icon' : 'debt-icon'}">
+                                    ${debt.isProtocol ? 'P' : (debt.photo ? `<img src="${debt.photo}" class="avatar-mini">` : debt.person.substring(0, 2).toUpperCase())}
                                 </div>
                                 <div class="loan-details">
-                                    <h3>${debt.person}</h3>
+                                    <h3>${debt.person} ${debt.isProtocol ? '<span class="badge-protocol">Protocolo</span>' : ''}</h3>
                                     <p>${debt.reason} • <span class="text-warning">Día ${startDay}</span></p>
                                 </div>
                                 <div class="loan-amount">
                                     <span class="current">${formatCurrency(debt.amount)}</span>
-                                    <span class="rate" style="font-size: 0.7rem; color: #fbbf24;">+${debt.interest_rate}%</span>
+                                    <span class="rate">${debt.isProtocol ? 'Interés' : `+${debt.interest_rate}%`}</span>
                                 </div>
                             </div>
                         </div>
