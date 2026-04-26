@@ -2099,8 +2099,8 @@ window.app = {
 
             // --- WATERMARK ---
             if (receipt.watermarkEnabled !== false) {
-                doc.setTextColor(248, 248, 248);
-                doc.setFontSize(35);
+                doc.setTextColor(245, 245, 245);
+                doc.setFontSize(65);
                 doc.setFont("helvetica", "bold");
                 doc.text("STUDIO SYNC PRO", 105, 148, { align: 'center', angle: 45 });
                 doc.setTextColor(0, 0, 0); // Reset color
