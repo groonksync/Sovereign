@@ -971,6 +971,132 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
     background: rgba(255,255,255,0.05);
 }
 
+/* ============================================================
+   SOVEREIGN NEXUS - ELITE PRODUCTION SUITE (PREFIXED)
+   ============================================================ */
+
+.sv-nexus-wrapper {
+    background-color: #000;
+    background-image: radial-gradient(circle at 50% 0%, #111 0%, #000 50%);
+    color: #ffffff;
+    min-height: 100vh;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.02em;
+}
+
+.sv-nexus-nav {
+    height: 64px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sv-nexus-nav-link {
+    padding: 8px 16px;
+    border-radius: 100px;
+    color: #a1a1aa;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.sv-nexus-nav-link i { color: #fff; width: 14px; }
+.sv-nexus-nav-link:hover { color: #fff; background: rgba(255, 255, 255, 0.03); }
+.sv-nexus-nav-link.active { color: #ffffff; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.1); }
+
+.sv-nexus-card {
+    background: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 20px;
+    padding: 32px;
+    transition: all 0.3s ease;
+}
+
+.sv-nexus-card:hover { border-color: rgba(255, 255, 255, 0.1); }
+.sv-nexus-card-compact { padding: 24px; }
+
+.sv-nexus-kpi-mega {
+    font-size: 5.5rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    background: linear-gradient(180deg, #fff 30%, #666 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.sv-nexus-kpi-sub { font-size: 3rem; font-weight: 800; letter-spacing: -0.04em; }
+
+.sv-nexus-pipeline-bar { height: 6px; border-radius: 12px; background: #111; overflow: hidden; display: flex; }
+.sv-nexus-pipeline-segment { height: 100%; transition: width 0.5s ease; }
+
+.sv-nexus-btn {
+    background: #ffffff;
+    color: #000000;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    padding: 12px 24px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.sv-nexus-btn.emerald { background: #10b981; color: #000; }
+.sv-nexus-btn.emerald:hover { background: #059669; }
+.sv-nexus-btn:hover { transform: scale(1.02); background: #e5e5e5; }
+.sv-nexus-btn.ghost { background: transparent; color: #a1a1aa; border: 1px solid rgba(255, 255, 255, 0.06); }
+.sv-nexus-btn.ghost:hover { color: white; background: rgba(255, 255, 255, 0.05); transform: none; }
+
+.sv-nexus-input {
+    width: 100%;
+    background-color: #050505;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #ffffff;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.sv-nexus-input:focus { border-color: #10b981; }
+.sv-nexus-editor {
+    background: #050505;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    min-height: 250px;
+    border-radius: 12px;
+    padding: 20px;
+    outline: none;
+    line-height: 1.7;
+    font-size: 0.9rem;
+    color: #fff;
+}
+
+.sv-nexus-highlight-emerald { background: rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 2px 4px; }
+.sv-nexus-highlight-amber { background: rgba(245, 158, 11, 0.3); border-radius: 4px; padding: 2px 4px; }
+.sv-nexus-highlight-blue { background: rgba(59, 130, 246, 0.3); border-radius: 4px; padding: 2px 4px; }
+.sv-nexus-timestamp { color: #10b981; font-weight: 800; font-family: monospace; background: rgba(16, 185, 129, 0.1); padding: 2px 6px; border-radius: 4px; }
+
 .monolith-nav-btn.active i {
     color: var(--monolith-emerald);
 }
