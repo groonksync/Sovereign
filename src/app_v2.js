@@ -2542,12 +2542,23 @@ async function renderSovereignNexus() {
     const renderSubNav = () => `
         <nav class="sv-nexus-nav">
             <div class="sv-nexus-flex sv-nexus-items-center sv-nexus-gap-8">
-                <h1 class="sv-nexus-text-sm sv-nexus-font-black sv-nexus-tracking-tighter text-white">NEXUS <span class="text-emerald-500">PRO</span></h1>
+                <h1 class="sv-nexus-text-sm sv-nexus-font-black sv-nexus-tracking-tighter text-white">SOVEREIGN</h1>
                 <div class="sv-nexus-flex sv-nexus-items-center sv-nexus-gap-2">
                     <button onclick="window.app.switchNexusTab('dashboard')" class="sv-nexus-nav-link ${activeTab === 'dashboard' ? 'active' : ''}"><i data-lucide="layout"></i> Escritorio</button>
                     <button onclick="window.app.switchNexusTab('nexus')" class="sv-nexus-nav-link ${activeTab === 'nexus' ? 'active' : ''}"><i data-lucide="activity"></i> Proyectos</button>
-                    <button onclick="window.app.switchNexusTab('cloud')" class="sv-nexus-nav-link ${activeTab === 'cloud' ? 'active' : ''}"><i data-lucide="hard-drive"></i> Cloud</button>
+                    <button onclick="window.app.switchNexusTab('cloud')" class="sv-nexus-nav-link ${activeTab === 'cloud' ? 'active' : ''}"><i data-lucide="hard-drive"></i> Studio Cloud</button>
                     <button onclick="window.app.switchNexusTab('finance')" class="sv-nexus-nav-link ${activeTab === 'finance' ? 'active' : ''}"><i data-lucide="bar-chart-3"></i> Finanzas</button>
+                </div>
+            </div>
+            <div class="sv-nexus-flex sv-nexus-items-center sv-nexus-gap-6">
+                ${activeTab === 'nexus' ? `
+                    <div class="text-right">
+                        <p class="text-[9px] sv-nexus-font-black text-gray-500 sv-nexus-uppercase tracking-widest">Suma Cartera</p>
+                        <p class="text-sm sv-nexus-font-black text-emerald-500">${formatCurrency(totalPending + totalPaid, '$')}</p>
+                    </div>
+                ` : ''}
+                <div class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                    <i data-lucide="user" class="w-4 h-4 text-gray-400"></i>
                 </div>
             </div>
         </nav>
@@ -2558,24 +2569,32 @@ async function renderSovereignNexus() {
     if (activeTab === 'dashboard') {
         innerContent = `
             <div class="sv-nexus-flex sv-nexus-flex-col sv-nexus-gap-8 animate-in">
-                <div class="sv-nexus-card p-12 text-center relative overflow-hidden bg-gradient-to-b from-white/[0.02] to-transparent">
-                    <p class="text-[10px] sv-nexus-font-black text-emerald-500 sv-nexus-uppercase tracking-[0.4em] sv-nexus-mb-4">Ingresos Brutos Consolidados</p>
+                <!-- Imagen 1: Dashboard Principal -->
+                <div class="sv-nexus-card p-24 text-center relative overflow-hidden bg-gradient-to-b from-white/[0.03] to-transparent">
+                    <p class="text-[11px] sv-nexus-font-black text-emerald-500 sv-nexus-uppercase tracking-[0.4em] sv-nexus-mb-4">Ingresos Brutos Consolidados</p>
                     <h2 class="sv-nexus-kpi-mega">${formatCurrency(totalPaid, '$')}</h2>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 sv-nexus-gap-8">
-                    <div class="sv-nexus-card sv-nexus-card-compact border-l-4 border-l-amber-500/30">
+                    <div class="sv-nexus-card sv-nexus-card-compact border-l-2 border-amber-500/20 py-12 px-10">
                         <p class="text-[10px] sv-nexus-font-black text-gray-500 sv-nexus-uppercase tracking-[0.3em] sv-nexus-mb-4">Cuentas por Cobrar</p>
                         <h3 class="sv-nexus-kpi-sub text-amber-500">${formatCurrency(totalPending, '$')}</h3>
                     </div>
                     
-                    <div class="sv-nexus-card sv-nexus-card-compact">
-                        <div class="sv-nexus-flex sv-nexus-justify-between sv-nexus-items-center sv-nexus-mb-4">
+                    <div class="sv-nexus-card sv-nexus-card-compact py-12 px-10">
+                        <div class="sv-nexus-flex sv-nexus-justify-between sv-nexus-items-start sv-nexus-mb-4">
                             <p class="text-[10px] sv-nexus-font-black text-gray-500 sv-nexus-uppercase tracking-[0.3em]">Operaciones Activas</p>
                             <h3 class="sv-nexus-text-3xl sv-nexus-font-black text-white">${state.nexusProjects.length.toString().padStart(2, '0')}</h3>
                         </div>
+                        <p class="text-[9px] sv-nexus-font-black text-gray-600 sv-nexus-uppercase tracking-widest sv-nexus-mb-4">Distribución Pipeline</p>
                         <div class="sv-nexus-pipeline-bar">
-                            ${Object.keys(stages).map(s => `<div class="sv-nexus-pipeline-segment ${s==='briefing'?'bg-white':s==='production'?'bg-blue-500':s==='feedback'?'bg-amber-500':'bg-emerald-500'}" style="width:${(stages[s]/(state.nexusProjects.length||1))*100}%"></div>`).join('')}
+                            ${Object.keys(stages).map(s => `<div class="sv-nexus-pipeline-segment ${s==='briefing'?'bg-blue-600':s==='production'?'bg-blue-400':s==='feedback'?'bg-amber-500':'bg-emerald-500'}" style="width:${(stages[s]/(state.nexusProjects.length||1))*100}%"></div>`).join('')}
+                        </div>
+                        <div class="sv-nexus-flex sv-nexus-justify-between sv-nexus-mt-3 text-[8px] sv-nexus-font-black sv-nexus-uppercase text-gray-500">
+                            <span>Brief</span>
+                            <span class="text-blue-500">Edit</span>
+                            <span class="text-amber-500">Review</span>
+                            <span class="text-emerald-500">Done</span>
                         </div>
                     </div>
                 </div>
@@ -2585,8 +2604,9 @@ async function renderSovereignNexus() {
     else if (activeTab === 'nexus') {
         innerContent = `
             <div class="sv-nexus-grid-12 h-[calc(100vh-180px)]">
+                <!-- Imagen 2: Vista Proyectos -->
                 <div class="sv-nexus-col-3 sv-nexus-flex sv-nexus-flex-col sv-nexus-gap-4 border-r border-white/5 pr-6">
-                    <button onclick="window.app.openNexusModal('project')" class="sv-nexus-btn emerald sv-nexus-w-full">Nueva Operación</button>
+                    <button onclick="window.app.openNexusModal('project')" class="sv-nexus-btn emerald sv-nexus-w-full py-4">Nueva Operación</button>
                     <div class="sv-nexus-flex-1 space-y-2 overflow-y-auto custom-scroll pr-2">
                         ${state.nexusProjects.map(p => `
                             <div onclick="window.app.selectNexusProject('${p.id}')" class="p-4 rounded-xl cursor-pointer transition-all border ${state.activeNexusProjectId === p.id ? 'border-emerald-500 bg-white/[0.03]' : 'border-white/5 hover:border-white/20 bg-[#050505]'}">
@@ -2601,7 +2621,7 @@ async function renderSovereignNexus() {
                 <div class="sv-nexus-col-9 overflow-y-auto custom-scroll" id="nexus-workspace">
                     ${!state.activeNexusProjectId ? `
                         <div class="h-full sv-nexus-flex sv-nexus-flex-col sv-nexus-items-center sv-nexus-justify-center opacity-20 py-32">
-                            <i data-lucide="layers" class="w-16 h-16 sv-nexus-mb-4"></i>
+                            <i data-lucide="layers" class="w-24 h-24 sv-nexus-mb-4"></i>
                             <h4 class="sv-nexus-text-3xl sv-nexus-font-black sv-nexus-uppercase tracking-widest text-white">Workspace inactivo</h4>
                         </div>
                     ` : renderActiveNexusProject()}
@@ -2611,50 +2631,66 @@ async function renderSovereignNexus() {
     }
     else if (activeTab === 'cloud') {
         innerContent = `
-            <div class="sv-nexus-card p-0 overflow-hidden border-white/5 max-w-4xl mx-auto">
-                <div class="p-6 border-b border-white/5 bg-white/[0.02]">
-                    <h5 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Repositorios Sincronizados</h5>
+            <!-- Imagen 3: Studio Cloud -->
+            <div class="sv-nexus-card p-0 overflow-hidden border-white/5 max-w-5xl mx-auto">
+                <div class="p-8 border-b border-white/5 bg-white/[0.01]">
+                    <h5 class="text-[10px] sv-nexus-font-black sv-nexus-uppercase tracking-[0.3em] text-gray-500">Repositorios Sincronizados</h5>
                 </div>
                 <div class="divide-y divide-white/5">
                     ${state.nexusProjects.filter(p => p.drive_url).map(p => `
-                        <div class="p-6 flex items-center justify-between hover:bg-white/[0.02] border-l-2 border-transparent hover:border-blue-500 transition-all">
-                            <div class="flex items-center gap-6">
-                                <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400"><i data-lucide="folder-git-2"></i></div>
+                        <div class="p-8 sv-nexus-flex sv-nexus-items-center sv-nexus-justify-between hover:bg-white/[0.01] transition-all">
+                            <div class="sv-nexus-flex sv-nexus-items-center sv-nexus-gap-6">
+                                <div class="w-14 h-14 rounded-xl bg-blue-500/10 sv-nexus-flex sv-nexus-items-center sv-nexus-justify-center text-blue-400">
+                                    <i data-lucide="folder-git-2" class="w-6 h-6"></i>
+                                </div>
                                 <div>
-                                    <p class="text-lg font-black text-white uppercase">${p.name}</p>
-                                    <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Sincronizado: ${formatDate(p.created_at)}</p>
+                                    <p class="text-xl sv-nexus-font-black text-white sv-nexus-uppercase">${p.name}</p>
                                 </div>
                             </div>
-                            <button onclick="window.open('${p.drive_url}', '_blank')" class="sv-nexus-btn py-2 px-6 text-[10px] bg-white/5 text-gray-300 hover:text-white border border-white/10"><i data-lucide="external-link" class="w-3 h-3"></i> Abrir Drive</button>
+                            <button onclick="window.open('${p.drive_url}', '_blank')" class="sv-nexus-btn py-2 px-6 text-[10px] bg-white/5 text-gray-400 hover:text-white border border-white/10">
+                                <i data-lucide="external-link" class="w-3 h-3"></i> Abrir Drive
+                            </button>
                         </div>
-                    `).join('') || '<p class="p-10 text-center text-gray-600">No hay links activos.</p>'}
+                    `).join('') || '<p class="p-20 text-center text-gray-600 font-bold uppercase tracking-widest text-[10px]">Sin repositorios activos</p>'}
                 </div>
             </div>
         `;
     }
     else if (activeTab === 'finance') {
         innerContent = `
-            <div class="space-y-8 animate-in">
-                <div class="sv-nexus-card p-12 text-center bg-gradient-to-b from-white/[0.02] to-transparent border-white/5">
-                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-4">Capital Realizado</p>
-                    <h2 class="sv-nexus-kpi-mega text-white mb-8">${formatCurrency(totalPaid, '$')}</h2>
+            <!-- Imagen 4: Finanzas -->
+            <div class="sv-nexus-flex sv-nexus-flex-col sv-nexus-gap-8 animate-in">
+                <div class="sv-nexus-card p-16 text-center bg-gradient-to-b from-white/[0.03] to-transparent border-white/5 flex flex-col items-center">
+                    <p class="text-[11px] sv-nexus-font-black text-emerald-500 sv-nexus-uppercase tracking-[0.4em] sv-nexus-mb-6">Capital Realizado</p>
+                    <h2 class="sv-nexus-kpi-mega text-white sv-nexus-mb-8">${formatCurrency(totalPaid, '$')}</h2>
+                    
+                    <div class="sv-nexus-flex sv-nexus-flex-col sv-nexus-items-center p-6 bg-black border border-amber-500/20 rounded-2xl w-48">
+                        <p class="text-[9px] sv-nexus-font-black text-amber-500 sv-nexus-uppercase tracking-widest sv-nexus-mb-1">Cuentas por Cobrar</p>
+                        <h4 class="text-xl sv-nexus-font-black text-amber-500">${formatCurrency(totalPending, '$')}</h4>
+                    </div>
                 </div>
-                <div class="sv-nexus-card p-0 overflow-hidden border-white/5 max-w-4xl mx-auto">
+
+                <div class="sv-nexus-card p-0 overflow-hidden border-white/5 max-w-5xl mx-auto sv-nexus-w-full">
                     <div class="p-6 border-b border-white/5 bg-[#050505]">
-                        <h5 class="text-[10px] font-black uppercase tracking-widest text-gray-400">Historial Transacciones</h5>
+                        <h5 class="text-[10px] sv-nexus-font-black sv-nexus-uppercase tracking-widest text-gray-500">Historial Transacciones</h5>
                     </div>
                     <div class="divide-y divide-white/5">
                         ${state.nexusProjects.flatMap(p => (p.nexus_deliverables || []).map(d => ({...d, projectName: p.name}))).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).map(d => `
-                            <div class="p-6 flex items-center justify-between hover:bg-white/[0.02] border-l-2 ${d.status==='paid'?'border-emerald-500':'border-amber-500'} transition-all">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 rounded-lg ${d.status==='paid'?'bg-emerald-500/10 text-emerald-500':'bg-amber-500/10 text-amber-500'} flex items-center justify-center"><i data-lucide="${d.status==='paid'?'check':'clock'}" class="w-5 h-5"></i></div>
-                                    <div><p class="text-sm font-black text-white uppercase">${d.title}</p><p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">${d.projectName} • v${d.version}</p></div>
+                            <div class="p-6 sv-nexus-flex sv-nexus-items-center sv-nexus-justify-between hover:bg-white/[0.02] border-l-2 ${d.status==='paid'?'border-emerald-500':'border-amber-500'} transition-all">
+                                <div class="sv-nexus-flex sv-nexus-items-center sv-nexus-gap-4">
+                                    <div class="w-10 h-10 rounded-lg ${d.status==='paid'?'bg-emerald-500/10 text-emerald-500':'bg-amber-500/10 text-amber-500'} sv-nexus-flex sv-nexus-items-center sv-nexus-justify-center">
+                                        <i data-lucide="${d.status==='paid'?'check':'clock'}" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm sv-nexus-font-black text-white sv-nexus-uppercase">${d.title}</p>
+                                        <p class="text-[9px] text-gray-500 sv-nexus-font-black sv-nexus-uppercase tracking-widest">${d.projectName} • v${d.version}</p>
+                                    </div>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-xl font-black ${d.status==='paid'?'text-white':'text-gray-500'}">${formatCurrency(d.price, currencyMap[d.currency] || '$')}</p>
+                                    <p class="text-xl sv-nexus-font-black ${d.status==='paid'?'text-white':'text-gray-500'}">${formatCurrency(d.price, currencyMap[d.currency] || '$')}</p>
                                 </div>
                             </div>
-                        `).join('') || '<p class="p-10 text-center text-gray-600">No hay transacciones.</p>'}
+                        `).join('') || '<p class="p-20 text-center text-gray-600 font-bold uppercase tracking-widest text-[10px]">Sin transacciones registradas</p>'}
                     </div>
                 </div>
             </div>
