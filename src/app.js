@@ -434,12 +434,22 @@ function renderReceiptRegister() {
                 <span class="noir-label">CONFIGURACIÓN DE COBRO</span>
                 <div class="form-row" style="gap:15px;">
                     <div class="form-group" style="flex:1;">
-                        <span class="noir-label">ESTADO</span>
-                        <select name="status" class="glass-input" style="color:var(--primary-emerald); font-weight:700;">
-                            <option value="Pagado">✅ PAGADO</option>
-                            <option value="Pendiente">⏳ PENDIENTE</option>
-                            <option value="Parcial">🌗 PAGO PARCIAL</option>
-                        </select>
+                        <span class="noir-label">ESTADO DE COBRO</span>
+                        <div class="status-picker">
+                            <div class="status-option paid active" onclick="window.app.updateStatus(this, 'Pagado')">
+                                <i data-lucide="check-circle"></i>
+                                <span>Pagado</span>
+                            </div>
+                            <div class="status-option pending" onclick="window.app.updateStatus(this, 'Pendiente')">
+                                <i data-lucide="clock"></i>
+                                <span>Pendiente</span>
+                            </div>
+                            <div class="status-option partial" onclick="window.app.updateStatus(this, 'Parcial')">
+                                <i data-lucide="pie-chart"></i>
+                                <span>Parcial</span>
+                            </div>
+                        </div>
+                        <input type="hidden" name="status" value="Pagado">
                     </div>
                     <div class="form-group" style="flex:1;">
                         <span class="noir-label">MÉTODO</span>
@@ -607,12 +617,22 @@ function renderReceiptEdit() {
                 <span class="noir-label">CONFIGURACIÓN DE COBRO</span>
                 <div class="form-row" style="gap:15px;">
                     <div class="form-group" style="flex:1;">
-                        <span class="noir-label">ESTADO</span>
-                        <select name="status" class="glass-input" style="color:var(--primary-emerald); font-weight:700;">
-                            <option value="Pagado" ${receipt.status === 'Pagado' ? 'selected' : ''}>✅ PAGADO</option>
-                            <option value="Pendiente" ${receipt.status === 'Pendiente' ? 'selected' : ''}>⏳ PENDIENTE</option>
-                            <option value="Parcial" ${receipt.status === 'Parcial' ? 'selected' : ''}>🌗 PAGO PARCIAL</option>
-                        </select>
+                        <span class="noir-label">ESTADO DE COBRO</span>
+                        <div class="status-picker">
+                            <div class="status-option paid ${receipt.status === 'Pagado' ? 'active' : ''}" onclick="window.app.updateStatus(this, 'Pagado')">
+                                <i data-lucide="check-circle"></i>
+                                <span>Pagado</span>
+                            </div>
+                            <div class="status-option pending ${receipt.status === 'Pendiente' ? 'active' : ''}" onclick="window.app.updateStatus(this, 'Pendiente')">
+                                <i data-lucide="clock"></i>
+                                <span>Pendiente</span>
+                            </div>
+                            <div class="status-option partial ${receipt.status === 'Parcial' ? 'active' : ''}" onclick="window.app.updateStatus(this, 'Parcial')">
+                                <i data-lucide="pie-chart"></i>
+                                <span>Parcial</span>
+                            </div>
+                        </div>
+                        <input type="hidden" name="status" value="${receipt.status || 'Pagado'}">
                     </div>
                     <div class="form-group" style="flex:1;">
                         <span class="noir-label">MÉTODO</span>
@@ -2165,6 +2185,12 @@ window.app = {
         linkElement.setAttribute('download', exportFileDefaultName);
         linkElement.click();
         alert('Backup generado. Guárdalo en tu carpeta de Drive para sincronización.');
+    },
+    updateStatus: (el, value) => {
+        const picker = el.parentElement;
+        picker.querySelectorAll('.status-option').forEach(opt => opt.classList.remove('active'));
+        el.classList.add('active');
+        picker.parentElement.querySelector('input[name="status"]').value = value;
     },
     handleUpdateReceipt: async (event, id) => {
         event.preventDefault();

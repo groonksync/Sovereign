@@ -580,6 +580,53 @@ body.dark-mode {
 .status-badge.pending { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
 .status-badge.partial { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
 
+/* --- STATUS PICKER (FLAT DESIGN) --- */
+.status-picker {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    background: #050505;
+    padding: 4px;
+    border-radius: 14px;
+    border: 1px solid #1a1a1a;
+}
+
+.status-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 4px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    opacity: 0.5;
+}
+
+.status-option i {
+    width: 18px;
+    height: 18px;
+    margin-bottom: 4px;
+}
+
+.status-option span {
+    font-size: 0.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: white;
+}
+
+.status-option.active {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.status-option.active.paid { color: var(--primary-emerald) !important; border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05); }
+.status-option.active.pending { color: #ef4444 !important; border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); }
+.status-option.active.partial { color: #f59e0b !important; border-color: rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.05); }
+
 @media print {
     .bottom-tab-bar, .fab, .back-btn, .header-actions, .btn-primary, .fab-receipt { display: none !important; }
     .app-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
