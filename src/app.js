@@ -355,7 +355,11 @@ function renderStudioSync() {
                 </div>
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
-                <button class="btn-icon" onclick="window.app.exportDriveBackup()" title="Backup a Drive" style="background:rgba(255,255,255,0.05); border:1px solid #1a1a1a; padding:8px; border-radius:10px; cursor:pointer;">💾</button>
+                <button id="btn-drive-link" class="btn-icon" onclick="window.app.setupDriveFolder()" title="Vincular Carpeta de Drive" style="background:rgba(255,255,255,0.05); border:1px solid #1a1a1a; padding:8px; border-radius:10px; cursor:pointer; position:relative;">
+                    📁
+                    <div id="drive-status-dot" style="position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:#4a4a4a; border-radius:50%; border:2px solid #000;"></div>
+                </button>
+                <button class="btn-icon" onclick="window.app.exportDriveBackup()" title="Backup de Datos JSON" style="background:rgba(255,255,255,0.05); border:1px solid #1a1a1a; padding:8px; border-radius:10px; cursor:pointer;">💾</button>
                 <div class="avatar">MP</div>
             </div>
         </header>
@@ -2191,8 +2195,38 @@ window.app = {
             doc.text("Generado por Sovereign System.", 105, 285, { align: 'center' });
 
             const fileName = `Recibo_SSP_${receipt.receiptId}_${receipt.clientName.replace(/\s+/g, '_')}_${receipt.date}.pdf`;
+            
+            // --- DOBLE GUARDADO ---
+            // 1. Descarga Normal
             doc.save(fileName);
+
+            // 2. Guardado Directo en Carpeta (si está vinculada)
+            if (window.driveFolderHandle) {
+                try {
+                    const pdfBlob = doc.output('blob');
+                    const fileHandle = await window.driveFolderHandle.getFileHandle(fileName, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(pdfBlob);
+                    await writable.close();
+                    console.log("Copia guardada directamente en Drive.");
+                } catch (err) {
+                    console.error("Error al guardar en carpeta vinculada:", err);
+                    alert("Error al guardar en la carpeta de Drive. Es posible que debas vincularla de nuevo.");
+                }
+            }
         } catch (e) { alert("Error PDF: " + e.message); }
+    },
+    setupDriveFolder: async () => {
+        try {
+            window.driveFolderHandle = await window.showDirectoryPicker();
+            document.getElementById('drive-status-dot').style.background = '#10b981'; // Verde
+            alert("¡Carpeta de Drive vinculada con éxito! Ahora tus PDFs se guardarán allí automáticamente.");
+        } catch (err) {
+            console.error("Error al vincular carpeta:", err);
+            if (err.name !== 'AbortError') {
+                alert("Tu navegador no soporta esta función o hubo un error al vincular la carpeta.");
+            }
+        }
     },
     exportDriveBackup: () => {
         const dataStr = JSON.stringify(state, null, 2);
