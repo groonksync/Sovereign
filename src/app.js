@@ -2217,6 +2217,10 @@ window.app = {
         } catch (e) { alert("Error PDF: " + e.message); }
     },
     setupDriveFolder: async () => {
+        if (!window.showDirectoryPicker) {
+            alert("⚠️ Esta función requiere Google Chrome o Microsoft Edge para poder escribir archivos directamente en tu Drive. En Safari o Firefox, el guardado es solo manual mediante la descarga estándar.");
+            return;
+        }
         try {
             window.driveFolderHandle = await window.showDirectoryPicker();
             document.getElementById('drive-status-dot').style.background = '#10b981'; // Verde
@@ -2224,7 +2228,7 @@ window.app = {
         } catch (err) {
             console.error("Error al vincular carpeta:", err);
             if (err.name !== 'AbortError') {
-                alert("Tu navegador no soporta esta función o hubo un error al vincular la carpeta.");
+                alert("Hubo un error al acceder a la carpeta. Asegúrate de dar los permisos necesarios en el navegador.");
             }
         }
     },
