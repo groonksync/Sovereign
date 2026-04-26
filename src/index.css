@@ -380,6 +380,20 @@ body.dark-mode .custom-select { background-color: rgba(255,255,255,0.05); }
     overflow: hidden;
 }
 
+.receipt-paper::before {
+    content: "STUDIO SYNC PRO";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    font-size: 3rem;
+    font-weight: 900;
+    color: rgba(0, 0, 0, 0.03);
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 0;
+}
+
 .receipt-header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #e2e8f0; padding-bottom: 15px; }
 .receipt-header h2 { font-size: 1.2rem; font-weight: 800; color: #000; margin-bottom: 5px; }
 .receipt-header p { font-size: 0.7rem; color: #718096; text-transform: uppercase; }
