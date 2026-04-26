@@ -15,9 +15,6 @@ let state = {
     expenses: [], // Mis Pagos
     receipts: [], // Studio Sync Pro
     currentView: 'dashboard',
-    editorProTab: 'escritorio',
-    selectedEditorProject: null,
-    selectedLoanId: null,
     isDarkMode: localStorage.getItem('sovereign-theme') === 'dark'
 };
 
@@ -1002,7 +999,7 @@ function render() {
             case 'receiptRegister': content = renderReceiptRegister(); break;
             case 'receiptDetail': content = renderReceiptDetail(); break;
             case 'receiptEdit': content = renderReceiptEdit(); break;
-            case 'editorPro': content = renderEditorProSuite(); break;
+            case 'clientes': content = renderClientesDashboard(); break;
             default: content = renderDashboard();
         }
     } catch (e) {
@@ -1040,9 +1037,9 @@ function renderTabBar() {
                 <i data-lucide="file-text"></i>
                 <span>Recibos</span>
             </button>
-            <button class="tab-item ${state.currentView === 'editorPro' ? 'active' : ''}" onclick="window.app.navigate('editorPro')">
-                <i data-lucide="video"></i>
-                <span>Editor Pro</span>
+            <button class="tab-item ${state.currentView === 'clientes' ? 'active' : ''}" onclick="window.app.navigate('clientes')">
+                <i data-lucide="users"></i>
+                <span>Clientes</span>
             </button>
         </nav>
     `;
@@ -2514,267 +2511,6 @@ const initApp = () => {
 
 initApp();
 
-/** --- PHASE 2: EDITOR PRO - WORKSPACE MULTIDISCIPLINARIO --- **/
-function renderEditorProSuite() {
-    const activeTab = state.editorProTab || 'escritorio';
-    const selectedProject = state.selectedEditorProject;
-    const isCreating = state.isCreatingEditorProject;
-
-    // --- MOCK DATA / PERSISTENCIA TEMPORAL ---
-    if (!state.editorProjects) {
-        state.editorProjects = [
-            {
-                id: 1, cliente: "TechNova Solutions", titulo: "Rediseño Ecosystem 2026", tipo: "Desarrollo Web & App", estado: "Briefing", 
-                presupuesto_usd: 4500, pago_metodo: "PayPal", cobro_tipo: "One-time",
-                proxima_reunion: "2026-05-10T15:00:00",
-                brief_notes: "El cliente busca una estética cyberpunk pero limpia. Necesitan integración con Stripe y un dashboard de usuario.",
-                requerimientos: [{ id: 1, desc: "Modo Oscuro Obligatorio", obligatorio: true }],
-                entregables: [{ id: 101, titulo: "Landing Page", objetivo: "Conversión de Leads", specs: "React + Tailwind" }],
-                referencias: [{ url: "https://linear.app", creador: "Linear Team", desc: "Referencia UI" }]
-            }
-        ];
-    }
-
-    const renderSidebar = () => `
-        <aside class="monolith-sidebar">
-            <div style="margin-bottom:40px; display:flex; align-items:center; gap:12px; padding:0 15px;">
-                <div style="width:32px; height:32px; background:#fff; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#000;">
-                    <i data-lucide="monitor" style="width:18px;"></i>
-                </div>
-                <h2 style="font-weight:900; letter-spacing:-0.05em; font-size:1.1rem; text-transform:uppercase;">Workspace <span style="color:#444;">Pro</span></h2>
-            </div>
-            <button class="monolith-nav-btn ${activeTab === 'escritorio' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('escritorio')">
-                <i data-lucide="layout-grid"></i> Escritorio
-            </button>
-            <button class="monolith-nav-btn ${activeTab === 'briefing' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('briefing')">
-                <i data-lucide="message-square"></i> Briefing
-            </button>
-            <button class="monolith-nav-btn ${activeTab === 'pipeline' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('pipeline')">
-                <i data-lucide="layers"></i> Pipeline
-            </button>
-            <button class="monolith-nav-btn ${activeTab === 'inspiracion' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('inspiracion')">
-                <i data-lucide="sparkles"></i> Inspiración
-            </button>
-            <button class="monolith-nav-btn ${activeTab === 'finanzas' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('finanzas')">
-                <i data-lucide="dollar-sign"></i> Finanzas
-            </button>
-        </aside>
-    `;
-
-    let innerContent = '';
-
-    // --- VISTA: DASHBOARD ---
-    if (activeTab === 'escritorio') {
-        innerContent = `
-            <div class="animate-in">
-                <p class="monolith-label-micro" style="margin-bottom:10px;">Workspace Active</p>
-                <h1 class="monolith-h1" style="margin-bottom:40px;">Overview</h1>
-                
-                <div class="editor-grid-auto" style="gap:20px; margin-bottom:40px;">
-                    <div class="monolith-card-elite">
-                        <p class="monolith-label-micro">Ventas Totales (USD)</p>
-                        <h3 style="font-size:2.2rem; font-weight:900; margin-top:10px;">$28,450.00</h3>
-                    </div>
-                    <div class="monolith-card-elite">
-                        <p class="monolith-label-micro">Proyectos Activos</p>
-                        <h3 style="font-size:2.2rem; font-weight:900; margin-top:10px;">${state.editorProjects.length}</h3>
-                    </div>
-                    <div class="monolith-card-elite">
-                        <p class="monolith-label-micro">Próxima Reunión</p>
-                        <h3 style="font-size:1.2rem; font-weight:900; margin-top:10px; color:var(--monolith-emerald);">15 May - 10:00 AM</h3>
-                    </div>
-                </div>
-
-                <div class="monolith-card-elite">
-                    <p class="monolith-label-micro" style="margin-bottom:20px;">Clientes Recientes</p>
-                    <div style="display:flex; flex-direction:column; gap:15px;">
-                        ${state.editorProjects.slice(-3).map(p => `
-                            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.03);">
-                                <div><h4 style="font-weight:700;">${p.cliente}</h4><p style="font-size:0.7rem; color:#555;">${p.tipo}</p></div>
-                                <span class="noir-badge-pro">$${p.presupuesto_usd} USD</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    // --- VISTA: BRIEFING ---
-    else if (activeTab === 'briefing') {
-        innerContent = `
-            <div class="animate-in">
-                <h1 class="monolith-h1" style="margin-bottom:40px;">Briefing</h1>
-                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:30px;">
-                    <div>
-                        <p class="monolith-label-micro" style="margin-bottom:15px;">Notas de Reunión</p>
-                        <textarea class="glass-input" style="width:100%; height:300px; padding:20px; border-radius:15px; background:rgba(255,255,255,0.02); color:#ccc;" placeholder="Apuntes rápidos...">${state.editorProjects[0].brief_notes}</textarea>
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:30px;">
-                        <div class="monolith-card-elite">
-                            <p class="monolith-label-micro" style="margin-bottom:20px;">Requerimientos</p>
-                            ${state.editorProjects[0].requerimientos.map(r => `
-                                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                                    <input type="checkbox" ${r.obligatorio ? 'checked' : ''} style="accent-color:var(--monolith-emerald);">
-                                    <span style="font-size:0.85rem; color:#fff;">${r.desc}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    // --- VISTA: PIPELINE ---
-    else if (activeTab === 'pipeline') {
-        if (isCreating) {
-            innerContent = `
-                <div class="animate-in">
-                    <button onclick="window.app.toggleEditorCreate(false)" class="monolith-nav-btn" style="margin-bottom:20px; padding-left:0;">
-                        <i data-lucide="arrow-left"></i> Cancelar
-                    </button>
-                    <h1 class="monolith-h1" style="margin-bottom:40px;">Nuevo Proyecto</h1>
-                    <form onsubmit="window.app.handleSaveEditorProject(event)" class="monolith-card-elite" style="max-width:600px;">
-                        <div style="display:grid; gap:20px;">
-                            <div>
-                                <label class="monolith-label-micro">Cliente</label>
-                                <input type="text" name="cliente" class="glass-input" placeholder="Nombre de la empresa o persona" required>
-                            </div>
-                            <div>
-                                <label class="monolith-label-micro">Título del Proyecto</label>
-                                <input type="text" name="titulo" class="glass-input" placeholder="Ej. Edición Video Lanzamiento Q3" required>
-                            </div>
-                            <div>
-                                <label class="monolith-label-micro">Tipo de Servicio</label>
-                                <select name="tipo" class="glass-input">
-                                    <option value="Edición de Video">Edición de Video</option>
-                                    <option value="Desarrollo Web">Desarrollo Web</option>
-                                    <option value="Desarrollo de App">Desarrollo de App</option>
-                                    <option value="Diseño de Flyer">Diseño de Flyer</option>
-                                    <option value="Software a Medida">Software a Medida</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="monolith-label-micro">Presupuesto (USD)</label>
-                                <input type="number" name="presupuesto" class="glass-input" placeholder="0.00" step="0.01" required>
-                            </div>
-                            <button type="submit" class="noir-btn-tab active" style="background:var(--monolith-emerald); color:#000; width:100%; margin-top:20px; font-weight:900;">CREAR PROYECTO ELITE</button>
-                        </div>
-                    </form>
-                </div>
-            `;
-        } else if (!selectedProject) {
-            innerContent = `
-                <div class="animate-in">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:40px;">
-                        <h1 class="monolith-h1">Pipeline</h1>
-                        <button onclick="window.app.toggleEditorCreate(true)" class="noir-btn-tab active" style="background:#fff; color:#000;">+ Nuevo Proyecto</button>
-                    </div>
-                    
-                    <div style="display:flex; flex-direction:column; gap:20px;">
-                        ${state.editorProjects.map(p => `
-                            <div onclick="window.app.selectEditorProject(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="monolith-card-elite" style="cursor:pointer;">
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <div>
-                                        <p class="monolith-label-micro" style="color:var(--monolith-emerald);">${p.tipo}</p>
-                                        <h2 style="font-size:1.4rem; font-weight:900;">${p.titulo}</h2>
-                                        <p style="font-size:0.8rem; color:#555;">${p.cliente}</p>
-                                    </div>
-                                    <h3 style="font-size:1.5rem; font-weight:900;">$${p.presupuesto_usd}</h3>
-                                </div>
-                            </div>
-                        `).reverse().join('')}
-                    </div>
-                </div>
-            `;
-        } else {
-            innerContent = `
-                <div class="animate-in">
-                    <button onclick="window.app.selectEditorProject(null)" class="monolith-nav-btn" style="margin-bottom:20px; padding-left:0;">
-                        <i data-lucide="arrow-left"></i> Volver
-                    </button>
-                    <h1 class="monolith-h1">${selectedProject.titulo}</h1>
-                    <div class="monolith-card-elite" style="margin-top:30px;">
-                        <p class="monolith-label-micro">Detalles del Proyecto</p>
-                        <p style="margin-top:10px; color:#aaa;">${selectedProject.cliente} - ${selectedProject.tipo}</p>
-                    </div>
-                </div>
-            `;
-        }
-    }
-    // --- VISTA: INSPIRACIÓN ---
-    else if (activeTab === 'inspiracion') {
-        innerContent = `<div class="animate-in"><h1 class="monolith-h1">Referencias</h1></div>`;
-    }
-    // --- VISTA: FINANZAS ---
-    else if (activeTab === 'finanzas') {
-        innerContent = `<div class="animate-in"><h1 class="monolith-h1">Finanzas USD</h1></div>`;
-    }
-
-    return `
-        <div class="monolith-wrapper">
-            <div class="monolith-layout">
-                ${renderSidebar()}
-                <main style="flex:1; padding:60px; overflow-y:auto; max-height:100vh;">
-                    ${innerContent}
-                </main>
-            </div>
-        </div>
-    `;
-}
-
-/** --- EDITOR PRO ACTIONS --- **/
-window.app.handleEditorTabChange = (tab) => {
-    state.editorProTab = tab;
-    state.selectedEditorProject = null;
-    state.isCreatingEditorProject = false;
-    render();
-};
-
-window.app.selectEditorProject = (project) => {
-    state.selectedEditorProject = project;
-    state.isCreatingEditorProject = false;
-    render();
-};
-
-window.app.toggleEditorCreate = (val) => {
-    state.isCreatingEditorProject = val;
-    state.selectedEditorProject = null;
-    render();
-};
-
-window.app.handleSaveEditorProject = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const newProj = {
-        id: Date.now(),
-        cliente: formData.get('cliente'),
-        titulo: formData.get('titulo'),
-        tipo: formData.get('tipo'),
-        presupuesto_usd: formData.get('presupuesto'),
-        estado: "Briefing",
-        requerimientos: [],
-        entregables: [],
-        referencias: [],
-        brief_notes: ""
-    };
-    if (!state.editorProjects) state.editorProjects = [];
-    state.editorProjects.push(newProj);
-    state.isCreatingEditorProject = false;
-    render();
-    alert("¡Proyecto Elite Creado!");
-};
-
-/** --- UTILS & HELPERS --- **/
-window.app.handleEditorTabChange = (tab) => {
-    state.editorProTab = tab;
-    state.selectedEditorProject = null;
-    render();
-};
-
-window.app.selectEditorProject = (project) => {
-    state.selectedEditorProject = project;
-    render();
-};
 
 /** --- PHASE 3: CLIENTES DASHBOARD (EXACT CLONE) --- **/
 function renderClientesDashboard() {
