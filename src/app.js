@@ -2160,22 +2160,27 @@ window.app = {
             });
 
             const finalY = doc.lastAutoTable.finalY + 10;
-            doc.setFontSize(11);
+            doc.setFontSize(13);
             doc.setFont("helvetica", "bold");
             
             let currentY = finalY;
-            if (receipt.totals && receipt.totals.BOB > 0) {
-                doc.text(`TOTAL BOB: ${formatCurrency(receipt.totals.BOB)}`, 190, currentY, { align: 'right' });
-                currentY += 7;
-            }
-            if (receipt.totals && receipt.totals.USD > 0) {
-                doc.text(`TOTAL USD: ${formatCurrency(receipt.totals.USD, '$')}`, 190, currentY, { align: 'right' });
-                currentY += 7;
-            }
-            if (receipt.totals && receipt.totals.EUR > 0) {
-                doc.text(`TOTAL EUR: ${formatCurrency(receipt.totals.EUR, '€')}`, 190, currentY, { align: 'right' });
-            }
-            if (!receipt.totals) {
+            // Mostramos los totales de forma inteligente
+            const hasTotals = receipt.totals && (receipt.totals.BOB > 0 || receipt.totals.USD > 0 || receipt.totals.EUR > 0);
+            
+            if (hasTotals) {
+                // Orden de prioridad para el total principal
+                if (receipt.totals.USD > 0) {
+                    doc.text(`TOTAL USD: ${formatCurrency(receipt.totals.USD, '$')}`, 190, currentY, { align: 'right' });
+                    currentY += 7;
+                }
+                if (receipt.totals.BOB > 0) {
+                    doc.text(`TOTAL BOB: ${formatCurrency(receipt.totals.BOB)}`, 190, currentY, { align: 'right' });
+                    currentY += 7;
+                }
+                if (receipt.totals.EUR > 0) {
+                    doc.text(`TOTAL EUR: ${formatCurrency(receipt.totals.EUR, '€')}`, 190, currentY, { align: 'right' });
+                }
+            } else {
                 doc.text(`TOTAL BS: ${formatCurrency(receipt.totalAmount)}`, 190, currentY, { align: 'right' });
             }
 
@@ -2340,7 +2345,7 @@ window.app = {
         const CLIENT_ID = localStorage.getItem('google_client_id') || '787612710186-p7c0l7u75k0u7k0u7k0u7k0u7k0u7k0u.apps.googleusercontent.com';
         
         if (!localStorage.getItem('google_client_id')) {
-            const cid = prompt("Para usar Google Drive en Safari, introduce tu 'Client ID' de Google Cloud. Si no lo tienes, puedes solicitármelo:", "");
+            const cid = prompt("Introduce tu 'Client ID' de Google Cloud para vincular la cuenta permanentemente:", "");
             if (cid) localStorage.setItem('google_client_id', cid);
             else return;
         }
@@ -2348,12 +2353,14 @@ window.app = {
         try {
             const tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: localStorage.getItem('google_client_id'),
-                scope: 'https://www.googleapis.com/auth/drive.file',
+                scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata.readonly',
                 callback: (response) => {
                     if (response.access_token) {
                         window.googleAccessToken = response.access_token;
+                        localStorage.setItem('google_auth_linked', 'true');
                         document.getElementById('google-status-dot').style.background = '#4285F4'; 
-                        alert("¡Cuenta de Google vinculada! Los PDFs se subirán ahora también a tu nube.");
+                        alert("¡Cuenta de Google vinculada! Se mantendrá activa mientras navegues.");
+                        window.app.getOrCreateDriveFolder();
                     }
                 },
             });
@@ -2363,10 +2370,48 @@ window.app = {
             alert("Error al iniciar la vinculación con Google.");
         }
     },
+    getOrCreateDriveFolder: async () => {
+        if (!window.googleAccessToken) return;
+
+        // Buscar si ya existe la carpeta
+        try {
+            const query = encodeURIComponent("name = 'STUDIO_SYNC_PRO_RECIBOS' and mimeType = 'application/vnd.google-apps.folder' and trashed = false");
+            const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}`, {
+                headers: { Authorization: `Bearer ${window.googleAccessToken}` }
+            });
+            const data = await response.json();
+
+            if (data.files && data.files.length > 0) {
+                window.driveFolderId = data.files[0].id;
+                console.log("Carpeta encontrada:", window.driveFolderId);
+            } else {
+                // Crear carpeta
+                const createResp = await fetch('https://www.googleapis.com/drive/v3/files', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${window.googleAccessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: 'STUDIO_SYNC_PRO_RECIBOS',
+                        mimeType: 'application/vnd.google-apps.folder'
+                    })
+                });
+                const folder = await createResp.json();
+                window.driveFolderId = folder.id;
+                console.log("Nueva carpeta creada:", window.driveFolderId);
+            }
+        } catch (err) {
+            console.error("Error gestionando carpeta Drive:", err);
+        }
+    },
     uploadToGoogleDrive: async (blob, fileName) => {
+        if (!window.driveFolderId) await window.app.getOrCreateDriveFolder();
+
         const metadata = {
             name: fileName,
-            mimeType: 'application/pdf'
+            mimeType: 'application/pdf',
+            parents: window.driveFolderId ? [window.driveFolderId] : []
         };
 
         const form = new FormData();
