@@ -422,30 +422,37 @@ function renderReceiptRegister() {
         </header>
 
         <form id="receipt-form" class="sovereign-form" onsubmit="window.app.handleSaveReceipt(event)">
-            <section class="form-section">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>ID Recibo</label>
-                        <input type="text" name="receiptId" value="${nextId}" readonly style="background:rgba(0,0,0,0.05); font-weight:700;">
+            <div class="noir-card">
+                <span class="noir-label">NOMBRE DEL CLIENTE</span>
+                <div class="noir-input-container">
+                    <div class="icon-box" style="cursor:default; color:#4a4a4a;">
+                        <i data-lucide="user"></i>
                     </div>
-                    <div class="form-group">
-                        <label>Fecha</label>
-                        <input type="date" name="date" value="${new Date().toISOString().split('T')[0]}" required>
+                    <input type="text" name="clientName" class="glass-input" placeholder="Juan Pérez" required>
+                </div>
+                
+                <div class="form-row" style="margin-top:20px; gap:20px;">
+                    <div class="form-group" style="flex:1;">
+                        <span class="noir-label">ID RECIBO</span>
+                        <input type="text" name="receiptId" value="${nextId}" readonly style="background:transparent; color:var(--primary-emerald); border:none; font-weight:700; font-size:0.9rem;">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <span class="noir-label">FECHA</span>
+                        <input type="date" name="date" value="${new Date().toISOString().split('T')[0]}" required style="background:transparent; color:white; border:none; font-size:0.9rem;">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Nombre del Cliente</label>
-                    <input type="text" name="clientName" class="glass-input" placeholder="Ej: Juan Pérez" required>
-                </div>
-            </section>
+            </div>
 
-            <section class="form-section">
-                <h3 class="section-title">Desglose de Servicios</h3>
-                <div id="items-container">
-                    <!-- Los items se añadirán aquí dinámicamente -->
-                </div>
-                <button type="button" class="btn-secondary" style="width:100%; margin-top:10px; font-weight:700;" onclick="window.app.addReceiptItem()">+ Añadir Concepto / Empresa</button>
-            </section>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 10px;">
+                <span class="noir-label" style="margin:0;">SERVICIOS</span>
+                <button type="button" class="noir-btn-add" onclick="window.app.addReceiptItem()">
+                    <span>+ Nuevo Concepto</span>
+                </button>
+            </div>
+
+            <div id="items-container">
+                <!-- Los items se añadirán aquí dinámicamente -->
+            </div>
 
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Guardar e Imprimir</button>
@@ -578,81 +585,76 @@ function renderReceiptEdit() {
         </header>
 
         <form id="edit-receipt-form" class="sovereign-form" onsubmit="window.app.handleUpdateReceipt(event, '${receipt.id}')">
-            <section class="form-section">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>ID Recibo</label>
-                        <input type="text" name="receiptId" value="${receipt.receiptId}" readonly style="background:rgba(0,0,0,0.05); font-weight:700;">
+            <div class="noir-card">
+                <span class="noir-label">NOMBRE DEL CLIENTE</span>
+                <div class="noir-input-container">
+                    <div class="icon-box" style="cursor:default; color:#4a4a4a;">
+                        <i data-lucide="user"></i>
                     </div>
-                    <div class="form-group">
-                        <label>Fecha</label>
-                        <input type="date" name="date" value="${receipt.date}" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Nombre del Cliente</label>
                     <input type="text" name="clientName" class="glass-input" value="${receipt.clientName}" required>
                 </div>
-            </section>
+                
+                <div class="form-row" style="margin-top:20px; gap:20px;">
+                    <div class="form-group" style="flex:1;">
+                        <span class="noir-label">ID RECIBO</span>
+                        <input type="text" name="receiptId" value="${receipt.receiptId}" readonly style="background:transparent; color:var(--primary-emerald); border:none; font-weight:700;">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <span class="noir-label">FECHA</span>
+                        <input type="date" name="date" value="${receipt.date}" required style="background:transparent; color:white; border:none;">
+                    </div>
+                </div>
+            </div>
 
-            <section class="form-section">
-                <h3 class="section-title">Desglose de Servicios</h3>
-                <div id="items-container">
-                    ${receipt.items.map((item, index) => `
-                        <div class="receipt-item-card">
-                            <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="position:absolute; top:8px; right:8px; color:#ff4d4d;">✕</button>
-                            
-                            <div style="display:grid; grid-template-columns: 50px 1fr; gap:12px; margin-bottom:12px;">
-                                <div class="item-field-group">
-                                    <label>Icono</label>
-                                    <button type="button" class="icon-preview-btn" data-type="Brand" data-index="${index}" onclick="window.app.openIconPicker(event, 'Brand', ${index})">
-                                        <i data-lucide="${item.brandIcon || 'video'}"></i>
-                                    </button>
-                                    <input type="hidden" name="itemBrandIcon[]" value="${item.brandIcon || 'video'}" data-index="${index}">
-                                </div>
-                                <div class="item-field-group">
-                                    <label>Empresa / Marca</label>
-                                    <input type="text" name="itemBrand[]" class="glass-input" value="${item.brand}" required>
-                                </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 10px;">
+                <span class="noir-label" style="margin:0;">SERVICIOS</span>
+                <button type="button" class="noir-btn-add" onclick="window.app.addReceiptItem()">
+                    <span>+ Nuevo Concepto</span>
+                </button>
+            </div>
+
+            <div id="items-container">
+                ${receipt.items.map((item, index) => `
+                    <div class="noir-card receipt-item-card" style="padding:20px; position:relative;">
+                        <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="position:absolute; top:12px; right:12px; color:#ff4d4d; opacity:0.5;">✕</button>
+                        
+                        <div class="noir-input-container" style="margin-bottom:12px;">
+                            <div class="icon-box" data-type="Brand" data-index="${index}" onclick="window.app.openIconPicker(event, 'Brand', ${index})">
+                                <i data-lucide="${item.brandIcon || 'globe'}"></i>
                             </div>
-                            
-                            <div style="display:grid; grid-template-columns: 50px 1fr; gap:12px; margin-bottom:12px;">
-                                <div class="item-field-group">
-                                    <label>Icono</label>
-                                    <button type="button" class="icon-preview-btn" data-type="Service" data-index="${index}" onclick="window.app.openIconPicker(event, 'Service', ${index})">
-                                        <i data-lucide="${item.serviceIcon || 'pen-tool'}"></i>
-                                    </button>
-                                    <input type="hidden" name="itemServiceIcon[]" value="${item.serviceIcon || 'pen-tool'}" data-index="${index}">
-                                </div>
-                                <div class="item-field-group">
-                                    <label>Servicio / Descripción</label>
-                                    <input type="text" name="itemDesc[]" class="glass-input" value="${item.desc}" required>
-                                </div>
+                            <input type="text" name="itemBrand[]" class="glass-input" value="${item.brand}" placeholder="Nombre de la marca" required>
+                            <input type="hidden" name="itemBrandIcon[]" value="${item.brandIcon || 'globe'}" data-index="${index}">
+                        </div>
+                        
+                        <div class="noir-input-container">
+                            <div class="icon-box" data-type="Service" data-index="${index}" onclick="window.app.openIconPicker(event, 'Service', ${index})">
+                                <i data-lucide="${item.serviceIcon || 'video'}"></i>
                             </div>
-                            
-                            <div class="item-field-row">
-                                <div class="item-field-group">
-                                    <label>Cantidad</label>
-                                    <input type="number" name="itemQty[]" class="glass-input" value="${item.qty}" min="1" required>
-                                </div>
-                                <div class="item-field-group">
-                                    <label>Precio</label>
-                                    <input type="number" name="itemPrice[]" class="glass-input" value="${item.price}" step="0.01" required>
-                                </div>
-                                <div class="item-field-group">
-                                    <label>Moneda</label>
-                                    <select name="itemCurrency[]" class="currency-select glass-input">
-                                        <option value="BOB" ${item.currency === 'BOB' ? 'selected' : ''}>BOB</option>
-                                        <option value="USD" ${item.currency === 'USD' ? 'selected' : ''}>USD</option>
-                                        <option value="EUR" ${item.currency === 'EUR' ? 'selected' : ''}>EUR</option>
-                                    </select>
-                                </div>
+                            <input type="text" name="itemDesc[]" class="glass-input" value="${item.desc}" placeholder="Edición de Video High-End" required>
+                            <input type="hidden" name="itemServiceIcon[]" value="${item.serviceIcon || 'video'}" data-index="${index}">
+                        </div>
+                        
+                        <div class="item-row-divider"></div>
+                        
+                        <div class="noir-grid-3">
+                            <div class="noir-input-container">
+                                <input type="number" name="itemQty[]" class="glass-input" value="${item.qty}" min="1" style="text-align:center;" required>
+                            </div>
+                            <div class="noir-input-container" style="padding-left:15px;">
+                                <span style="color:var(--primary-emerald); font-weight:700;">$</span>
+                                <input type="number" name="itemPrice[]" class="glass-input" value="${item.price}" step="0.01" required>
+                            </div>
+                            <div class="noir-input-container">
+                                <select name="itemCurrency[]" class="glass-input" style="text-align:center;">
+                                    <option value="BOB" ${item.currency === 'BOB' ? 'selected' : ''}>BOB</option>
+                                    <option value="USD" ${item.currency === 'USD' ? 'selected' : ''}>USD</option>
+                                    <option value="EUR" ${item.currency === 'EUR' ? 'selected' : ''}>EUR</option>
+                                </select>
                             </div>
                         </div>
-                    `).join('')}
-                </div>
-                <button type="button" class="btn-secondary" style="width:100%; margin-top:10px; font-weight:700;" onclick="window.app.addReceiptItem()">+ Añadir Concepto / Empresa</button>
-            </section>
+                    </div>
+                `).join('')}
+            </div>
 
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Actualizar Recibo</button>
@@ -1839,50 +1841,40 @@ window.app = {
         const container = document.getElementById('items-container');
         const itemIndex = container.children.length;
         const card = document.createElement('div');
-        card.className = 'receipt-item-card';
+        card.className = 'noir-card receipt-item-card';
+        card.style.padding = '20px';
+        card.style.position = 'relative';
         card.innerHTML = `
-            <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="position:absolute; top:8px; right:8px; color:#ff4d4d;">✕</button>
+            <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="position:absolute; top:12px; right:12px; color:#ff4d4d; opacity:0.5;">✕</button>
             
-            <div style="display:grid; grid-template-columns: 50px 1fr; gap:12px; margin-bottom:12px;">
-                <div class="item-field-group">
-                    <label>Icono</label>
-                    <button type="button" class="icon-preview-btn" data-type="Brand" data-index="${itemIndex}" onclick="window.app.openIconPicker(event, 'Brand', ${itemIndex})">
-                        <i data-lucide="video"></i>
-                    </button>
-                    <input type="hidden" name="itemBrandIcon[]" value="video" data-index="${itemIndex}">
+            <div class="noir-input-container" style="margin-bottom:12px;">
+                <div class="icon-box" data-type="Brand" data-index="${itemIndex}" onclick="window.app.openIconPicker(event, 'Brand', ${itemIndex})">
+                    <i data-lucide="globe"></i>
                 </div>
-                <div class="item-field-group">
-                    <label>Empresa / Marca</label>
-                    <input type="text" name="itemBrand[]" class="glass-input" placeholder="Nombre de la empresa" required>
-                </div>
+                <input type="text" name="itemBrand[]" class="glass-input" placeholder="Nombre de la marca" required>
+                <input type="hidden" name="itemBrandIcon[]" value="globe" data-index="${itemIndex}">
             </div>
             
-            <div style="display:grid; grid-template-columns: 50px 1fr; gap:12px; margin-bottom:12px;">
-                <div class="item-field-group">
-                    <label>Icono</label>
-                    <button type="button" class="icon-preview-btn" data-type="Service" data-index="${itemIndex}" onclick="window.app.openIconPicker(event, 'Service', ${itemIndex})">
-                        <i data-lucide="pen-tool"></i>
-                    </button>
-                    <input type="hidden" name="itemServiceIcon[]" value="pen-tool" data-index="${itemIndex}">
+            <div class="noir-input-container">
+                <div class="icon-box" data-type="Service" data-index="${itemIndex}" onclick="window.app.openIconPicker(event, 'Service', ${itemIndex})">
+                    <i data-lucide="video"></i>
                 </div>
-                <div class="item-field-group">
-                    <label>Servicio / Descripción</label>
-                    <input type="text" name="itemDesc[]" class="glass-input" placeholder="Descripción del trabajo" required>
-                </div>
+                <input type="text" name="itemDesc[]" class="glass-input" placeholder="Edición de Video High-End" required>
+                <input type="hidden" name="itemServiceIcon[]" value="video" data-index="${itemIndex}">
             </div>
             
-            <div class="item-field-row">
-                <div class="item-field-group">
-                    <label>Cantidad</label>
-                    <input type="number" name="itemQty[]" class="glass-input" value="1" min="1" required>
+            <div class="item-row-divider"></div>
+            
+            <div class="noir-grid-3">
+                <div class="noir-input-container">
+                    <input type="number" name="itemQty[]" class="glass-input" value="1" min="1" style="text-align:center;" required>
                 </div>
-                <div class="item-field-group">
-                    <label>Precio</label>
-                    <input type="number" name="itemPrice[]" class="glass-input" placeholder="0.00" step="0.01" required>
+                <div class="noir-input-container" style="padding-left:15px;">
+                    <span style="color:var(--primary-emerald); font-weight:700;">$</span>
+                    <input type="number" name="itemPrice[]" class="glass-input" placeholder="0" step="0.01" required>
                 </div>
-                <div class="item-field-group">
-                    <label>Moneda</label>
-                    <select name="itemCurrency[]" class="currency-select glass-input">
+                <div class="noir-input-container">
+                    <select name="itemCurrency[]" class="glass-input" style="text-align:center;">
                         <option value="BOB">BOB</option>
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
