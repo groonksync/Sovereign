@@ -348,16 +348,15 @@ function renderStudioSync() {
     return `
         <header class="main-header">
             <div class="user-info">
-                <div class="avatar">SSP</div>
+                <div class="avatar" style="background:var(--primary-emerald);">SS</div>
                 <div class="greeting">
-                    <span>Studio</span>
-                    <h1>Sync Pro</h1>
+                    <h1>Studio Sync Pro</h1>
+                    <p>Gestión de Producción</p>
                 </div>
             </div>
-            <div class="header-actions">
-                <button class="btn-icon theme-toggle" onclick="window.app.toggleTheme()">
-                    ${state.isDarkMode ? '☀️' : '🌙'}
-                </button>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <button class="btn-icon" onclick="window.app.exportDriveBackup()" title="Backup a Drive" style="background:rgba(255,255,255,0.05); border:1px solid #1a1a1a; padding:8px; border-radius:10px; cursor:pointer;">💾</button>
+                <div class="avatar">MP</div>
             </div>
         </header>
 
@@ -431,15 +430,31 @@ function renderReceiptRegister() {
                     <input type="text" name="clientName" class="glass-input" placeholder="Juan Pérez" required>
                 </div>
                 
-                <div class="form-row" style="margin-top:20px; gap:20px;">
+            <div class="noir-card">
+                <span class="noir-label">CONFIGURACIÓN DE COBRO</span>
+                <div class="form-row" style="gap:15px;">
                     <div class="form-group" style="flex:1;">
-                        <span class="noir-label">ID RECIBO</span>
-                        <input type="text" name="receiptId" value="${nextId}" readonly style="background:transparent; color:var(--primary-emerald); border:none; font-weight:700; font-size:0.9rem;">
+                        <span class="noir-label">ESTADO</span>
+                        <select name="status" class="glass-input" style="color:var(--primary-emerald); font-weight:700;">
+                            <option value="Pagado">✅ PAGADO</option>
+                            <option value="Pendiente">⏳ PENDIENTE</option>
+                            <option value="Parcial">🌗 PAGO PARCIAL</option>
+                        </select>
                     </div>
                     <div class="form-group" style="flex:1;">
-                        <span class="noir-label">FECHA</span>
-                        <input type="date" name="date" value="${new Date().toISOString().split('T')[0]}" required style="background:transparent; color:white; border:none; font-size:0.9rem;">
+                        <span class="noir-label">MÉTODO</span>
+                        <select name="paymentMethod" class="glass-input">
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="QR / Banco">QR / Banco</option>
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Binance / USDT">Binance / USDT</option>
+                            <option value="PayPal">PayPal</option>
+                        </select>
                     </div>
+                </div>
+                <div class="form-group" style="margin-top:15px;">
+                    <span class="noir-label">TÉRMINOS / GARANTÍA</span>
+                    <textarea name="terms" class="glass-input" style="min-height:60px; font-size:0.8rem;">Garantía: Este pago cubre hasta 3 rondas de revisiones. Al completarse el pago, se transfieren los derechos de uso comercial.</textarea>
                 </div>
             </div>
 
@@ -472,6 +487,9 @@ function renderReceiptDetail() {
             </button>
             <h1>Vista de Recibo</h1>
             <div style="display:flex; gap:10px;">
+                <span class="status-badge ${receipt.status === 'Pagado' ? 'paid' : (receipt.status === 'Pendiente' ? 'pending' : 'partial')}">
+                    ${receipt.status || 'Pagado'}
+                </span>
                 <button class="menu-btn" onclick="window.app.navigate('receiptEdit', '${receipt.id}')">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                 </button>
@@ -585,6 +603,34 @@ function renderReceiptEdit() {
         </header>
 
         <form id="edit-receipt-form" class="sovereign-form" onsubmit="window.app.handleUpdateReceipt(event, '${receipt.id}')">
+            <div class="noir-card">
+                <span class="noir-label">CONFIGURACIÓN DE COBRO</span>
+                <div class="form-row" style="gap:15px;">
+                    <div class="form-group" style="flex:1;">
+                        <span class="noir-label">ESTADO</span>
+                        <select name="status" class="glass-input" style="color:var(--primary-emerald); font-weight:700;">
+                            <option value="Pagado" ${receipt.status === 'Pagado' ? 'selected' : ''}>✅ PAGADO</option>
+                            <option value="Pendiente" ${receipt.status === 'Pendiente' ? 'selected' : ''}>⏳ PENDIENTE</option>
+                            <option value="Parcial" ${receipt.status === 'Parcial' ? 'selected' : ''}>🌗 PAGO PARCIAL</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <span class="noir-label">MÉTODO</span>
+                        <select name="paymentMethod" class="glass-input">
+                            <option value="Transferencia" ${receipt.paymentMethod === 'Transferencia' ? 'selected' : ''}>Transferencia</option>
+                            <option value="QR / Banco" ${receipt.paymentMethod === 'QR / Banco' ? 'selected' : ''}>QR / Banco</option>
+                            <option value="Efectivo" ${receipt.paymentMethod === 'Efectivo' ? 'selected' : ''}>Efectivo</option>
+                            <option value="Binance / USDT" ${receipt.paymentMethod === 'Binance / USDT' ? 'selected' : ''}>Binance / USDT</option>
+                            <option value="PayPal" ${receipt.paymentMethod === 'PayPal' ? 'selected' : ''}>PayPal</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:15px;">
+                    <span class="noir-label">TÉRMINOS / GARANTÍA</span>
+                    <textarea name="terms" class="glass-input" style="min-height:60px; font-size:0.8rem;">${receipt.terms || 'Garantía: Este pago cubre hasta 3 rondas de revisiones. Al completarse el pago, se transfieren los derechos de uso comercial.'}</textarea>
+                </div>
+            </div>
+
             <div class="noir-card">
                 <span class="noir-label">NOMBRE DEL CLIENTE</span>
                 <div class="noir-input-container">
@@ -1971,7 +2017,10 @@ window.app = {
                 items: items,
                 totalBOB: totalBOB,
                 totalUSD: totalUSD,
-                totalEUR: totalEUR
+                totalEUR: totalEUR,
+                status: formData.get('status'),
+                paymentMethod: formData.get('paymentMethod'),
+                terms: formData.get('terms')
             },
             ref: 'STUDIO_SYNC'
         };
@@ -1988,7 +2037,10 @@ window.app = {
                 brandName: newReceipt.collateral,
                 items: items,
                 totalAmount: newReceipt.amount,
-                totals: { BOB: totalBOB, USD: totalUSD, EUR: totalEUR }
+                totals: { BOB: totalBOB, USD: totalUSD, EUR: totalEUR },
+                status: newReceipt.installments.status,
+                paymentMethod: newReceipt.installments.paymentMethod,
+                terms: newReceipt.installments.terms
             });
             
             navigate('receiptDetail', newReceipt.id);
@@ -2073,13 +2125,39 @@ window.app = {
                 doc.text(`TOTAL BS: ${formatCurrency(receipt.totalAmount)}`, 190, currentY, { align: 'right' });
             }
 
+            // Status & Method
+            currentY += 15;
+            doc.setFontSize(10);
+            doc.setTextColor(0,0,0);
+            doc.text(`ESTADO DE PAGO: ${receipt.status || 'PAGADO'}`, 20, currentY);
+            doc.text(`MÉTODO DE PAGO: ${receipt.paymentMethod || 'Transferencia'}`, 120, currentY);
+            
+            // Terms
+            currentY += 15;
+            doc.setFontSize(8);
+            doc.setTextColor(...grayColor);
+            const splitTerms = doc.splitTextToSize(receipt.terms || "Garantía de servicio Studio Sync Pro.", 170);
+            doc.text(splitTerms, 20, currentY);
+
             doc.setFontSize(8);
             doc.setTextColor(...grayColor);
             doc.text("Gracias por confiar en Studio Sync Pro.", 105, 280, { align: 'center' });
             doc.text("Generado por Sovereign System.", 105, 285, { align: 'center' });
 
-            doc.save(`Recibo_${receipt.receiptId}.pdf`);
+            const fileName = `Recibo_SSP_${receipt.receiptId}_${receipt.clientName.replace(/\s+/g, '_')}_${receipt.date}.pdf`;
+            doc.save(fileName);
         } catch (e) { alert("Error PDF: " + e.message); }
+    },
+    exportDriveBackup: () => {
+        const dataStr = JSON.stringify(state, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = `Sovereign_Backup_Drive_${new Date().toISOString().split('T')[0]}.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        alert('Backup generado. Guárdalo en tu carpeta de Drive para sincronización.');
     },
     handleUpdateReceipt: async (event, id) => {
         event.preventDefault();

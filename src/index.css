@@ -554,6 +554,18 @@ body.dark-mode {
     box-shadow: 0 10px 25px rgba(0,0,0,0.8);
 }
 
+/* --- STATUS BADGES --- */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+.status-badge.paid { background: rgba(16, 185, 129, 0.2); color: var(--primary-emerald); }
+.status-badge.pending { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.status-badge.partial { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
 @media print {
     .bottom-tab-bar, .fab, .back-btn, .header-actions, .btn-primary, .fab-receipt { display: none !important; }
     .app-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
