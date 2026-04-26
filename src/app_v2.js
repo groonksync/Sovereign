@@ -2518,27 +2518,22 @@ initApp();
 function renderEditorProSuite() {
     const activeTab = state.editorProTab || 'escritorio';
     const selectedProject = state.selectedEditorProject;
+    const isCreating = state.isCreatingEditorProject;
 
-    // --- MOCK DATA (Modelo Multidisciplinario) ---
-    const proyectos = [
-        {
-            id: 1, cliente: "TechNova Solutions", titulo: "Rediseño Ecosystem 2026", tipo: "Desarrollo Web & App", estado: "Briefing", 
-            presupuesto_usd: 4500, pago_metodo: "PayPal", cobro_tipo: "One-time",
-            proxima_reunion: "2026-05-10T15:00:00",
-            brief_notes: "El cliente busca una estética cyberpunk pero limpia. Necesitan integración con Stripe y un dashboard de usuario.",
-            requerimientos: [
-                { id: 1, desc: "Modo Oscuro Obligatorio", obligatorio: true },
-                { id: 2, desc: "Animaciones con Framer Motion", obligatorio: false }
-            ],
-            entregables: [
-                { id: 101, titulo: "Landing Page", objetivo: "Conversión de Leads", specs: "React + Tailwind, Optimización SEO" },
-                { id: 102, titulo: "Mobile Dashboard", objetivo: "Gestión de Activos", specs: "React Native, Gráficos en tiempo real" }
-            ],
-            referencias: [
-                { url: "https://linear.app", creador: "Linear Team", desc: "Referencia para el diseño de interfaces" }
-            ]
-        }
-    ];
+    // --- MOCK DATA / PERSISTENCIA TEMPORAL ---
+    if (!state.editorProjects) {
+        state.editorProjects = [
+            {
+                id: 1, cliente: "TechNova Solutions", titulo: "Rediseño Ecosystem 2026", tipo: "Desarrollo Web & App", estado: "Briefing", 
+                presupuesto_usd: 4500, pago_metodo: "PayPal", cobro_tipo: "One-time",
+                proxima_reunion: "2026-05-10T15:00:00",
+                brief_notes: "El cliente busca una estética cyberpunk pero limpia. Necesitan integración con Stripe y un dashboard de usuario.",
+                requerimientos: [{ id: 1, desc: "Modo Oscuro Obligatorio", obligatorio: true }],
+                entregables: [{ id: 101, titulo: "Landing Page", objetivo: "Conversión de Leads", specs: "React + Tailwind" }],
+                referencias: [{ url: "https://linear.app", creador: "Linear Team", desc: "Referencia UI" }]
+            }
+        ];
+    }
 
     const renderSidebar = () => `
         <aside class="monolith-sidebar">
@@ -2582,7 +2577,7 @@ function renderEditorProSuite() {
                     </div>
                     <div class="monolith-card-elite">
                         <p class="monolith-label-micro">Proyectos Activos</p>
-                        <h3 style="font-size:2.2rem; font-weight:900; margin-top:10px;">12</h3>
+                        <h3 style="font-size:2.2rem; font-weight:900; margin-top:10px;">${state.editorProjects.length}</h3>
                     </div>
                     <div class="monolith-card-elite">
                         <p class="monolith-label-micro">Próxima Reunión</p>
@@ -2593,7 +2588,7 @@ function renderEditorProSuite() {
                 <div class="monolith-card-elite">
                     <p class="monolith-label-micro" style="margin-bottom:20px;">Clientes Recientes</p>
                     <div style="display:flex; flex-direction:column; gap:15px;">
-                        ${proyectos.map(p => `
+                        ${state.editorProjects.slice(-3).map(p => `
                             <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.03);">
                                 <div><h4 style="font-weight:700;">${p.cliente}</h4><p style="font-size:0.7rem; color:#555;">${p.tipo}</p></div>
                                 <span class="noir-badge-pro">$${p.presupuesto_usd} USD</span>
@@ -2611,23 +2606,18 @@ function renderEditorProSuite() {
                 <h1 class="monolith-h1" style="margin-bottom:40px;">Briefing</h1>
                 <div style="display:grid; grid-template-columns: 2fr 1fr; gap:30px;">
                     <div>
-                        <p class="monolith-label-micro" style="margin-bottom:15px;">Notas de Reunión (Google Meet / Zoom)</p>
-                        <textarea class="glass-input" style="width:100%; height:300px; padding:20px; font-family:'Inter', sans-serif; font-size:0.95rem; line-height:1.6; border-radius:15px; background:rgba(255,255,255,0.02); color:#ccc;" placeholder="Empieza a escribir tus apuntes aquí...">${proyectos[0].brief_notes}</textarea>
+                        <p class="monolith-label-micro" style="margin-bottom:15px;">Notas de Reunión</p>
+                        <textarea class="glass-input" style="width:100%; height:300px; padding:20px; border-radius:15px; background:rgba(255,255,255,0.02); color:#ccc;" placeholder="Apuntes rápidos...">${state.editorProjects[0].brief_notes}</textarea>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:30px;">
                         <div class="monolith-card-elite">
                             <p class="monolith-label-micro" style="margin-bottom:20px;">Requerimientos</p>
-                            ${proyectos[0].requerimientos.map(r => `
+                            ${state.editorProjects[0].requerimientos.map(r => `
                                 <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
                                     <input type="checkbox" ${r.obligatorio ? 'checked' : ''} style="accent-color:var(--monolith-emerald);">
-                                    <span style="font-size:0.85rem; color:${r.obligatorio ? '#fff' : '#666'};">${r.desc}</span>
-                                    <span style="font-size:0.6rem; text-transform:uppercase; font-weight:900; margin-left:auto; color:${r.obligatorio ? '#f44336' : '#555'};">${r.obligatorio ? 'Obligatorio' : 'Opcional'}</span>
+                                    <span style="font-size:0.85rem; color:#fff;">${r.desc}</span>
                                 </div>
                             `).join('')}
-                        </div>
-                        <div class="monolith-card-elite">
-                            <p class="monolith-label-micro" style="margin-bottom:15px;">Agenda de Seguimiento</p>
-                            <input type="datetime-local" class="glass-input" value="${proyectos[0].proxima_reunion.slice(0,16)}" style="font-size:0.8rem;">
                         </div>
                     </div>
                 </div>
@@ -2636,91 +2626,88 @@ function renderEditorProSuite() {
     }
     // --- VISTA: PIPELINE ---
     else if (activeTab === 'pipeline') {
-        innerContent = `
-            <div class="animate-in">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:40px;">
-                    <h1 class="monolith-h1">Pipeline</h1>
-                    <button class="noir-btn-tab active" style="background:#fff; color:#000;">+ Nuevo Proyecto</button>
-                </div>
-                
-                <div style="display:flex; flex-direction:column; gap:30px;">
-                    ${proyectos.map(p => `
-                        <div class="monolith-card-elite">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:25px;">
-                                <div>
-                                    <p class="monolith-label-micro" style="color:var(--monolith-emerald);">${p.tipo}</p>
-                                    <h2 style="font-size:1.8rem; font-weight:900; margin-top:5px;">${p.titulo}</h2>
-                                    <p style="font-size:0.85rem; color:#555;">Cliente: <b>${p.cliente}</b></p>
-                                </div>
-                                <div style="text-align:right;">
-                                    <span class="noir-badge-pro">${p.estado}</span>
-                                    <h3 style="font-size:1.5rem; font-weight:900; margin-top:10px;">$${p.presupuesto_usd} USD</h3>
-                                </div>
+        if (isCreating) {
+            innerContent = `
+                <div class="animate-in">
+                    <button onclick="window.app.toggleEditorCreate(false)" class="monolith-nav-btn" style="margin-bottom:20px; padding-left:0;">
+                        <i data-lucide="arrow-left"></i> Cancelar
+                    </button>
+                    <h1 class="monolith-h1" style="margin-bottom:40px;">Nuevo Proyecto</h1>
+                    <form onsubmit="window.app.handleSaveEditorProject(event)" class="monolith-card-elite" style="max-width:600px;">
+                        <div style="display:grid; gap:20px;">
+                            <div>
+                                <label class="monolith-label-micro">Cliente</label>
+                                <input type="text" name="cliente" class="glass-input" placeholder="Nombre de la empresa o persona" required>
                             </div>
-                            
-                            <p class="monolith-label-micro" style="margin-bottom:20px;">Desglose de Entregables</p>
-                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:15px;">
-                                ${p.entregables.map(e => `
-                                    <div style="padding:20px; background:rgba(255,255,255,0.02); border-radius:15px; border:1px solid rgba(255,255,255,0.05);">
-                                        <h4 style="font-weight:800; font-size:0.9rem; margin-bottom:8px;">${e.titulo}</h4>
-                                        <p style="font-size:0.75rem; color:#888; margin-bottom:12px;"><b>Objetivo:</b> ${e.objetivo}</p>
-                                        <p style="font-size:0.7rem; color:#555; font-style:italic;">${e.specs}</p>
-                                    </div>
-                                `).join('')}
+                            <div>
+                                <label class="monolith-label-micro">Título del Proyecto</label>
+                                <input type="text" name="titulo" class="glass-input" placeholder="Ej. Edición Video Lanzamiento Q3" required>
                             </div>
+                            <div>
+                                <label class="monolith-label-micro">Tipo de Servicio</label>
+                                <select name="tipo" class="glass-input">
+                                    <option value="Edición de Video">Edición de Video</option>
+                                    <option value="Desarrollo Web">Desarrollo Web</option>
+                                    <option value="Desarrollo de App">Desarrollo de App</option>
+                                    <option value="Diseño de Flyer">Diseño de Flyer</option>
+                                    <option value="Software a Medida">Software a Medida</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="monolith-label-micro">Presupuesto (USD)</label>
+                                <input type="number" name="presupuesto" class="glass-input" placeholder="0.00" step="0.01" required>
+                            </div>
+                            <button type="submit" class="noir-btn-tab active" style="background:var(--monolith-emerald); color:#000; width:100%; margin-top:20px; font-weight:900;">CREAR PROYECTO ELITE</button>
                         </div>
-                    `).join('')}
+                    </form>
                 </div>
-            </div>
-        `;
+            `;
+        } else if (!selectedProject) {
+            innerContent = `
+                <div class="animate-in">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:40px;">
+                        <h1 class="monolith-h1">Pipeline</h1>
+                        <button onclick="window.app.toggleEditorCreate(true)" class="noir-btn-tab active" style="background:#fff; color:#000;">+ Nuevo Proyecto</button>
+                    </div>
+                    
+                    <div style="display:flex; flex-direction:column; gap:20px;">
+                        ${state.editorProjects.map(p => `
+                            <div onclick="window.app.selectEditorProject(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="monolith-card-elite" style="cursor:pointer;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <p class="monolith-label-micro" style="color:var(--monolith-emerald);">${p.tipo}</p>
+                                        <h2 style="font-size:1.4rem; font-weight:900;">${p.titulo}</h2>
+                                        <p style="font-size:0.8rem; color:#555;">${p.cliente}</p>
+                                    </div>
+                                    <h3 style="font-size:1.5rem; font-weight:900;">$${p.presupuesto_usd}</h3>
+                                </div>
+                            </div>
+                        `).reverse().join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            innerContent = `
+                <div class="animate-in">
+                    <button onclick="window.app.selectEditorProject(null)" class="monolith-nav-btn" style="margin-bottom:20px; padding-left:0;">
+                        <i data-lucide="arrow-left"></i> Volver
+                    </button>
+                    <h1 class="monolith-h1">${selectedProject.titulo}</h1>
+                    <div class="monolith-card-elite" style="margin-top:30px;">
+                        <p class="monolith-label-micro">Detalles del Proyecto</p>
+                        <p style="margin-top:10px; color:#aaa;">${selectedProject.cliente} - ${selectedProject.tipo}</p>
+                    </div>
+                </div>
+            `;
+        }
     }
     // --- VISTA: INSPIRACIÓN ---
     else if (activeTab === 'inspiracion') {
-        innerContent = `
-            <div class="animate-in">
-                <h1 class="monolith-h1" style="margin-bottom:40px;">Referencias</h1>
-                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:20px;">
-                    ${proyectos[0].referencias.map(r => `
-                        <div class="monolith-card-elite">
-                            <div style="width:100%; height:150px; background:rgba(255,255,255,0.03); border-radius:10px; margin-bottom:20px; display:flex; align-items:center; justify-content:center;">
-                                <i data-lucide="external-link" style="color:#222; width:40px; height:40px;"></i>
-                            </div>
-                            <p class="monolith-label-micro">Referencia Estilo</p>
-                            <h4 style="font-weight:700; margin:10px 0;">${r.creador}</h4>
-                            <p style="font-size:0.75rem; color:#555; margin-bottom:15px;">${r.desc}</p>
-                            <a href="${r.url}" target="_blank" style="color:var(--monolith-emerald); font-size:0.8rem; font-weight:700; text-decoration:none;">Ver Referencia →</a>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
+        innerContent = `<div class="animate-in"><h1 class="monolith-h1">Referencias</h1></div>`;
     }
     // --- VISTA: FINANZAS ---
     else if (activeTab === 'finanzas') {
-        innerContent = `
-            <div class="animate-in">
-                <h1 class="monolith-h1" style="margin-bottom:40px;">Finanzas USD</h1>
-                <div class="monolith-card-elite" style="background:linear-gradient(135deg, #141415 0%, #000 100%); padding:60px; margin-bottom:40px;">
-                    <p class="monolith-label-micro" style="color:var(--monolith-emerald);">Ingresos Totales en Dólares</p>
-                    <h1 style="font-size:5rem; font-weight:900; letter-spacing:-0.05em; margin-top:20px;">$28,450<span style="font-size:1.5rem; color:#333; margin-left:15px;">USD</span></h1>
-                </div>
-
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:20px;">
-                    <div class="monolith-card-elite">
-                        <p class="monolith-label-micro">Método Predominante</p>
-                        <h3 style="font-size:1.8rem; font-weight:900; margin-top:10px;">PayPal</h3>
-                    </div>
-                    <div class="monolith-card-elite">
-                        <p class="monolith-label-micro">Tipo de Cobro</p>
-                        <h3 style="font-size:1.8rem; font-weight:900; margin-top:10px;">Retención Mensual</h3>
-                    </div>
-                    <div class="monolith-card-elite">
-                        <p class="monolith-label-micro">Status Fiscal</p>
-                        <h3 style="font-size:1.8rem; font-weight:900; margin-top:10px; color:var(--monolith-emerald);">SaaS / Iguala</h3>
-                    </div>
-                </div>
-            </div>
-        `;
+        innerContent = `<div class="animate-in"><h1 class="monolith-h1">Finanzas USD</h1></div>`;
     }
 
     return `
@@ -2735,28 +2722,46 @@ function renderEditorProSuite() {
     `;
 }
 
-/** --- UTILS & HELPERS --- **/
+/** --- EDITOR PRO ACTIONS --- **/
 window.app.handleEditorTabChange = (tab) => {
     state.editorProTab = tab;
     state.selectedEditorProject = null;
+    state.isCreatingEditorProject = false;
     render();
 };
 
 window.app.selectEditorProject = (project) => {
     state.selectedEditorProject = project;
+    state.isCreatingEditorProject = false;
     render();
 };
 
-/** --- UTILS & HELPERS --- **/
-window.app.handleEditorTabChange = (tab) => {
-    state.editorProTab = tab;
+window.app.toggleEditorCreate = (val) => {
+    state.isCreatingEditorProject = val;
     state.selectedEditorProject = null;
     render();
 };
 
-window.app.selectEditorProject = (project) => {
-    state.selectedEditorProject = project;
+window.app.handleSaveEditorProject = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const newProj = {
+        id: Date.now(),
+        cliente: formData.get('cliente'),
+        titulo: formData.get('titulo'),
+        tipo: formData.get('tipo'),
+        presupuesto_usd: formData.get('presupuesto'),
+        estado: "Briefing",
+        requerimientos: [],
+        entregables: [],
+        referencias: [],
+        brief_notes: ""
+    };
+    if (!state.editorProjects) state.editorProjects = [];
+    state.editorProjects.push(newProj);
+    state.isCreatingEditorProject = false;
     render();
+    alert("¡Proyecto Elite Creado!");
 };
 
 /** --- UTILS & HELPERS --- **/
