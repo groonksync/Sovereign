@@ -408,7 +408,7 @@ function renderStudioSync() {
     `;
 }
 
-async function renderReceiptRegister() {
+function renderReceiptRegister() {
     // Generar ID Incremental
     let nextId = "SSP-001";
     if (state.receipts.length > 0) {
