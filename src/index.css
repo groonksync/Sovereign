@@ -822,3 +822,25 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
     margin-bottom: 20px;
     cursor: pointer;
 }
+
+/* --- FIX: DISEÑO EXTENDIDO Y COMPACTO --- */
+.content-wrapper {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+.animate-in {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.pro-top-nav {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.noir-card {
+    margin: 0 5px 15px 5px; /* Compacto y con aire mínimo */
+}
