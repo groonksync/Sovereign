@@ -470,7 +470,12 @@ function renderReceiptDetail() {
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
             <h1>Vista de Recibo</h1>
-            <button class="btn-icon" onclick="window.app.handleDeleteUniversal('${receipt.id}', 'studioSync')">🗑️</button>
+            <div style="display:flex; gap:10px;">
+                <button class="menu-btn" onclick="window.app.navigate('receiptEdit', '${receipt.id}')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </button>
+                <button class="btn-icon" onclick="window.app.handleDeleteUniversal('${receipt.id}', 'studioSync')">🗑️</button>
+            </div>
         </header>
 
         <div class="receipt-paper" id="printable-receipt">
@@ -553,6 +558,85 @@ function renderReceiptDetail() {
                 📄 Exportar PDF
             </button>
         </div>
+    `;
+}
+
+
+function renderReceiptEdit() {
+    const receipt = state.receipts.find(r => r.id === state.selectedLoanId);
+    if (!receipt) return navigate('studioSync');
+
+    return `
+        <header class="view-header">
+            <button class="back-btn" onclick="window.app.navigate('receiptDetail', '${receipt.id}')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h1>Editar Recibo</h1>
+        </header>
+
+        <form id="edit-receipt-form" class="sovereign-form" onsubmit="window.app.handleUpdateReceipt(event, '${receipt.id}')">
+            <section class="form-section">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ID Recibo</label>
+                        <input type="text" name="receiptId" value="${receipt.receiptId}" readonly style="background:rgba(0,0,0,0.05); font-weight:700;">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="date" name="date" value="${receipt.date}" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Nombre del Cliente</label>
+                    <input type="text" name="clientName" value="${receipt.clientName}" required>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h3 class="section-title">Desglose de Servicios</h3>
+                <div id="items-container">
+                    ${receipt.items.map((item, index) => `
+                        <div class="receipt-item-card">
+                            <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="position:absolute; top:8px; right:8px; color:#ff4d4d;">✕</button>
+                            
+                            <div class="item-field-group">
+                                <label>Empresa / Marca</label>
+                                <input type="text" name="itemBrand[]" value="${item.brand}" required>
+                            </div>
+                            
+                            <div class="item-field-group">
+                                <label>Servicio / Descripción</label>
+                                <input type="text" name="itemDesc[]" value="${item.desc}" required>
+                            </div>
+                            
+                            <div class="item-field-row">
+                                <div class="item-field-group">
+                                    <label>Cantidad</label>
+                                    <input type="number" name="itemQty[]" value="${item.qty}" min="1" required>
+                                </div>
+                                <div class="item-field-group">
+                                    <label>Precio</label>
+                                    <input type="number" name="itemPrice[]" value="${item.price}" step="0.01" required>
+                                </div>
+                                <div class="item-field-group">
+                                    <label>Moneda</label>
+                                    <select name="itemCurrency[]" class="currency-select">
+                                        <option value="BOB" ${item.currency === 'BOB' ? 'selected' : ''}>BOB</option>
+                                        <option value="USD" ${item.currency === 'USD' ? 'selected' : ''}>USD</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <button type="button" class="btn-secondary" style="width:100%; margin-top:10px; font-weight:700;" onclick="window.app.addReceiptItem()">+ Añadir Concepto / Empresa</button>
+            </section>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Actualizar Recibo</button>
+                <button type="button" class="btn-secondary" onclick="window.app.navigate('receiptDetail', '${receipt.id}')">Cancelar</button>
+            </div>
+        </form>
     `;
 }
 
@@ -760,6 +844,7 @@ function render() {
             case 'studioSync': content = renderStudioSync(); break;
             case 'receiptRegister': content = renderReceiptRegister(); break;
             case 'receiptDetail': content = renderReceiptDetail(); break;
+            case 'receiptEdit': content = renderReceiptEdit(); break;
             default: content = renderDashboard();
         }
     } catch (e) {
@@ -1903,6 +1988,65 @@ window.app = {
 
             doc.save(`Recibo_${receipt.receiptId}.pdf`);
         } catch (e) { alert("Error PDF: " + e.message); }
+    },
+    handleUpdateReceipt: async (event, id) => {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        
+        // Recopilar items
+        const items = [];
+        const brands = formData.getAll('itemBrand[]');
+        const descs = formData.getAll('itemDesc[]');
+        const qtys = formData.getAll('itemQty[]');
+        const prices = formData.getAll('itemPrice[]');
+        const currencies = formData.getAll('itemCurrency[]');
+        
+        let totalBOB = 0;
+        let totalUSD = 0;
+
+        descs.forEach((d, i) => {
+            const q = parseFloat(qtys[i] || 0);
+            const p = parseFloat(prices[i] || 0);
+            const curr = currencies[i] || 'BOB';
+            const b = brands[i] || '';
+            
+            items.push({ brand: b, desc: d, qty: q, price: p, currency: curr });
+            
+            if (curr === 'BOB') totalBOB += q * p;
+            else totalUSD += q * p;
+        });
+
+        const updates = {
+            debtor: formData.get('clientName'),
+            amount: totalBOB > 0 ? totalBOB : totalUSD,
+            collateral: items.length > 0 ? items[0].brand : 'Studio Sync',
+            start_date: formData.get('date'),
+            installments: {
+                receiptId: formData.get('receiptId'),
+                items: items,
+                totalBOB: totalBOB,
+                totalUSD: totalUSD
+            }
+        };
+
+        try {
+            const { error } = await sb.from('loans').update(updates).eq('id', id);
+            if (error) throw error;
+            
+            const receipt = state.receipts.find(r => r.id === id);
+            if (receipt) {
+                Object.assign(receipt, {
+                    date: updates.start_date,
+                    clientName: updates.debtor,
+                    brandName: updates.collateral,
+                    items: items,
+                    totalAmount: updates.amount,
+                    totals: { BOB: totalBOB, USD: totalUSD }
+                });
+            }
+            
+            navigate('receiptDetail', id);
+        } catch (e) { alert(e.message); }
     }
 };
 
