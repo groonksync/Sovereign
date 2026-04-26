@@ -2060,6 +2060,13 @@ window.app = {
             const accentColor = [0, 72, 82]; 
             const grayColor = [113, 128, 150];
 
+            // --- WATERMARK ---
+            doc.setTextColor(240, 240, 240);
+            doc.setFontSize(60);
+            doc.setFont("helvetica", "bold");
+            doc.text("STUDIO SYNC PRO", 105, 160, { align: 'center', angle: 45 });
+            doc.setTextColor(0, 0, 0); // Reset color
+
             // Header
             doc.setFillColor(0,0,0);
             doc.rect(0, 0, 210, 40, 'F');
