@@ -2355,7 +2355,7 @@ window.app = {
             const tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: localStorage.getItem('google_client_id'),
                 scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata.readonly',
-                prompt: isSilent ? '' : 'select_account',
+                prompt: isSilent ? 'none' : 'select_account',
                 callback: (response) => {
                     if (response.access_token) {
                         window.googleAccessToken = response.access_token;
@@ -2367,9 +2367,9 @@ window.app = {
                     }
                 },
             });
-            tokenClient.requestAccessToken({ prompt: isSilent ? '' : 'select_account' });
+            tokenClient.requestAccessToken({ prompt: isSilent ? 'none' : 'select_account' });
         } catch (err) {
-            console.error("Error OAuth:", err);
+            if (!isSilent) console.error("Error OAuth:", err);
         }
     },
     getOrCreateDriveFolder: async () => {
