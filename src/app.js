@@ -497,10 +497,6 @@ function renderReceiptDetail() {
                     <label>CLIENTE</label>
                     <span>${receipt.clientName}</span>
                 </div>
-                <div class="receipt-info-item">
-                    <label>MARCA</label>
-                    <span>${receipt.brandName}</span>
-                </div>
             </div>
 
             <table class="receipt-table">
@@ -1942,7 +1938,6 @@ window.app = {
             doc.line(20, 60, 190, 60);
 
             doc.text(`CLIENTE: ${receipt.clientName}`, 20, 70);
-            doc.text(`MARCA: ${receipt.brandName}`, 20, 77);
 
             // Table
             const tableBody = receipt.items.map(item => [
