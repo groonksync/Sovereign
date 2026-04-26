@@ -2550,7 +2550,7 @@ function renderEditorProSuite() {
                 <div style="display:grid; grid-template-columns: 1fr; gap:15px; margin-bottom:25px;">
                     <div class="noir-card" style="border-left: 3px solid #10b981; background:linear-gradient(135deg, #141415 0%, #0c0c0d 100%);">
                         <p class="noir-label-small">Ingresos Proyectados (Mes)</p>
-                        <h3 style="font-size:2.2rem; font-weight:900;">,200.00</h3>
+                        <h3 style="font-size:2.2rem; font-weight:900;">$14,200.00</h3>
                     </div>
                     <div class="noir-card" style="background:#141415;">
                         <p class="noir-label-small">Proyectos Activos</p>
@@ -2626,7 +2626,7 @@ function renderEditorProSuite() {
                 <h2 style="font-size:1.5rem; font-weight:900; font-style:italic; text-transform:uppercase; margin-bottom:25px;">Finanzas</h2>
                 <div class="noir-card" style="border-left:4px solid #10b981;">
                     <p class="noir-label-small" style="color:#10b981;">Ganancia Neta 2026</p>
-                    <h2 style="font-size:2.5rem; font-weight:900;">,500 <span style="font-size:1rem; color:#444;">USD</span></h2>
+                    <h2 style="font-size:2.5rem; font-weight:900;">$84,500 <span style="font-size:1rem; color:#444;">USD</span></h2>
                 </div>
             </div>
         `;
