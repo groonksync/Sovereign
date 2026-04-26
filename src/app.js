@@ -409,15 +409,9 @@ function renderStudioSync() {
 }
 
 function renderReceiptRegister() {
-    // Generar ID Incremental
-    let nextId = "SSP-001";
-    if (state.receipts.length > 0) {
-        const lastIdStr = state.receipts[0].receiptId; // Asumiendo orden descendente
-        const lastNum = parseInt(lastIdStr.split('-')[1]);
-        if (!isNaN(lastNum)) {
-            nextId = `SSP-${(lastNum + 1).toString().padStart(3, '0')}`;
-        }
-    }
+    const year = new Date().getFullYear();
+    const randomId = Math.floor(1000 + Math.random() * 9000);
+    const nextId = `SSP-${year}-${randomId}`;
 
     return `
         <header class="view-header">
@@ -441,7 +435,7 @@ function renderReceiptRegister() {
                 </div>
                 <div class="form-group">
                     <label>Nombre del Cliente</label>
-                    <input type="text" name="clientName" placeholder="Ej: Juan Pérez" required>
+                    <input type="text" name="clientName" class="glass-input" placeholder="Ej: Juan Pérez" required>
                 </div>
             </section>
 
@@ -502,6 +496,7 @@ function renderReceiptDetail() {
             <table class="receipt-table">
                 <thead>
                     <tr>
+                        <th style="width:40px;"></th>
                         <th>Empresa / Servicio</th>
                         <th style="text-align:center;">Cant.</th>
                         <th style="text-align:right;">Subtotal</th>
@@ -510,12 +505,18 @@ function renderReceiptDetail() {
                 <tbody>
                     ${receipt.items.map(item => `
                         <tr>
+                            <td style="vertical-align:top; padding-top:12px;">
+                                <i data-lucide="${item.serviceIcon || 'pen-tool'}" style="width:16px; height:16px; color:var(--primary-emerald);"></i>
+                            </td>
                             <td>
-                                <strong style="display:block; font-size:0.7rem; color:var(--primary-emerald);">${item.brand}</strong>
+                                <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
+                                    <i data-lucide="${item.brandIcon || 'video'}" style="width:12px; height:12px; opacity:0.6;"></i>
+                                    <strong style="font-size:0.7rem; color:var(--primary-emerald);">${item.brand}</strong>
+                                </div>
                                 <span>${item.desc}</span>
                             </td>
                             <td style="text-align:center;">${item.qty}</td>
-                            <td class="amount-col">${formatCurrency(item.qty * item.price, item.currency === 'USD' ? '$' : 'Bs.')}</td>
+                            <td class="amount-col">${formatCurrency(item.qty * item.price, item.currency === 'USD' ? '$' : (item.currency === 'EUR' ? '€' : 'Bs.'))}</td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -529,9 +530,15 @@ function renderReceiptDetail() {
                     </div>
                 ` : ''}
                 ${receipt.totals && receipt.totals.USD > 0 ? `
-                    <div style="display:flex; justify-content:space-between; width:100%;">
+                    <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:5px;">
                         <span class="total-label" style="font-size:0.8rem;">TOTAL USD</span>
                         <span class="total-amount" style="font-size:1rem; color:#2d3748;">${formatCurrency(receipt.totals.USD, '$')}</span>
+                    </div>
+                ` : ''}
+                ${receipt.totals && receipt.totals.EUR > 0 ? `
+                    <div style="display:flex; justify-content:space-between; width:100%;">
+                        <span class="total-label" style="font-size:0.8rem;">TOTAL EUR</span>
+                        <span class="total-amount" style="font-size:1rem; color:#2d3748;">${formatCurrency(receipt.totals.EUR, '€')}</span>
                     </div>
                 ` : ''}
                 ${!receipt.totals ? `
@@ -584,7 +591,7 @@ function renderReceiptEdit() {
                 </div>
                 <div class="form-group">
                     <label>Nombre del Cliente</label>
-                    <input type="text" name="clientName" value="${receipt.clientName}" required>
+                    <input type="text" name="clientName" class="glass-input" value="${receipt.clientName}" required>
                 </div>
             </section>
 
@@ -595,30 +602,49 @@ function renderReceiptEdit() {
                         <div class="receipt-item-card">
                             <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="position:absolute; top:8px; right:8px; color:#ff4d4d;">✕</button>
                             
-                            <div class="item-field-group">
-                                <label>Empresa / Marca</label>
-                                <input type="text" name="itemBrand[]" value="${item.brand}" required>
+                            <div style="display:grid; grid-template-columns: 50px 1fr; gap:12px; margin-bottom:12px;">
+                                <div class="item-field-group">
+                                    <label>Icono</label>
+                                    <button type="button" class="icon-preview-btn" data-type="Brand" data-index="${index}" onclick="window.app.openIconPicker(event, 'Brand', ${index})">
+                                        <i data-lucide="${item.brandIcon || 'video'}"></i>
+                                    </button>
+                                    <input type="hidden" name="itemBrandIcon[]" value="${item.brandIcon || 'video'}" data-index="${index}">
+                                </div>
+                                <div class="item-field-group">
+                                    <label>Empresa / Marca</label>
+                                    <input type="text" name="itemBrand[]" class="glass-input" value="${item.brand}" required>
+                                </div>
                             </div>
                             
-                            <div class="item-field-group">
-                                <label>Servicio / Descripción</label>
-                                <input type="text" name="itemDesc[]" value="${item.desc}" required>
+                            <div style="display:grid; grid-template-columns: 50px 1fr; gap:12px; margin-bottom:12px;">
+                                <div class="item-field-group">
+                                    <label>Icono</label>
+                                    <button type="button" class="icon-preview-btn" data-type="Service" data-index="${index}" onclick="window.app.openIconPicker(event, 'Service', ${index})">
+                                        <i data-lucide="${item.serviceIcon || 'pen-tool'}"></i>
+                                    </button>
+                                    <input type="hidden" name="itemServiceIcon[]" value="${item.serviceIcon || 'pen-tool'}" data-index="${index}">
+                                </div>
+                                <div class="item-field-group">
+                                    <label>Servicio / Descripción</label>
+                                    <input type="text" name="itemDesc[]" class="glass-input" value="${item.desc}" required>
+                                </div>
                             </div>
                             
                             <div class="item-field-row">
                                 <div class="item-field-group">
                                     <label>Cantidad</label>
-                                    <input type="number" name="itemQty[]" value="${item.qty}" min="1" required>
+                                    <input type="number" name="itemQty[]" class="glass-input" value="${item.qty}" min="1" required>
                                 </div>
                                 <div class="item-field-group">
                                     <label>Precio</label>
-                                    <input type="number" name="itemPrice[]" value="${item.price}" step="0.01" required>
+                                    <input type="number" name="itemPrice[]" class="glass-input" value="${item.price}" step="0.01" required>
                                 </div>
                                 <div class="item-field-group">
                                     <label>Moneda</label>
-                                    <select name="itemCurrency[]" class="currency-select">
+                                    <select name="itemCurrency[]" class="currency-select glass-input">
                                         <option value="BOB" ${item.currency === 'BOB' ? 'selected' : ''}>BOB</option>
                                         <option value="USD" ${item.currency === 'USD' ? 'selected' : ''}>USD</option>
+                                        <option value="EUR" ${item.currency === 'EUR' ? 'selected' : ''}>EUR</option>
                                     </select>
                                 </div>
                             </div>
@@ -849,6 +875,7 @@ function render() {
     }
 
     app.innerHTML = content + renderTabBar();
+    if (window.lucide) window.lucide.createIcons();
     window.scrollTo(0, 0);
 }
 
@@ -1810,40 +1837,103 @@ window.app = {
     },
     addReceiptItem: () => {
         const container = document.getElementById('items-container');
+        const itemIndex = container.children.length;
         const card = document.createElement('div');
         card.className = 'receipt-item-card';
         card.innerHTML = `
             <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="position:absolute; top:8px; right:8px; color:#ff4d4d;">✕</button>
             
-            <div class="item-field-group">
-                <label>Empresa / Marca</label>
-                <input type="text" name="itemBrand[]" placeholder="Nombre de la empresa" required>
+            <div style="display:grid; grid-template-columns: 50px 1fr; gap:12px; margin-bottom:12px;">
+                <div class="item-field-group">
+                    <label>Icono</label>
+                    <button type="button" class="icon-preview-btn" data-type="Brand" data-index="${itemIndex}" onclick="window.app.openIconPicker(event, 'Brand', ${itemIndex})">
+                        <i data-lucide="video"></i>
+                    </button>
+                    <input type="hidden" name="itemBrandIcon[]" value="video" data-index="${itemIndex}">
+                </div>
+                <div class="item-field-group">
+                    <label>Empresa / Marca</label>
+                    <input type="text" name="itemBrand[]" class="glass-input" placeholder="Nombre de la empresa" required>
+                </div>
             </div>
             
-            <div class="item-field-group">
-                <label>Servicio / Descripción</label>
-                <input type="text" name="itemDesc[]" placeholder="Descripción del trabajo" required>
+            <div style="display:grid; grid-template-columns: 50px 1fr; gap:12px; margin-bottom:12px;">
+                <div class="item-field-group">
+                    <label>Icono</label>
+                    <button type="button" class="icon-preview-btn" data-type="Service" data-index="${itemIndex}" onclick="window.app.openIconPicker(event, 'Service', ${itemIndex})">
+                        <i data-lucide="pen-tool"></i>
+                    </button>
+                    <input type="hidden" name="itemServiceIcon[]" value="pen-tool" data-index="${itemIndex}">
+                </div>
+                <div class="item-field-group">
+                    <label>Servicio / Descripción</label>
+                    <input type="text" name="itemDesc[]" class="glass-input" placeholder="Descripción del trabajo" required>
+                </div>
             </div>
             
             <div class="item-field-row">
                 <div class="item-field-group">
                     <label>Cantidad</label>
-                    <input type="number" name="itemQty[]" value="1" min="1" required>
+                    <input type="number" name="itemQty[]" class="glass-input" value="1" min="1" required>
                 </div>
                 <div class="item-field-group">
                     <label>Precio</label>
-                    <input type="number" name="itemPrice[]" placeholder="0.00" step="0.01" required>
+                    <input type="number" name="itemPrice[]" class="glass-input" placeholder="0.00" step="0.01" required>
                 </div>
                 <div class="item-field-group">
                     <label>Moneda</label>
-                    <select name="itemCurrency[]" class="currency-select">
+                    <select name="itemCurrency[]" class="currency-select glass-input">
                         <option value="BOB">BOB</option>
                         <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
                     </select>
                 </div>
             </div>
         `;
         container.appendChild(card);
+        lucide.createIcons();
+    },
+    openIconPicker: (event, type, itemIndex) => {
+        event.stopPropagation();
+        const btn = event.currentTarget;
+        const rect = btn.getBoundingClientRect();
+        
+        document.querySelectorAll('.icon-picker-popover').forEach(p => p.remove());
+        
+        const popover = document.createElement('div');
+        popover.className = 'icon-picker-popover';
+        popover.style.top = `${window.scrollY + rect.bottom + 8}px`;
+        popover.style.left = `${rect.left}px`;
+        
+        const icons = ['video', 'image', 'camera', 'pen-tool', 'music', 'mic', 'globe'];
+        
+        popover.innerHTML = icons.map(icon => `
+            <div class="icon-option" onclick="window.app.selectIcon('${icon}', '${type}', ${itemIndex})">
+                <i data-lucide="${icon}"></i>
+            </div>
+        `).join('');
+        
+        document.body.appendChild(popover);
+        lucide.createIcons();
+        
+        const closePicker = (e) => {
+            if (!popover.contains(e.target) && e.target !== btn) {
+                popover.remove();
+                document.removeEventListener('click', closePicker);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', closePicker), 10);
+    },
+    selectIcon: (iconName, type, itemIndex) => {
+        const input = document.querySelector(`input[name="item${type}Icon[]"][data-index="${itemIndex}"]`);
+        const btn = document.querySelector(`.icon-preview-btn[data-type="${type}"][data-index="${itemIndex}"]`);
+        
+        if (input) input.value = iconName;
+        if (btn) {
+            btn.innerHTML = `<i data-lucide="${iconName}"></i>`;
+            lucide.createIcons();
+        }
+        document.querySelectorAll('.icon-picker-popover').forEach(p => p.remove());
     },
     handleSaveReceipt: async (event) => {
         event.preventDefault();
@@ -1852,37 +1942,44 @@ window.app = {
         // Recopilar items
         const items = [];
         const brands = formData.getAll('itemBrand[]');
+        const brandIcons = formData.getAll('itemBrandIcon[]');
         const descs = formData.getAll('itemDesc[]');
+        const serviceIcons = formData.getAll('itemServiceIcon[]');
         const qtys = formData.getAll('itemQty[]');
         const prices = formData.getAll('itemPrice[]');
         const currencies = formData.getAll('itemCurrency[]');
         
         let totalBOB = 0;
         let totalUSD = 0;
+        let totalEUR = 0;
 
         descs.forEach((d, i) => {
             const q = parseFloat(qtys[i] || 0);
             const p = parseFloat(prices[i] || 0);
             const curr = currencies[i] || 'BOB';
             const b = brands[i] || '';
+            const bi = brandIcons[i] || 'video';
+            const si = serviceIcons[i] || 'pen-tool';
             
-            items.push({ brand: b, desc: d, qty: q, price: p, currency: curr });
+            items.push({ brand: b, brandIcon: bi, desc: d, serviceIcon: si, qty: q, price: p, currency: curr });
             
             if (curr === 'BOB') totalBOB += q * p;
-            else totalUSD += q * p;
+            else if (curr === 'USD') totalUSD += q * p;
+            else if (curr === 'EUR') totalEUR += q * p;
         });
 
         const newReceipt = {
             id: Date.now().toString(),
             debtor: formData.get('clientName'),
-            amount: totalBOB > 0 ? totalBOB : totalUSD, // Guardamos el principal
-            collateral: items.length > 0 ? items[0].brand : 'Studio Sync', // Marca del primer item
+            amount: totalBOB > 0 ? totalBOB : (totalUSD > 0 ? totalUSD : totalEUR),
+            collateral: items.length > 0 ? items[0].brand : 'Studio Sync',
             start_date: formData.get('date'),
             installments: {
                 receiptId: formData.get('receiptId'),
                 items: items,
                 totalBOB: totalBOB,
-                totalUSD: totalUSD
+                totalUSD: totalUSD,
+                totalEUR: totalEUR
             },
             ref: 'STUDIO_SYNC'
         };
@@ -1899,10 +1996,12 @@ window.app = {
                 brandName: newReceipt.collateral,
                 items: items,
                 totalAmount: newReceipt.amount,
-                totals: { BOB: totalBOB, USD: totalUSD }
+                totals: { BOB: totalBOB, USD: totalUSD, EUR: totalEUR }
             });
             
             navigate('receiptDetail', newReceipt.id);
+            // Feedback visual
+            alert('¡Recibo SSP Guardado con éxito!');
         } catch (e) { alert(e.message); }
     },
     exportReceiptToPDF: async (id) => {
@@ -1941,22 +2040,24 @@ window.app = {
 
             // Table
             const tableBody = receipt.items.map(item => [
+                '', // Icon placeholder
                 `${item.brand}\n${item.desc}`,
                 item.qty,
-                formatCurrency(item.price, item.currency === 'USD' ? '$' : 'Bs.'),
-                formatCurrency(item.qty * item.price, item.currency === 'USD' ? '$' : 'Bs.')
+                formatCurrency(item.price, item.currency === 'USD' ? '$' : (item.currency === 'EUR' ? '€' : 'Bs.')),
+                formatCurrency(item.qty * item.price, item.currency === 'USD' ? '$' : (item.currency === 'EUR' ? '€' : 'Bs.'))
             ]);
 
             doc.autoTable({
                 startY: 85,
-                head: [['Empresa / Servicio', 'Cant.', 'Precio Unit.', 'Subtotal']],
+                head: [['', 'Empresa / Servicio', 'Cant.', 'Precio Unit.', 'Subtotal']],
                 body: tableBody,
                 headStyles: { fillColor: accentColor },
                 styles: { fontSize: 8, cellPadding: 3 },
                 columnStyles: {
-                    1: { halign: 'center' },
-                    2: { halign: 'right' },
-                    3: { halign: 'right' }
+                    0: { cellWidth: 10 },
+                    2: { halign: 'center' },
+                    3: { halign: 'right' },
+                    4: { halign: 'right' }
                 }
             });
 
@@ -1971,6 +2072,10 @@ window.app = {
             }
             if (receipt.totals && receipt.totals.USD > 0) {
                 doc.text(`TOTAL USD: ${formatCurrency(receipt.totals.USD, '$')}`, 190, currentY, { align: 'right' });
+                currentY += 7;
+            }
+            if (receipt.totals && receipt.totals.EUR > 0) {
+                doc.text(`TOTAL EUR: ${formatCurrency(receipt.totals.EUR, '€')}`, 190, currentY, { align: 'right' });
             }
             if (!receipt.totals) {
                 doc.text(`TOTAL BS: ${formatCurrency(receipt.totalAmount)}`, 190, currentY, { align: 'right' });
@@ -1991,36 +2096,43 @@ window.app = {
         // Recopilar items
         const items = [];
         const brands = formData.getAll('itemBrand[]');
+        const brandIcons = formData.getAll('itemBrandIcon[]');
         const descs = formData.getAll('itemDesc[]');
+        const serviceIcons = formData.getAll('itemServiceIcon[]');
         const qtys = formData.getAll('itemQty[]');
         const prices = formData.getAll('itemPrice[]');
         const currencies = formData.getAll('itemCurrency[]');
         
         let totalBOB = 0;
         let totalUSD = 0;
+        let totalEUR = 0;
 
         descs.forEach((d, i) => {
             const q = parseFloat(qtys[i] || 0);
             const p = parseFloat(prices[i] || 0);
             const curr = currencies[i] || 'BOB';
             const b = brands[i] || '';
+            const bi = brandIcons[i] || 'video';
+            const si = serviceIcons[i] || 'pen-tool';
             
-            items.push({ brand: b, desc: d, qty: q, price: p, currency: curr });
+            items.push({ brand: b, brandIcon: bi, desc: d, serviceIcon: si, qty: q, price: p, currency: curr });
             
             if (curr === 'BOB') totalBOB += q * p;
-            else totalUSD += q * p;
+            else if (curr === 'USD') totalUSD += q * p;
+            else if (curr === 'EUR') totalEUR += q * p;
         });
 
         const updates = {
             debtor: formData.get('clientName'),
-            amount: totalBOB > 0 ? totalBOB : totalUSD,
+            amount: totalBOB > 0 ? totalBOB : (totalUSD > 0 ? totalUSD : totalEUR),
             collateral: items.length > 0 ? items[0].brand : 'Studio Sync',
             start_date: formData.get('date'),
             installments: {
                 receiptId: formData.get('receiptId'),
                 items: items,
                 totalBOB: totalBOB,
-                totalUSD: totalUSD
+                totalUSD: totalUSD,
+                totalEUR: totalEUR
             }
         };
 
@@ -2036,7 +2148,7 @@ window.app = {
                     brandName: updates.collateral,
                     items: items,
                     totalAmount: updates.amount,
-                    totals: { BOB: totalBOB, USD: totalUSD }
+                    totals: { BOB: totalBOB, USD: totalUSD, EUR: totalEUR }
                 });
             }
             

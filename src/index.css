@@ -439,6 +439,87 @@ body.dark-mode .custom-select { background-color: rgba(255,255,255,0.05); }
     font-weight: 600;
 }
 
+/* --- NOIR THEME & GLASSMORPHISM --- */
+body.dark-mode {
+    background: #050505;
+}
+
+.glass-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    padding: 10px;
+    color: white;
+    width: 100%;
+}
+
+.glass-input:focus {
+    border-color: var(--primary-emerald);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+/* --- ICON PICKER --- */
+.icon-picker-popover {
+    position: absolute;
+    z-index: 1000;
+    background: #121212;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 12px;
+    width: 192px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.icon-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #a0aec0;
+}
+
+.icon-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.icon-option.selected {
+    background: var(--primary-emerald);
+    color: white;
+}
+
+.icon-preview-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+}
+
+/* --- ANIMATIONS --- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.receipt-item-card {
+    animation: fadeIn 0.3s ease-out;
+}
+
 @media print {
     .bottom-tab-bar, .fab, .back-btn, .header-actions, .btn-primary, .fab-receipt { display: none !important; }
     .app-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
