@@ -977,7 +977,7 @@ function renderDetails() {
 
 // --- CORE FUNCTIONS ---
 
-function render() {
+async function render() {
     const app = document.getElementById('app');
     if (!app) return;
     let content = '';
@@ -999,7 +999,7 @@ function render() {
             case 'receiptRegister': content = renderReceiptRegister(); break;
             case 'receiptDetail': content = renderReceiptDetail(); break;
             case 'receiptEdit': content = renderReceiptEdit(); break;
-            case 'nexus': content = renderSovereignNexus(); break;
+            case 'nexus': content = await renderSovereignNexus(); break;
             default: content = renderDashboard();
         }
     } catch (e) {
@@ -1007,7 +1007,7 @@ function render() {
         content = `<div class="empty-state"><p>Error al cargar la vista. Intente de nuevo.</p></div>`;
     }
 
-    app.innerHTML = content + renderTabBar();
+    app.innerHTML = (content || '') + renderTabBar();
     if (window.lucide) window.lucide.createIcons();
     window.scrollTo(0, 0);
 }
