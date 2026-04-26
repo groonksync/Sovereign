@@ -2341,10 +2341,11 @@ window.app = {
             navigate('receiptDetail', id);
         } catch (e) { alert(e.message); }
     },
-    handleGoogleAuth: () => {
+    handleGoogleAuth: (isSilent = false) => {
         const CLIENT_ID = localStorage.getItem('google_client_id') || '787612710186-p7c0l7u75k0u7k0u7k0u7k0u7k0u7k0u.apps.googleusercontent.com';
         
         if (!localStorage.getItem('google_client_id')) {
+            if (isSilent) return;
             const cid = prompt("Introduce tu 'Client ID' de Google Cloud para vincular la cuenta permanentemente:", "");
             if (cid) localStorage.setItem('google_client_id', cid);
             else return;
@@ -2354,28 +2355,28 @@ window.app = {
             const tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: localStorage.getItem('google_client_id'),
                 scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata.readonly',
+                prompt: isSilent ? '' : 'select_account',
                 callback: (response) => {
                     if (response.access_token) {
                         window.googleAccessToken = response.access_token;
                         localStorage.setItem('google_auth_linked', 'true');
-                        document.getElementById('google-status-dot').style.background = '#4285F4'; 
-                        alert("¡Cuenta de Google vinculada! Se mantendrá activa mientras navegues.");
+                        const dot = document.getElementById('google-status-dot');
+                        if (dot) dot.style.background = '#4285F4'; 
                         window.app.getOrCreateDriveFolder();
+                        if (!isSilent) alert("¡Cuenta de Google vinculada con éxito!");
                     }
                 },
             });
-            tokenClient.requestAccessToken();
+            tokenClient.requestAccessToken({ prompt: isSilent ? '' : 'select_account' });
         } catch (err) {
             console.error("Error OAuth:", err);
-            alert("Error al iniciar la vinculación con Google.");
         }
     },
     getOrCreateDriveFolder: async () => {
         if (!window.googleAccessToken) return;
 
-        // Buscar si ya existe la carpeta
         try {
-            const query = encodeURIComponent("name = 'STUDIO_SYNC_PRO_RECIBOS' and mimeType = 'application/vnd.google-apps.folder' and trashed = false");
+            const query = encodeURIComponent("name = 'FACTURAS_APP' and mimeType = 'application/vnd.google-apps.folder' and trashed = false");
             const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}`, {
                 headers: { Authorization: `Bearer ${window.googleAccessToken}` }
             });
@@ -2383,9 +2384,7 @@ window.app = {
 
             if (data.files && data.files.length > 0) {
                 window.driveFolderId = data.files[0].id;
-                console.log("Carpeta encontrada:", window.driveFolderId);
             } else {
-                // Crear carpeta
                 const createResp = await fetch('https://www.googleapis.com/drive/v3/files', {
                     method: 'POST',
                     headers: {
@@ -2393,16 +2392,15 @@ window.app = {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        name: 'STUDIO_SYNC_PRO_RECIBOS',
+                        name: 'FACTURAS_APP',
                         mimeType: 'application/vnd.google-apps.folder'
                     })
                 });
                 const folder = await createResp.json();
                 window.driveFolderId = folder.id;
-                console.log("Nueva carpeta creada:", window.driveFolderId);
             }
         } catch (err) {
-            console.error("Error gestionando carpeta Drive:", err);
+            console.error("Error gestionando carpeta FACTURAS_APP:", err);
         }
     },
     uploadToGoogleDrive: async (blob, fileName) => {
@@ -2435,4 +2433,16 @@ window.app = {
 };
 
 // Start App
-loadState();
+const initApp = () => {
+    loadState();
+    // Intentar reconexión silenciosa de Google si ya estaba vinculado
+    if (localStorage.getItem('google_auth_linked') === 'true') {
+        setTimeout(() => {
+            if (window.google && window.google.accounts) {
+                window.app.handleGoogleAuth(true);
+            }
+        }, 2000); // Esperar a que carguen los scripts de Google
+    }
+};
+
+initApp();
