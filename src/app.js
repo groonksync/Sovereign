@@ -462,6 +462,14 @@ function renderReceiptRegister() {
                         </select>
                     </div>
                 </div>
+                <div class="form-group" style="margin-top:15px; display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:12px; border:1px solid #1a1a1a;">
+                    <span class="noir-label" style="margin:0;">MARCA DE AGUA</span>
+                    <label class="switch-container">
+                        <input type="checkbox" name="watermarkEnabled" checked onchange="window.app.toggleWatermarkPreview(this.checked)">
+                        <span class="switch-slider"></span>
+                    </label>
+                </div>
+
                 <div class="form-group" style="margin-top:15px;">
                     <span class="noir-label">TÉRMINOS / GARANTÍA</span>
                     <textarea name="terms" class="glass-input" style="min-height:60px; font-size:0.8rem;">Garantía: Este pago cubre hasta 3 rondas de revisiones. Al completarse el pago, se transfieren los derechos de uso comercial.</textarea>
@@ -645,6 +653,14 @@ function renderReceiptEdit() {
                         </select>
                     </div>
                 </div>
+                <div class="form-group" style="margin-top:15px; display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:12px; border:1px solid #1a1a1a;">
+                    <span class="noir-label" style="margin:0;">MARCA DE AGUA</span>
+                    <label class="switch-container">
+                        <input type="checkbox" name="watermarkEnabled" ${receipt.watermarkEnabled !== false ? 'checked' : ''} onchange="window.app.toggleWatermarkPreview(this.checked)">
+                        <span class="switch-slider"></span>
+                    </label>
+                </div>
+
                 <div class="form-group" style="margin-top:15px;">
                     <span class="noir-label">TÉRMINOS / GARANTÍA</span>
                     <textarea name="terms" class="glass-input" style="min-height:60px; font-size:0.8rem;">${receipt.terms || 'Garantía: Este pago cubre hasta 3 rondas de revisiones. Al completarse el pago, se transfieren los derechos de uso comercial.'}</textarea>
@@ -2040,7 +2056,8 @@ window.app = {
                 totalEUR: totalEUR,
                 status: formData.get('status'),
                 paymentMethod: formData.get('paymentMethod'),
-                terms: formData.get('terms')
+                terms: formData.get('terms'),
+                watermarkEnabled: formData.get('watermarkEnabled') === 'on'
             },
             ref: 'STUDIO_SYNC'
         };
@@ -2081,11 +2098,13 @@ window.app = {
             const grayColor = [113, 128, 150];
 
             // --- WATERMARK ---
-            doc.setTextColor(245, 245, 245);
-            doc.setFontSize(50);
-            doc.setFont("helvetica", "bold");
-            doc.text("STUDIO SYNC PRO", 105, 148, { align: 'center', angle: 45 });
-            doc.setTextColor(0, 0, 0); // Reset color
+            if (receipt.watermarkEnabled !== false) {
+                doc.setTextColor(248, 248, 248);
+                doc.setFontSize(35);
+                doc.setFont("helvetica", "bold");
+                doc.text("STUDIO SYNC PRO", 105, 148, { align: 'center', angle: 45 });
+                doc.setTextColor(0, 0, 0); // Reset color
+            }
 
             // Header
             doc.setFillColor(0,0,0);
@@ -2185,6 +2204,13 @@ window.app = {
         linkElement.setAttribute('download', exportFileDefaultName);
         linkElement.click();
         alert('Backup generado. Guárdalo en tu carpeta de Drive para sincronización.');
+    },
+    toggleWatermarkPreview: (enabled) => {
+        const paper = document.querySelector('.receipt-paper');
+        if (paper) {
+            if (enabled) paper.classList.remove('no-watermark');
+            else paper.classList.add('no-watermark');
+        }
     },
     updateStatus: (el, value) => {
         const picker = el.parentElement;

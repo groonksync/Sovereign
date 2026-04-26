@@ -394,6 +394,10 @@ body.dark-mode .custom-select { background-color: rgba(255,255,255,0.05); }
     z-index: 0;
 }
 
+.receipt-paper.no-watermark::before {
+    display: none;
+}
+
 .receipt-header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #e2e8f0; padding-bottom: 15px; }
 .receipt-header h2 { font-size: 1.2rem; font-weight: 800; color: #000; margin-bottom: 5px; }
 .receipt-header p { font-size: 0.7rem; color: #718096; text-transform: uppercase; }
@@ -579,6 +583,39 @@ body.dark-mode {
 .status-badge.paid { background: rgba(16, 185, 129, 0.2); color: var(--primary-emerald); }
 .status-badge.pending { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
 .status-badge.partial { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
+/* --- SWITCH UI --- */
+.switch-container {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch-container input { opacity: 0; width: 0; height: 0; }
+
+.switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #1a1a1a;
+    transition: .4s;
+    border-radius: 34px;
+    border: 1px solid #333;
+}
+
+.switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px; width: 16px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .switch-slider { background-color: var(--primary-emerald); border-color: var(--primary-emerald); }
+input:checked + .switch-slider:before { transform: translateX(20px); }
 
 /* --- STATUS PICKER (FLAT DESIGN) --- */
 .status-picker {
