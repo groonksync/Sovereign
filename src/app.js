@@ -355,7 +355,11 @@ function renderStudioSync() {
                 </div>
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
-                <button id="btn-drive-link" class="btn-icon" onclick="window.app.setupDriveFolder()" title="Vincular Carpeta de Drive" style="background:rgba(255,255,255,0.05); border:1px solid #1a1a1a; padding:8px; border-radius:10px; cursor:pointer; position:relative;">
+                <button id="btn-google-auth" class="btn-icon" onclick="window.app.handleGoogleAuth()" title="Vincular Cuenta de Google (Cloud)" style="background:rgba(255,255,255,0.05); border:1px solid #1a1a1a; padding:8px; border-radius:10px; cursor:pointer; position:relative;">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png" style="width:18px; height:18px;">
+                    <div id="google-status-dot" style="position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:#4a4a4a; border-radius:50%; border:2px solid #000;"></div>
+                </button>
+                <button id="btn-drive-link" class="btn-icon" onclick="window.app.setupDriveFolder()" title="Vincular Carpeta Local (Chrome/Edge)" style="background:rgba(255,255,255,0.05); border:1px solid #1a1a1a; padding:8px; border-radius:10px; cursor:pointer; position:relative;">
                     📁
                     <div id="drive-status-dot" style="position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:#4a4a4a; border-radius:50%; border:2px solid #000;"></div>
                 </button>
@@ -2214,6 +2218,16 @@ window.app = {
                     alert("Error al guardar en la carpeta de Drive. Es posible que debas vincularla de nuevo.");
                 }
             }
+            // 3. Guardado en Google Drive Cloud (si está vinculado)
+            if (window.googleAccessToken) {
+                try {
+                    const pdfBlob = doc.output('blob');
+                    await window.app.uploadToGoogleDrive(pdfBlob, fileName);
+                    console.log("Copia guardada en Google Drive Cloud.");
+                } catch (err) {
+                    console.error("Error al guardar en Google Cloud:", err);
+                }
+            }
         } catch (e) { alert("Error PDF: " + e.message); }
     },
     setupDriveFolder: async () => {
@@ -2321,6 +2335,57 @@ window.app = {
             
             navigate('receiptDetail', id);
         } catch (e) { alert(e.message); }
+    },
+    handleGoogleAuth: () => {
+        const CLIENT_ID = localStorage.getItem('google_client_id') || '787612710186-p7c0l7u75k0u7k0u7k0u7k0u7k0u7k0u.apps.googleusercontent.com';
+        
+        if (!localStorage.getItem('google_client_id')) {
+            const cid = prompt("Para usar Google Drive en Safari, introduce tu 'Client ID' de Google Cloud. Si no lo tienes, puedes solicitármelo:", "");
+            if (cid) localStorage.setItem('google_client_id', cid);
+            else return;
+        }
+
+        try {
+            const tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: localStorage.getItem('google_client_id'),
+                scope: 'https://www.googleapis.com/auth/drive.file',
+                callback: (response) => {
+                    if (response.access_token) {
+                        window.googleAccessToken = response.access_token;
+                        document.getElementById('google-status-dot').style.background = '#4285F4'; 
+                        alert("¡Cuenta de Google vinculada! Los PDFs se subirán ahora también a tu nube.");
+                    }
+                },
+            });
+            tokenClient.requestAccessToken();
+        } catch (err) {
+            console.error("Error OAuth:", err);
+            alert("Error al iniciar la vinculación con Google.");
+        }
+    },
+    uploadToGoogleDrive: async (blob, fileName) => {
+        const metadata = {
+            name: fileName,
+            mimeType: 'application/pdf'
+        };
+
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', blob);
+
+        try {
+            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${window.googleAccessToken}`,
+                },
+                body: form,
+            });
+            const result = await response.json();
+            console.log('Archivo subido a Drive:', result);
+        } catch (err) {
+            console.error('Error subiendo a Drive:', err);
+        }
     }
 };
 
