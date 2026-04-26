@@ -15,6 +15,8 @@ let state = {
     expenses: [], // Mis Pagos
     receipts: [], // Studio Sync Pro
     currentView: 'dashboard',
+    editorProTab: 'escritorio', // Sub-pestaña para Editor Pro
+    selectedEditorProject: null,
     selectedLoanId: null,
     isDarkMode: localStorage.getItem('sovereign-theme') === 'dark'
 };
@@ -959,6 +961,7 @@ function render() {
             case 'receiptRegister': content = renderReceiptRegister(); break;
             case 'receiptDetail': content = renderReceiptDetail(); break;
             case 'receiptEdit': content = renderReceiptEdit(); break;
+            case 'editorPro': content = renderEditorProSuite(); break;
             default: content = renderDashboard();
         }
     } catch (e) {
@@ -993,8 +996,12 @@ function renderTabBar() {
                 <span>${categories.expenses.label}</span>
             </button>
             <button class="tab-item ${state.currentView.includes('Sync') || state.currentView.includes('receipt') ? 'active' : ''}" onclick="window.app.navigate('studioSync')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <i data-lucide="file-text"></i>
                 <span>Recibos</span>
+            </button>
+            <button class="tab-item ${state.currentView === 'editorPro' ? 'active' : ''}" onclick="window.app.navigate('editorPro')">
+                <i data-lucide="video"></i>
+                <span>Editor Pro</span>
             </button>
         </nav>
     `;
@@ -1775,6 +1782,15 @@ async function exportToPDF(loanId) {
 
 // --- INITIALIZATION ---
 window.app = {
+    handleEditorTabChange: (tab) => {
+        state.editorProTab = tab;
+        state.selectedEditorProject = null;
+        render();
+    },
+    selectEditorProject: (project) => {
+        state.selectedEditorProject = project;
+        render();
+    },
     navigate,
     handleSave,
     handleDelete,
@@ -2456,3 +2472,143 @@ const initApp = () => {
 };
 
 initApp();
+
+/** --- PHASE 2: EDITOR PRO SUITE (ISOLATED UI) --- **/
+function renderEditorProSuite() {
+    const activeTab = state.editorProTab || 'escritorio';
+    const selectedProject = state.selectedEditorProject;
+
+    // --- MOCK DATA (FASE 2) ---
+    const proyectos = [
+        {
+            id: 1, cliente: "Pollos 'El Gran Sabor'", titulo: "Campaña Redes Sociales Q2", tipo: "Edición Múltiple", estado: "En Curso", presupuesto: 1200, pagado: 600, entrega: "15 May", notas: "Ritmo rápido, transiciones dinámicas.", carpetaDrive: "/Editor_OS/Clientes/Pollos_El_Gran_Sabor",
+            activos: { contenido: [{ nombre: "Toma_Pollo_01.mp4", peso: "1.2 GB", fecha: "Hoy", carpeta: "01_Material_Bruto" }], referencias: [] },
+            entregables: [{ id: 101, titulo: "Video 01", obligatorio: true, desc: "15 segs.", versiones: ["v1"] }]
+        }
+    ];
+
+    const renderInternalNav = () => `
+        <div class="sidebar-internal" style="width:250px; border-right:1px solid rgba(255,255,255,0.05); padding:24px; display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:40px;">
+                <div style="width:32px; height:32px; background:#fff; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#000;">
+                    <i data-lucide="video" style="width:18px;"></i>
+                </div>
+                <span style="font-weight:900; font-size:0.8rem; letter-spacing:0.1em; text-transform:uppercase;">Editor Pro</span>
+            </div>
+            <p style="font-size:0.6rem; font-weight:900; color:#444; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:10px;">Navegación Interna</p>
+            <button class="noir-btn ${activeTab === 'escritorio' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('escritorio')">
+                <i data-lucide="layout-dashboard" style="width:16px;"></i> Escritorio
+            </button>
+            <button class="noir-btn ${activeTab === 'proyectos' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('proyectos')">
+                <i data-lucide="briefcase" style="width:16px;"></i> Proyectos
+            </button>
+            <button class="noir-btn ${activeTab === 'archivos' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('archivos')">
+                <i data-lucide="cloud" style="width:16px;"></i> Editor Cloud
+            </button>
+            <button class="noir-btn ${activeTab === 'finanzas' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('finanzas')">
+                <i data-lucide="credit-card" style="width:16px;"></i> Finanzas
+            </button>
+        </div>
+    `;
+
+    let innerContent = '';
+
+    if (activeTab === 'escritorio') {
+        innerContent = `
+            <div class="animate-in fade-in" style="max-width:1000px; margin:0 auto;">
+                <header style="margin-bottom:50px;">
+                    <h2 style="font-size:2.5rem; font-weight:900; font-style:italic; text-transform:uppercase; letter-spacing:-0.05em;">
+                        Editor <span style="color:#666; font-weight:300; font-style:normal;">Pro</span>
+                    </h2>
+                </header>
+                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:40px;">
+                    <div class="noir-card" style="grid-column: span 2; border-left: 2px solid #10b981;">
+                        <p style="font-size:0.6rem; font-weight:900; color:#666; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:8px;">Ingresos Proyectados (Mes)</p>
+                        <h3 style="font-size:2.5rem; font-weight:900;">,200.00</h3>
+                    </div>
+                    <div class="noir-card">
+                        <p style="font-size:0.6rem; font-weight:900; color:#666; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:8px;">Proyectos Activos</p>
+                        <h3 style="font-size:2.5rem; font-weight:900; color:#aaa;">${proyectos.length}</h3>
+                    </div>
+                </div>
+                <div class="noir-card" style="padding:30px;">
+                    <h3 style="font-size:0.65rem; font-weight:900; color:#666; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:24px; display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="clock" style="width:14px;"></i> Próximas Entregas
+                    </h3>
+                    ${proyectos.map(p => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.02); margin-bottom:16px;">
+                            <div>
+                                <h4 style="font-weight:700; font-size:0.9rem;">${p.titulo}</h4>
+                                <p style="font-size:0.65rem; color:#666; font-style:italic; margin-top:2px;">${p.cliente}</p>
+                            </div>
+                            <span class="noir-badge-pro">${p.entrega}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    } else if (activeTab === 'proyectos') {
+        if (!selectedProject) {
+            innerContent = `
+                <div class="animate-in fade-in" style="max-width:1000px; margin:0 auto;">
+                    <header style="margin-bottom:40px;"><h2 style="font-size:2.5rem; font-weight:900; font-style:italic; text-transform:uppercase;">Directorio de <span style="color:#666; font-weight:300;">Proyectos</span></h2></header>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        ${proyectos.map(p => `
+                            <div onclick="window.app.selectEditorProject(${JSON.stringify(p).replace(/"/g, '&quot;')})" style="background:#141415; border:1px solid rgba(255,255,255,0.03); padding:20px 24px; border-radius:16px; display:flex; align-items:center; justify-content:between; cursor:pointer; transition:all 0.2s;" class="hover-border-white">
+                                <div style="display:flex; align-items:center; gap:24px; flex:1;">
+                                    <div style="width:48px; height:48px; background:#1a1a1b; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#555;"><i data-lucide="video" style="width:22px;"></i></div>
+                                    <div><h4 style="font-weight:900; text-transform:uppercase; font-style:italic; font-size:1rem;">${p.titulo}</h4><p style="font-size:0.65rem; font-weight:700; color:#666; margin-top:4px;">${p.cliente}</p></div>
+                                </div>
+                                <i data-lucide="chevron-right" style="color:#222;"></i>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            innerContent = `
+                <div class="animate-in fade-in" style="max-width:1200px; margin:0 auto;">
+                    <button onclick="window.app.selectEditorProject(null)" style="background:none; border:none; color:#666; display:flex; align-items:center; gap:8px; margin-bottom:32px; font-weight:900; text-transform:uppercase; font-size:0.6rem; letter-spacing:0.3em; cursor:pointer;"><i data-lucide="chevron-left" style="width:14px;"></i> Volver al Pipeline</button>
+                    <h2 style="font-size:3.5rem; font-weight:900; font-style:italic; text-transform:uppercase; letter-spacing:-0.05em; margin-bottom:32px;">${selectedProject.titulo}</h2>
+                    <div class="noir-card" style="background:#111112; border:none; padding:32px;">
+                        <h3 style="font-size:0.65rem; font-weight:900; color:#fff; text-transform:uppercase; letter-spacing:0.3em; font-style:italic; margin-bottom:24px;">Dirección Creativa</h3>
+                        <p style="font-size:1rem; color:#aaa; font-weight:300; font-style:italic; border-left:2px solid rgba(255,255,255,0.05); padding-left:24px;">"${selectedProject.notas}"</p>
+                    </div>
+                </div>
+            `;
+        }
+    } else if (activeTab === 'archivos') {
+        innerContent = `
+            <div class="animate-in fade-in" style="max-width:1000px; margin:0 auto;">
+                <header style="margin-bottom:50px;"><h2 style="font-size:2.5rem; font-weight:900; font-style:italic; text-transform:uppercase;">Editor <span style="color:#666; font-weight:300;">Cloud Sync</span></h2></header>
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;">
+                    ${proyectos.map(p => `
+                        <div class="noir-card" style="cursor:pointer; transition:all 0.2s;">
+                            <div style="width:48px; height:48px; background:#1a1a1b; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#555; margin-bottom:24px;"><i data-lucide="folder" style="width:24px;"></i></div>
+                            <h4 style="font-weight:900; font-size:1.1rem; text-transform:uppercase; font-style:italic; color:#eee;">${p.cliente}</h4>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    } else if (activeTab === 'finanzas') {
+        innerContent = `
+            <div class="animate-in fade-in" style="max-width:1000px; margin:0 auto;">
+                <header style="margin-bottom:50px;"><h2 style="font-size:2.5rem; font-weight:900; font-style:italic; text-transform:uppercase;">Reporte <span style="color:#666; font-weight:300;">Financiero</span></h2></header>
+                <div class="noir-card" style="padding:32px; border-left:4px solid #10b981; background:linear-gradient(to right, rgba(16,185,129,0.05), transparent);">
+                    <h3 style="font-size:0.75rem; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:#10b981; margin-bottom:16px;">Ganancia Neta Acumulada (2026)</h3>
+                    <h2 style="font-size:4rem; font-weight:900; letter-spacing:-0.05em;">,500<span style="font-size:1.5rem; color:#666; margin-left:8px;">USD</span></h2>
+                </div>
+            </div>
+        `;
+    }
+
+    return `
+        <div style="display:flex; height:100vh; background:#0c0c0d; color:#f3f4f6;">
+            ${renderInternalNav()}
+            <main style="flex:1; overflow-y:auto; padding:40px 60px;">
+                ${innerContent}
+            </main>
+        </div>
+    `;
+}
