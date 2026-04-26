@@ -1007,6 +1007,7 @@ async function render() {
         content = `<div class="empty-state"><p>Error al cargar la vista. Intente de nuevo.</p></div>`;
     }
 
+    app.classList.toggle('full-width-mode', state.currentView === 'nexus');
     app.innerHTML = (content || '') + renderTabBar();
     if (window.lucide) window.lucide.createIcons();
     window.scrollTo(0, 0);
@@ -2538,9 +2539,9 @@ async function renderSovereignNexus() {
 
     const renderSubNav = () => `
         <nav class="sv-nexus-nav">
-            <div class="flex items-center gap-8">
-                <h1 class="text-lg font-black tracking-tighter text-white">NEXUS <span class="text-emerald-500">PRO</span></h1>
-                <div class="flex items-center gap-2">
+            <div class="sv-nexus-flex sv-nexus-items-center sv-nexus-gap-8">
+                <h1 class="sv-nexus-text-sm sv-nexus-font-black sv-nexus-tracking-tighter text-white">NEXUS <span class="text-emerald-500">PRO</span></h1>
+                <div class="sv-nexus-flex sv-nexus-items-center sv-nexus-gap-2">
                     <button onclick="window.app.switchNexusTab('dashboard')" class="sv-nexus-nav-link ${activeTab === 'dashboard' ? 'active' : ''}"><i data-lucide="layout"></i> Escritorio</button>
                     <button onclick="window.app.switchNexusTab('nexus')" class="sv-nexus-nav-link ${activeTab === 'nexus' ? 'active' : ''}"><i data-lucide="activity"></i> Proyectos</button>
                     <button onclick="window.app.switchNexusTab('cloud')" class="sv-nexus-nav-link ${activeTab === 'cloud' ? 'active' : ''}"><i data-lucide="hard-drive"></i> Cloud</button>
@@ -2554,22 +2555,22 @@ async function renderSovereignNexus() {
 
     if (activeTab === 'dashboard') {
         innerContent = `
-            <div class="space-y-8 animate-in">
+            <div class="sv-nexus-flex sv-nexus-flex-col sv-nexus-gap-8 animate-in">
                 <div class="sv-nexus-card p-12 text-center relative overflow-hidden bg-gradient-to-b from-white/[0.02] to-transparent">
-                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-4">Ingresos Brutos Consolidados</p>
+                    <p class="text-[10px] sv-nexus-font-black text-emerald-500 sv-nexus-uppercase tracking-[0.4em] sv-nexus-mb-4">Ingresos Brutos Consolidados</p>
                     <h2 class="sv-nexus-kpi-mega">${formatCurrency(totalPaid, '$')}</h2>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 sv-nexus-gap-8">
                     <div class="sv-nexus-card sv-nexus-card-compact border-l-4 border-l-amber-500/30">
-                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-4">Cuentas por Cobrar</p>
+                        <p class="text-[10px] sv-nexus-font-black text-gray-500 sv-nexus-uppercase tracking-[0.3em] sv-nexus-mb-4">Cuentas por Cobrar</p>
                         <h3 class="sv-nexus-kpi-sub text-amber-500">${formatCurrency(totalPending, '$')}</h3>
                     </div>
                     
                     <div class="sv-nexus-card sv-nexus-card-compact">
-                        <div class="flex justify-between items-start mb-6">
-                            <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Operaciones Activas</p>
-                            <h3 class="text-3xl font-black text-white">${state.nexusProjects.length.toString().padStart(2, '0')}</h3>
+                        <div class="sv-nexus-flex sv-nexus-justify-between sv-nexus-items-center sv-nexus-mb-4">
+                            <p class="text-[10px] sv-nexus-font-black text-gray-500 sv-nexus-uppercase tracking-[0.3em]">Operaciones Activas</p>
+                            <h3 class="sv-nexus-text-3xl sv-nexus-font-black text-white">${state.nexusProjects.length.toString().padStart(2, '0')}</h3>
                         </div>
                         <div class="sv-nexus-pipeline-bar">
                             ${Object.keys(stages).map(s => `<div class="sv-nexus-pipeline-segment ${s==='briefing'?'bg-white':s==='production'?'bg-blue-500':s==='feedback'?'bg-amber-500':'bg-emerald-500'}" style="width:${(stages[s]/(state.nexusProjects.length||1))*100}%"></div>`).join('')}
@@ -2581,25 +2582,25 @@ async function renderSovereignNexus() {
     } 
     else if (activeTab === 'nexus') {
         innerContent = `
-            <div class="grid grid-cols-12 gap-8 h-[calc(100vh-180px)]">
-                <div class="col-span-3 flex flex-col gap-4 border-r border-white/5 pr-6">
-                    <button onclick="window.app.openNexusModal('project')" class="sv-nexus-btn emerald w-full">Nueva Operación</button>
-                    <div class="flex-1 space-y-2 overflow-y-auto custom-scroll pr-2">
+            <div class="sv-nexus-grid-12 h-[calc(100vh-180px)]">
+                <div class="sv-nexus-col-3 sv-nexus-flex sv-nexus-flex-col sv-nexus-gap-4 border-r border-white/5 pr-6">
+                    <button onclick="window.app.openNexusModal('project')" class="sv-nexus-btn emerald sv-nexus-w-full">Nueva Operación</button>
+                    <div class="sv-nexus-flex-1 space-y-2 overflow-y-auto custom-scroll pr-2">
                         ${state.nexusProjects.map(p => `
                             <div onclick="window.app.selectNexusProject('${p.id}')" class="p-4 rounded-xl cursor-pointer transition-all border ${state.activeNexusProjectId === p.id ? 'border-emerald-500 bg-white/[0.03]' : 'border-white/5 hover:border-white/20 bg-[#050505]'}">
-                                <p class="text-xs font-black uppercase text-white truncate">${p.name}</p>
-                                <p class="text-[8px] text-gray-500 font-bold uppercase mt-1 tracking-widest flex items-center gap-1.5">
+                                <p class="text-xs sv-nexus-font-black sv-nexus-uppercase text-white sv-nexus-truncate">${p.name}</p>
+                                <p class="text-[8px] text-gray-500 sv-nexus-font-black sv-nexus-uppercase sv-nexus-mt-3 tracking-widest sv-nexus-flex sv-nexus-items-center sv-nexus-gap-2">
                                     <span class="w-1.5 h-1.5 rounded-full ${p.status==='finished'?'bg-emerald-500':'bg-blue-500'}"></span> ${p.status}
                                 </p>
                             </div>
                         `).join('')}
                     </div>
                 </div>
-                <div class="col-span-9 overflow-y-auto custom-scroll" id="nexus-workspace">
+                <div class="sv-nexus-col-9 overflow-y-auto custom-scroll" id="nexus-workspace">
                     ${!state.activeNexusProjectId ? `
-                        <div class="h-full flex flex-col items-center justify-center opacity-20 py-32">
-                            <i data-lucide="layers" class="w-16 h-16 mb-4"></i>
-                            <h4 class="text-xl font-black uppercase tracking-widest text-white">Workspace inactivo</h4>
+                        <div class="h-full sv-nexus-flex sv-nexus-flex-col sv-nexus-items-center sv-nexus-justify-center opacity-20 py-32">
+                            <i data-lucide="layers" class="w-16 h-16 sv-nexus-mb-4"></i>
+                            <h4 class="sv-nexus-text-3xl sv-nexus-font-black sv-nexus-uppercase tracking-widest text-white">Workspace inactivo</h4>
                         </div>
                     ` : renderActiveNexusProject()}
                 </div>

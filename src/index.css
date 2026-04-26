@@ -58,6 +58,11 @@ body {
     padding-bottom: 120px;
     display: flex;
     flex-direction: column;
+    transition: max-width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-container.full-width-mode {
+    max-width: 1400px;
 }
 
 /* --- HEADERS --- */
@@ -1096,6 +1101,37 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
 .sv-nexus-highlight-amber { background: rgba(245, 158, 11, 0.3); border-radius: 4px; padding: 2px 4px; }
 .sv-nexus-highlight-blue { background: rgba(59, 130, 246, 0.3); border-radius: 4px; padding: 2px 4px; }
 .sv-nexus-timestamp { color: #10b981; font-weight: 800; font-family: monospace; background: rgba(16, 185, 129, 0.1); padding: 2px 6px; border-radius: 4px; }
+
+/* --- NEXUS LAYOUT UTILS --- */
+.sv-nexus-grid-12 { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2rem; }
+.sv-nexus-col-3 { grid-column: span 3 / span 3; }
+.sv-nexus-col-9 { grid-column: span 9 / span 9; }
+.sv-nexus-flex { display: flex; }
+.sv-nexus-flex-col { flex-direction: column; }
+.sv-nexus-items-center { align-items: center; }
+.sv-nexus-justify-between { justify-content: space-between; }
+.sv-nexus-gap-2 { gap: 0.5rem; }
+.sv-nexus-gap-4 { gap: 1rem; }
+.sv-nexus-gap-8 { gap: 2rem; }
+.sv-nexus-w-full { width: 100%; }
+.sv-nexus-mt-3 { margin-top: 0.75rem; }
+.sv-nexus-mb-4 { margin-bottom: 1rem; }
+.sv-nexus-text-xs { font-size: 0.75rem; }
+.sv-nexus-text-sm { font-size: 0.875rem; }
+.sv-nexus-text-3xl { font-size: 1.875rem; }
+.sv-nexus-font-black { font-weight: 900; }
+.sv-nexus-uppercase { text-transform: uppercase; }
+.sv-nexus-tracking-tighter { letter-spacing: -0.05em; }
+.sv-nexus-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.animate-in {
+    animation: sv-fade-in 0.4s ease-out forwards;
+}
+
+@keyframes sv-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
 .monolith-nav-btn.active i {
     color: var(--monolith-emerald);
