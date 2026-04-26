@@ -2775,3 +2775,144 @@ window.app.selectEditorProject = (project) => {
     state.selectedEditorProject = project;
     render();
 };
+
+/** --- PHASE 3: CLIENTES DASHBOARD (EXACT CLONE) --- **/
+function renderClientesDashboard() {
+    return `
+        <div class="monolith-wrapper" style="display:flex;">
+            <!-- SIDEBAR EXACT CLONE -->
+            <aside class="monolith-sidebar" style="width:280px; background:#000; border-right:1px solid #111; padding:40px 25px;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:60px;">
+                    <div style="width:35px; height:35px; background:#fff; border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                        <i data-lucide="zap" style="color:#000; width:20px;"></i>
+                    </div>
+                    <div>
+                        <h2 style="font-weight:900; font-size:1.1rem; line-height:1; letter-spacing:-0.02em;">STUDIO <span style="color:#666;">SYNC</span></h2>
+                        <p style="font-size:0.6rem; font-weight:700; color:#444; font-style:italic;">Professional Pro</p>
+                    </div>
+                </div>
+
+                <p class="monolith-label-micro" style="margin-bottom:20px; color:#333;">PANEL DE CONTROL</p>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <button class="monolith-nav-btn active"><i data-lucide="layout-grid"></i> Escritorio</button>
+                    <button class="monolith-nav-btn"><i data-lucide="briefcase"></i> Proyectos</button>
+                    <button class="monolith-nav-btn"><i data-lucide="cloud"></i> Studio Cloud</button>
+                    <button class="monolith-nav-btn"><i data-lucide="credit-card"></i> Finanzas</button>
+                </div>
+
+                <div style="margin-top:auto; padding-top:40px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <p class="monolith-label-micro" style="font-size:0.6rem;">DRIVE STATUS</p>
+                        <i data-lucide="refresh-cw" style="width:12px; color:#10b981;"></i>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                        <div style="width:8px; height:8px; background:#10b981; border-radius:50%;"></div>
+                        <p style="font-size:0.7rem; font-weight:700;">director@studiosync.pro</p>
+                    </div>
+                    <div style="width:100%; height:4px; background:#111; border-radius:2px; margin-bottom:8px;">
+                        <div style="width:84%; height:100%; background:#fff; border-radius:2px;"></div>
+                    </div>
+                    <p style="text-align:right; font-size:0.6rem; color:#444; font-weight:700;">8.4 TB DE 10 TB</p>
+                </div>
+            </aside>
+
+            <!-- MAIN CONTENT -->
+            <main style="flex:1; padding:60px 80px; background:#0c0c0d;">
+                <header style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:60px;">
+                    <div>
+                        <h1 style="font-size:3.5rem; font-weight:900; font-style:italic; letter-spacing:-0.05em; display:flex; align-items:baseline; gap:10px;">
+                            STUDIO <span style="font-weight:100; color:#444;">SYNC PRO</span>
+                        </h1>
+                        <div style="display:flex; align-items:center; gap:15px; margin-top:10px;">
+                            <p style="font-size:0.75rem; font-weight:700; color:#555; display:flex; align-items:center; gap:8px;">
+                                <i data-lucide="calendar" style="width:14px;"></i> 26 ABR, 2026
+                            </p>
+                            <p style="font-size:0.75rem; font-weight:900; color:#fff; letter-spacing:0.1em; text-transform:uppercase;">
+                                • SISTEMA OPERATIVO PERSONAL
+                            </p>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:15px;">
+                        <button style="width:45px; height:45px; background:#111; border:1px solid #222; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff;">
+                            <i data-lucide="search" style="width:18px;"></i>
+                        </button>
+                        <button class="noir-btn-tab active" style="background:#fff; color:#000; padding:0 25px; border-radius:12px; font-weight:900; font-size:0.85rem;">Nuevo Proyecto</button>
+                    </div>
+                </header>
+
+                <!-- KPI GRID -->
+                <div style="display:grid; grid-template-columns: 1.5fr 1fr 1fr; gap:20px; margin-bottom:40px;">
+                    <div class="monolith-card-elite" style="padding:40px; border-left:2px solid #10b981;">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                            <span style="color:#10b981; font-weight:900;">$</span>
+                            <p class="monolith-label-micro" style="font-size:0.65rem;">INGRESOS PROYECTADOS (MES)</p>
+                        </div>
+                        <div style="display:flex; align-items:baseline; gap:20px;">
+                            <h2 style="font-size:3.5rem; font-weight:900;">,200.00</h2>
+                            <span style="background:rgba(16,185,129,0.1); color:#10b981; padding:4px 10px; border-radius:20px; font-size:0.7rem; font-weight:900;">+12.5%</span>
+                        </div>
+                    </div>
+                    <div class="monolith-card-elite" style="padding:40px;">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                            <i data-lucide="layers" style="width:14px; color:#444;"></i>
+                            <p class="monolith-label-micro" style="font-size:0.65rem;">PROYECTOS ACTIVOS</p>
+                        </div>
+                        <h2 style="font-size:3.5rem; font-weight:900;">2</h2>
+                    </div>
+                    <div style="background:#fff; border-radius:24px; padding:40px; color:#000; display:flex; flex-direction:column; justify-content:space-between;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <i data-lucide="zap" style="width:16px; color:#000;"></i>
+                            <p style="font-size:0.65rem; font-weight:900; letter-spacing:0.2em; text-transform:uppercase;">EFICIENCIA</p>
+                        </div>
+                        <h2 style="font-size:4rem; font-weight:900;">98%</h2>
+                    </div>
+                </div>
+
+                <!-- BOTTOM GRID -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
+                    <div class="monolith-card-elite">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:30px;">
+                            <i data-lucide="clock" style="width:16px; color:#444;"></i>
+                            <p class="monolith-label-micro" style="font-size:0.65rem;">PRÓXIMAS ENTREGAS</p>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:20px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:15px; border-bottom:1px solid #1a1a1b;">
+                                <div>
+                                    <h4 style="font-size:1.1rem; font-weight:900; letter-spacing:-0.02em;">Campaña Redes Sociales Q2</h4>
+                                    <p style="font-size:0.75rem; color:#444; font-style:italic; margin-top:4px;">Pollos 'El Gran Sabor'</p>
+                                </div>
+                                <span style="background:#111; padding:6px 12px; border-radius:8px; font-size:0.65rem; font-weight:900; color:#fff; border:1px solid #222;">15 MAY</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <h4 style="font-size:1.1rem; font-weight:900; letter-spacing:-0.02em;">Campaña Lanzamiento Sne...</h4>
+                                    <p style="font-size:0.75rem; color:#444; font-style:italic; margin-top:4px;">Sport Feet</p>
+                                </div>
+                                <span style="background:#111; padding:6px 12px; border-radius:8px; font-size:0.65rem; font-weight:900; color:#fff; border:1px solid #222;">20 MAY</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="monolith-card-elite">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:30px;">
+                            <i data-lucide="zap" style="width:16px; color:#444;"></i>
+                            <p class="monolith-label-micro" style="font-size:0.65rem;">TAREAS RÁPIDAS</p>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:15px;">
+                            <div style="display:flex; align-items:center; gap:15px; background:#0e0e0f; padding:20px; border-radius:15px; border:1px solid #1a1a1b;">
+                                <div style="width:24px; height:24px; border:2px solid #333; border-radius:50%;"></div>
+                                <p style="font-size:0.95rem; font-weight:700; color:#888;">Solicitar Logo a Pollos El Gran Sabor</p>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:15px; background:#0e0e0f; padding:20px; border-radius:15px; border:1px solid #1a1a1b; opacity:0.5;">
+                                <div style="width:24px; height:24px; background:#10b981; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                                    <i data-lucide="check" style="width:14px; color:#000;"></i>
+                                </div>
+                                <p style="font-size:0.95rem; font-weight:700; color:#444; text-decoration:line-through;">Revisar corte offline Sport Feet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    `;
+}
