@@ -1124,6 +1124,19 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
 .sv-nexus-tracking-tighter { letter-spacing: -0.05em; }
 .sv-nexus-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+.hidden { display: none !important; }
+
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+
+.fixed { position: fixed; }
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+.z-\[2000\] { z-index: 2000; }
+.backdrop-blur-sm { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.backdrop-blur-md { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.bg-black\/95 { background-color: rgba(0, 0, 0, 0.95); }
+
 .animate-in {
     animation: sv-fade-in 0.4s ease-out forwards;
 }

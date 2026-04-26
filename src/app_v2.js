@@ -2514,6 +2514,8 @@ initApp();
 
 
 /** --- SOVEREIGN NEXUS: ELITE PRODUCTION SUITE --- **/
+const currencyMap = { 'USD': '$', 'BOB': 'Bs.', 'EUR': '€' };
+
 async function renderSovereignNexus() {
     const activeTab = state.nexusTab || 'dashboard';
     
