@@ -844,3 +844,26 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
 .noir-card {
     margin: 0 5px 15px 5px; /* Compacto y con aire mínimo */
 }
+
+/* --- MULTIPLATAFORMA: DISEÑO EXPANSIVO TOTAL --- */
+.app-container, #app {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* En Escritorio/Tablet/TV: Las tarjetas se ponen una al lado de otra */
+@media (min-width: 768px) {
+    .editor-grid-auto {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+}
+
+.content-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+

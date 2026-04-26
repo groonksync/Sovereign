@@ -2547,14 +2547,14 @@ function renderEditorProSuite() {
                     </h2>
                 </header>
                 
-                <div style="display:grid; grid-template-columns: 1fr; gap:15px; margin-bottom:25px;">
+                <div class="editor-grid-auto" style="margin-bottom:25px; padding: 0 10px;">
                     <div class="noir-card" style="border-left: 3px solid #10b981; background:linear-gradient(135deg, #141415 0%, #0c0c0d 100%);">
                         <p class="noir-label-small">Ingresos Proyectados (Mes)</p>
-                        <h3 style="font-size:2.2rem; font-weight:900;">$14,200.00</h3>
+                        <h3 style="font-size:2.5rem; font-weight:900;">$14,200.00</h3>
                     </div>
                     <div class="noir-card" style="background:#141415;">
                         <p class="noir-label-small">Proyectos Activos</p>
-                        <h3 style="font-size:2.2rem; font-weight:900; color:#555;">${proyectos.length}</h3>
+                        <h3 style="font-size:2.5rem; font-weight:900; color:#555;">${proyectos.length}</h3>
                     </div>
                 </div>
 
