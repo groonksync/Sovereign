@@ -2359,6 +2359,11 @@ window.app = {
                 callback: (response) => {
                     if (response.access_token) {
                         window.googleAccessToken = response.access_token;
+                        // Guardar token y hora de expiración (1 hora)
+                        const expiry = Date.now() + (3600 * 1000);
+                        localStorage.setItem('google_access_token', response.access_token);
+                        localStorage.setItem('google_token_expiry', expiry.toString());
+                        
                         localStorage.setItem('google_auth_linked', 'true');
                         const dot = document.getElementById('google-status-dot');
                         if (dot) dot.style.background = '#4285F4'; 
@@ -2435,13 +2440,18 @@ window.app = {
 // Start App
 const initApp = () => {
     loadState();
-    // Intentar reconexión silenciosa de Google si ya estaba vinculado
-    if (localStorage.getItem('google_auth_linked') === 'true') {
+    
+    // Recuperar token si aún es válido
+    const savedToken = localStorage.getItem('google_access_token');
+    const expiry = localStorage.getItem('google_token_expiry');
+    
+    if (savedToken && expiry && Date.now() < parseInt(expiry)) {
+        window.googleAccessToken = savedToken;
         setTimeout(() => {
-            if (window.google && window.google.accounts) {
-                window.app.handleGoogleAuth(true);
-            }
-        }, 2000); // Esperar a que carguen los scripts de Google
+            const dot = document.getElementById('google-status-dot');
+            if (dot) dot.style.background = '#4285F4';
+            window.app.getOrCreateDriveFolder();
+        }, 1000);
     }
 };
 
