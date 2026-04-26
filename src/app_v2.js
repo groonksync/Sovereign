@@ -2514,18 +2514,29 @@ const initApp = () => {
 
 initApp();
 
-/** --- PHASE 2: EDITOR PRO - MONOLITH ELITE OS --- **/
+/** --- PHASE 2: EDITOR PRO - WORKSPACE MULTIDISCIPLINARIO --- **/
 function renderEditorProSuite() {
     const activeTab = state.editorProTab || 'escritorio';
     const selectedProject = state.selectedEditorProject;
 
-    // --- MOCK DATA (Simulación del Modelo Conceptual) ---
-    const config = { workspaceRoot: "G:\\Mi unidad\\Editor_OS", templates: ["01_Material_Bruto", "02_Audio", "03_Graficos", "04_Renders"] };
+    // --- MOCK DATA (Modelo Multidisciplinario) ---
     const proyectos = [
         {
-            id: 1, cliente: "Pollos 'El Gran Sabor'", titulo: "Campaña Redes Sociales Q2", tipo: "Edición Múltiple", estado: "En Curso", presupuesto: 1200, pagado: 600, entrega: "15 May", notas: "Ritmo rápido, transiciones dinámicas.", carpetaDrive: "/Clientes/Pollos_El_Gran_Sabor",
-            entregables: [{ id: 101, titulo: "Spot 15s", obligatorio: true, desc: "Formato Vertical Reels", versiones: ["v1", "v2"] }],
-            activos: { contenido: [{ nombre: "Toma_Principal.mp4", peso: "1.2 GB", fecha: "24 Abr" }] }
+            id: 1, cliente: "TechNova Solutions", titulo: "Rediseño Ecosystem 2026", tipo: "Desarrollo Web & App", estado: "Briefing", 
+            presupuesto_usd: 4500, pago_metodo: "PayPal", cobro_tipo: "One-time",
+            proxima_reunion: "2026-05-10T15:00:00",
+            brief_notes: "El cliente busca una estética cyberpunk pero limpia. Necesitan integración con Stripe y un dashboard de usuario.",
+            requerimientos: [
+                { id: 1, desc: "Modo Oscuro Obligatorio", obligatorio: true },
+                { id: 2, desc: "Animaciones con Framer Motion", obligatorio: false }
+            ],
+            entregables: [
+                { id: 101, titulo: "Landing Page", objetivo: "Conversión de Leads", specs: "React + Tailwind, Optimización SEO" },
+                { id: 102, titulo: "Mobile Dashboard", objetivo: "Gestión de Activos", specs: "React Native, Gráficos en tiempo real" }
+            ],
+            referencias: [
+                { url: "https://linear.app", creador: "Linear Team", desc: "Referencia para el diseño de interfaces" }
+            ]
         }
     ];
 
@@ -2533,172 +2544,151 @@ function renderEditorProSuite() {
         <aside class="monolith-sidebar">
             <div style="margin-bottom:40px; display:flex; align-items:center; gap:12px; padding:0 15px;">
                 <div style="width:32px; height:32px; background:#fff; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#000;">
-                    <i data-lucide="command" style="width:18px;"></i>
+                    <i data-lucide="monitor" style="width:18px;"></i>
                 </div>
-                <h2 style="font-weight:900; letter-spacing:-0.05em; font-size:1.1rem; text-transform:uppercase;">Monolith <span style="color:#444;">Elite</span></h2>
+                <h2 style="font-weight:900; letter-spacing:-0.05em; font-size:1.1rem; text-transform:uppercase;">Workspace <span style="color:#444;">Pro</span></h2>
             </div>
             <button class="monolith-nav-btn ${activeTab === 'escritorio' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('escritorio')">
                 <i data-lucide="layout-grid"></i> Escritorio
             </button>
-            <button class="monolith-nav-btn ${activeTab === 'proyectos' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('proyectos')">
-                <i data-lucide="layers"></i> Proyectos
+            <button class="monolith-nav-btn ${activeTab === 'briefing' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('briefing')">
+                <i data-lucide="message-square"></i> Briefing
             </button>
-            <button class="monolith-nav-btn ${activeTab === 'archivos' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('archivos')">
-                <i data-lucide="cloud"></i> Editor Cloud
+            <button class="monolith-nav-btn ${activeTab === 'pipeline' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('pipeline')">
+                <i data-lucide="layers"></i> Pipeline
+            </button>
+            <button class="monolith-nav-btn ${activeTab === 'inspiracion' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('inspiracion')">
+                <i data-lucide="sparkles"></i> Inspiración
             </button>
             <button class="monolith-nav-btn ${activeTab === 'finanzas' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('finanzas')">
-                <i data-lucide="trending-up"></i> Finanzas
+                <i data-lucide="dollar-sign"></i> Finanzas
             </button>
         </aside>
     `;
 
     let innerContent = '';
 
-    // --- VISTA: ESCRITORIO ---
+    // --- VISTA: DASHBOARD ---
     if (activeTab === 'escritorio') {
         innerContent = `
             <div class="animate-in">
-                <p class="monolith-label-micro" style="margin-bottom:10px;">Status: Operational</p>
-                <h1 class="monolith-h1" style="margin-bottom:40px;">Dashboard</h1>
+                <p class="monolith-label-micro" style="margin-bottom:10px;">Workspace Active</p>
+                <h1 class="monolith-h1" style="margin-bottom:40px;">Overview</h1>
                 
                 <div class="editor-grid-auto" style="gap:20px; margin-bottom:40px;">
                     <div class="monolith-card-elite">
-                        <p class="monolith-label-micro">Ingresos Proyectados</p>
-                        <h3 style="font-size:2.2rem; font-weight:900; margin-top:10px;">$14,200.00</h3>
+                        <p class="monolith-label-micro">Ventas Totales (USD)</p>
+                        <h3 style="font-size:2.2rem; font-weight:900; margin-top:10px;">$28,450.00</h3>
                     </div>
                     <div class="monolith-card-elite">
                         <p class="monolith-label-micro">Proyectos Activos</p>
-                        <h3 style="font-size:2.2rem; font-weight:900; margin-top:10px;">${proyectos.length}</h3>
+                        <h3 style="font-size:2.2rem; font-weight:900; margin-top:10px;">12</h3>
                     </div>
-                    <div class="monolith-card-elite" style="border-left: 2px solid var(--monolith-emerald);">
-                        <p class="monolith-label-micro">Eficiencia</p>
-                        <h3 style="font-size:2.2rem; font-weight:900; margin-top:10px;">94%</h3>
+                    <div class="monolith-card-elite">
+                        <p class="monolith-label-micro">Próxima Reunión</p>
+                        <h3 style="font-size:1.2rem; font-weight:900; margin-top:10px; color:var(--monolith-emerald);">15 May - 10:00 AM</h3>
                     </div>
                 </div>
 
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:30px;">
-                    <div class="monolith-card-elite">
-                        <p class="monolith-label-micro" style="margin-bottom:20px;">Próximas Entregas</p>
+                <div class="monolith-card-elite">
+                    <p class="monolith-label-micro" style="margin-bottom:20px;">Clientes Recientes</p>
+                    <div style="display:flex; flex-direction:column; gap:15px;">
                         ${proyectos.map(p => `
-                            <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <div>
-                                    <h4 style="font-size:0.9rem; font-weight:700;">${p.titulo}</h4>
-                                    <p style="font-size:0.7rem; color:#555;">${p.cliente}</p>
-                                </div>
-                                <span style="font-size:0.75rem; font-weight:900; color:#fff;">${p.entrega}</span>
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.03);">
+                                <div><h4 style="font-weight:700;">${p.cliente}</h4><p style="font-size:0.7rem; color:#555;">${p.tipo}</p></div>
+                                <span class="noir-badge-pro">$${p.presupuesto_usd} USD</span>
                             </div>
                         `).join('')}
                     </div>
-                    <div class="monolith-card-elite">
-                        <p class="monolith-label-micro" style="margin-bottom:20px;">Quick Tasks</p>
-                        <div style="display:flex; flex-direction:column; gap:12px;">
-                            <div style="display:flex; gap:10px; font-size:0.85rem; color:#888;"><i data-lucide="circle" style="width:14px;"></i> Exportar versión final Pollos</div>
-                            <div style="display:flex; gap:10px; font-size:0.85rem; color:#888;"><i data-lucide="circle" style="width:14px;"></i> Organizar material nuevo cliente</div>
+                </div>
+            </div>
+        `;
+    }
+    // --- VISTA: BRIEFING ---
+    else if (activeTab === 'briefing') {
+        innerContent = `
+            <div class="animate-in">
+                <h1 class="monolith-h1" style="margin-bottom:40px;">Briefing</h1>
+                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:30px;">
+                    <div>
+                        <p class="monolith-label-micro" style="margin-bottom:15px;">Notas de Reunión (Google Meet / Zoom)</p>
+                        <textarea class="glass-input" style="width:100%; height:300px; padding:20px; font-family:'Inter', sans-serif; font-size:0.95rem; line-height:1.6; border-radius:15px; background:rgba(255,255,255,0.02); color:#ccc;" placeholder="Empieza a escribir tus apuntes aquí...">${proyectos[0].brief_notes}</textarea>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:30px;">
+                        <div class="monolith-card-elite">
+                            <p class="monolith-label-micro" style="margin-bottom:20px;">Requerimientos</p>
+                            ${proyectos[0].requerimientos.map(r => `
+                                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                                    <input type="checkbox" ${r.obligatorio ? 'checked' : ''} style="accent-color:var(--monolith-emerald);">
+                                    <span style="font-size:0.85rem; color:${r.obligatorio ? '#fff' : '#666'};">${r.desc}</span>
+                                    <span style="font-size:0.6rem; text-transform:uppercase; font-weight:900; margin-left:auto; color:${r.obligatorio ? '#f44336' : '#555'};">${r.obligatorio ? 'Obligatorio' : 'Opcional'}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="monolith-card-elite">
+                            <p class="monolith-label-micro" style="margin-bottom:15px;">Agenda de Seguimiento</p>
+                            <input type="datetime-local" class="glass-input" value="${proyectos[0].proxima_reunion.slice(0,16)}" style="font-size:0.8rem;">
                         </div>
                     </div>
                 </div>
             </div>
         `;
-    } 
-    // --- VISTA: PROYECTOS ---
-    else if (activeTab === 'proyectos') {
-        if (!selectedProject) {
-            innerContent = `
-                <div class="animate-in">
-                    <h1 class="monolith-h1" style="margin-bottom:40px;">Pipeline</h1>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:20px;">
-                        ${proyectos.map(p => `
-                            <div onclick="window.app.selectEditorProject(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="monolith-card-elite" style="cursor:pointer;">
-                                <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                                    <div style="width:40px; height:40px; background:rgba(255,255,255,0.03); border-radius:10px; display:flex; align-items:center; justify-content:center;">
-                                        <i data-lucide="video" style="width:20px;"></i>
-                                    </div>
-                                    <span class="noir-badge-pro">${p.estado}</span>
-                                </div>
-                                <h4 style="font-size:1.1rem; font-weight:900; text-transform:uppercase; margin-bottom:5px;">${p.titulo}</h4>
-                                <p style="font-size:0.8rem; color:#555; margin-bottom:20px;">${p.cliente}</p>
-                                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.05); pt-15px; margin-top:20px; padding-top:15px;">
-                                    <span style="font-size:0.75rem; color:#888;">Entrega: <b>${p.entrega}</b></span>
-                                    <span style="font-size:0.9rem; font-weight:900;">$${p.presupuesto}</span>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
+    }
+    // --- VISTA: PIPELINE ---
+    else if (activeTab === 'pipeline') {
+        innerContent = `
+            <div class="animate-in">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:40px;">
+                    <h1 class="monolith-h1">Pipeline</h1>
+                    <button class="noir-btn-tab active" style="background:#fff; color:#000;">+ Nuevo Proyecto</button>
                 </div>
-            `;
-        } else {
-            innerContent = `
-                <div class="animate-in">
-                    <button onclick="window.app.selectEditorProject(null)" class="monolith-nav-btn" style="margin-bottom:20px; padding-left:0;">
-                        <i data-lucide="arrow-left"></i> Volver al Pipeline
-                    </button>
-                    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:40px;">
-                        <div>
-                            <p class="monolith-label-micro">Project Details</p>
-                            <h1 class="monolith-h1">${selectedProject.titulo}</h1>
-                        </div>
-                        <button class="noir-btn-tab active" style="background:var(--monolith-emerald); color:#000;">Facturar</button>
-                    </div>
-
-                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:30px;">
-                        <div style="display:flex; flex-direction:column; gap:30px;">
-                            <div class="monolith-card-elite">
-                                <p class="monolith-label-micro" style="margin-bottom:15px;">Dirección Creativa (Brief)</p>
-                                <p style="font-size:1rem; color:#aaa; line-height:1.6; font-style:italic;">"${selectedProject.notas}"</p>
+                
+                <div style="display:flex; flex-direction:column; gap:30px;">
+                    ${proyectos.map(p => `
+                        <div class="monolith-card-elite">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:25px;">
+                                <div>
+                                    <p class="monolith-label-micro" style="color:var(--monolith-emerald);">${p.tipo}</p>
+                                    <h2 style="font-size:1.8rem; font-weight:900; margin-top:5px;">${p.titulo}</h2>
+                                    <p style="font-size:0.85rem; color:#555;">Cliente: <b>${p.cliente}</b></p>
+                                </div>
+                                <div style="text-align:right;">
+                                    <span class="noir-badge-pro">${p.estado}</span>
+                                    <h3 style="font-size:1.5rem; font-weight:900; margin-top:10px;">$${p.presupuesto_usd} USD</h3>
+                                </div>
                             </div>
-                            <div class="monolith-card-elite">
-                                <p class="monolith-label-micro" style="margin-bottom:20px;">Entregables Obligatorios</p>
-                                ${selectedProject.entregables.map(e => `
-                                    <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:rgba(255,255,255,0.02); border-radius:12px;">
-                                        <div>
-                                            <h5 style="font-weight:700;">${e.titulo}</h5>
-                                            <p style="font-size:0.7rem; color:#555;">${e.desc}</p>
-                                        </div>
-                                        <div style="display:flex; gap:5px;">
-                                            ${e.versiones.map(v => `<span class="noir-badge-pro" style="font-size:0.6rem;">${v}</span>`).join('')}
-                                        </div>
+                            
+                            <p class="monolith-label-micro" style="margin-bottom:20px;">Desglose de Entregables</p>
+                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:15px;">
+                                ${p.entregables.map(e => `
+                                    <div style="padding:20px; background:rgba(255,255,255,0.02); border-radius:15px; border:1px solid rgba(255,255,255,0.05);">
+                                        <h4 style="font-weight:800; font-size:0.9rem; margin-bottom:8px;">${e.titulo}</h4>
+                                        <p style="font-size:0.75rem; color:#888; margin-bottom:12px;"><b>Objetivo:</b> ${e.objetivo}</p>
+                                        <p style="font-size:0.7rem; color:#555; font-style:italic;">${e.specs}</p>
                                     </div>
                                 `).join('')}
                             </div>
                         </div>
-                        <div class="monolith-card-elite" style="height:fit-content;">
-                            <p class="monolith-label-micro" style="margin-bottom:20px;">Balance Financiero</p>
-                            <div style="margin-bottom:20px;">
-                                <p style="font-size:0.7rem; color:#555;">Presupuesto Total</p>
-                                <h4 style="font-size:1.5rem; font-weight:900;">$${selectedProject.presupuesto}</h4>
-                            </div>
-                            <div style="margin-bottom:20px;">
-                                <p style="font-size:0.7rem; color:#555;">Cobrado</p>
-                                <h4 style="font-size:1.5rem; font-weight:900; color:var(--monolith-emerald);">$${selectedProject.pagado}</h4>
-                            </div>
-                            <div style="width:100%; height:4px; background:#222; border-radius:2px;">
-                                <div style="width:${(selectedProject.pagado/selectedProject.presupuesto)*100}%; height:100%; background:var(--monolith-emerald);"></div>
-                            </div>
-                        </div>
-                    </div>
+                    `).join('')}
                 </div>
-            `;
-        }
+            </div>
+        `;
     }
-    // --- VISTA: EDITOR CLOUD ---
-    else if (activeTab === 'archivos') {
+    // --- VISTA: INSPIRACIÓN ---
+    else if (activeTab === 'inspiracion') {
         innerContent = `
             <div class="animate-in">
-                <h1 class="monolith-h1" style="margin-bottom:40px;">Editor Cloud</h1>
-                <div class="monolith-card-elite" style="margin-bottom:30px; display:flex; justify-content:space-between; align-items:center; border-left:4px solid #444;">
-                    <div>
-                        <p class="monolith-label-micro">Workspace Local Estándar</p>
-                        <code style="font-size:0.9rem; color:#888;">${config.workspaceRoot}</code>
-                    </div>
-                    <i data-lucide="settings" style="color:#444;"></i>
-                </div>
-
-                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:20px;">
-                    ${proyectos.map(p => `
-                        <div class="monolith-card-elite" style="text-align:center; padding:30px;">
-                            <i data-lucide="folder" style="width:40px; height:40px; margin:0 auto 15px auto; color:#333;"></i>
-                            <h4 style="font-size:0.8rem; font-weight:900; text-transform:uppercase;">${p.cliente}</h4>
-                            <p class="monolith-label-micro" style="margin-top:10px;">${p.activos.contenido.length} Archivos</p>
+                <h1 class="monolith-h1" style="margin-bottom:40px;">Referencias</h1>
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:20px;">
+                    ${proyectos[0].referencias.map(r => `
+                        <div class="monolith-card-elite">
+                            <div style="width:100%; height:150px; background:rgba(255,255,255,0.03); border-radius:10px; margin-bottom:20px; display:flex; align-items:center; justify-content:center;">
+                                <i data-lucide="external-link" style="color:#222; width:40px; height:40px;"></i>
+                            </div>
+                            <p class="monolith-label-micro">Referencia Estilo</p>
+                            <h4 style="font-weight:700; margin:10px 0;">${r.creador}</h4>
+                            <p style="font-size:0.75rem; color:#555; margin-bottom:15px;">${r.desc}</p>
+                            <a href="${r.url}" target="_blank" style="color:var(--monolith-emerald); font-size:0.8rem; font-weight:700; text-decoration:none;">Ver Referencia →</a>
                         </div>
                     `).join('')}
                 </div>
@@ -2709,24 +2699,24 @@ function renderEditorProSuite() {
     else if (activeTab === 'finanzas') {
         innerContent = `
             <div class="animate-in">
-                <h1 class="monolith-h1" style="margin-bottom:40px;">Finanzas</h1>
-                
-                <div class="monolith-card-elite" style="background:linear-gradient(135deg, #141415 0%, #000 100%); padding:60px; margin-bottom:40px; position:relative; overflow:hidden;">
-                    <div style="position:relative; z-index:1;">
-                        <p class="monolith-label-micro" style="color:var(--monolith-emerald);">Ganancia Neta Acumulada 2026</p>
-                        <h1 style="font-size:5rem; font-weight:900; letter-spacing:-0.05em; margin-top:20px;">$84,500<span style="font-size:1.5rem; color:#333; margin-left:15px;">USD</span></h1>
-                    </div>
-                    <i data-lucide="trending-up" style="position:absolute; right:-20px; bottom:-20px; width:200px; height:200px; color:rgba(16, 185, 129, 0.05);"></i>
+                <h1 class="monolith-h1" style="margin-bottom:40px;">Finanzas USD</h1>
+                <div class="monolith-card-elite" style="background:linear-gradient(135deg, #141415 0%, #000 100%); padding:60px; margin-bottom:40px;">
+                    <p class="monolith-label-micro" style="color:var(--monolith-emerald);">Ingresos Totales en Dólares</p>
+                    <h1 style="font-size:5rem; font-weight:900; letter-spacing:-0.05em; margin-top:20px;">$28,450<span style="font-size:1.5rem; color:#333; margin-left:15px;">USD</span></h1>
                 </div>
 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:20px;">
                     <div class="monolith-card-elite">
-                        <p class="monolith-label-micro" style="margin-bottom:20px;">Crecimiento Anual</p>
-                        <h3 style="font-size:2.5rem; font-weight:900; color:var(--monolith-emerald);">+24.8%</h3>
+                        <p class="monolith-label-micro">Método Predominante</p>
+                        <h3 style="font-size:1.8rem; font-weight:900; margin-top:10px;">PayPal</h3>
                     </div>
                     <div class="monolith-card-elite">
-                        <p class="monolith-label-micro" style="margin-bottom:20px;">Proyectos Completados</p>
-                        <h3 style="font-size:2.5rem; font-weight:900;">142</h3>
+                        <p class="monolith-label-micro">Tipo de Cobro</p>
+                        <h3 style="font-size:1.8rem; font-weight:900; margin-top:10px;">Retención Mensual</h3>
+                    </div>
+                    <div class="monolith-card-elite">
+                        <p class="monolith-label-micro">Status Fiscal</p>
+                        <h3 style="font-size:1.8rem; font-weight:900; margin-top:10px; color:var(--monolith-emerald);">SaaS / Iguala</h3>
                     </div>
                 </div>
             </div>
@@ -2744,6 +2734,18 @@ function renderEditorProSuite() {
         </div>
     `;
 }
+
+/** --- UTILS & HELPERS --- **/
+window.app.handleEditorTabChange = (tab) => {
+    state.editorProTab = tab;
+    state.selectedEditorProject = null;
+    render();
+};
+
+window.app.selectEditorProject = (project) => {
+    state.selectedEditorProject = project;
+    render();
+};
 
 /** --- UTILS & HELPERS --- **/
 window.app.handleEditorTabChange = (tab) => {
