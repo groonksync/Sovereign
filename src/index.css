@@ -400,6 +400,45 @@ body.dark-mode .custom-select { background-color: rgba(255,255,255,0.05); }
 .receipt-footer { text-align: center; margin-top: 30px; font-size: 0.6rem; color: #cbd5e0; }
 
 /* --- PRINT OPTIMIZATION --- */
+.receipt-item-card {
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.item-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.item-field-group label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-left: 4px;
+}
+
+.item-field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 0.8fr;
+    gap: 10px;
+}
+
+.currency-select {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
 @media print {
     .bottom-tab-bar, .fab, .back-btn, .header-actions, .btn-primary, .fab-receipt { display: none !important; }
     .app-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }

@@ -126,9 +126,9 @@ async function updateLoan(loanId, updates) {
 }
 
 // --- UTILS ---
-const formatCurrency = (amount) => {
+const formatCurrency = (amount, symbol = 'Bs.') => {
     const val = parseFloat(amount || 0);
-    return isNaN(val) ? 'Bs. 0.00' : 'Bs. ' + new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2 }).format(val);
+    return isNaN(val) ? `${symbol} 0.00` : `${symbol} ` + new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2 }).format(val);
 };
 const formatDate = (dateStr) => {
     if (!dateStr) return 'Pendiente';
@@ -443,22 +443,14 @@ function renderReceiptRegister() {
                     <label>Nombre del Cliente</label>
                     <input type="text" name="clientName" placeholder="Ej: Juan Pérez" required>
                 </div>
-                <div class="form-group">
-                    <label>Marca / Empresa</label>
-                    <input type="text" name="brandName" placeholder="Ej: Studio Sync" required>
-                </div>
             </section>
 
             <section class="form-section">
                 <h3 class="section-title">Desglose de Servicios</h3>
                 <div id="items-container">
-                    <div class="form-row item-row" style="margin-bottom:10px; gap:8px;">
-                        <input type="text" name="itemDesc[]" placeholder="Servicio" style="flex:2;" required>
-                        <input type="number" name="itemQty[]" placeholder="Cant" style="flex:0.5;" value="1" required>
-                        <input type="number" name="itemPrice[]" placeholder="Precio" style="flex:1;" required>
-                    </div>
+                    <!-- Los items se añadirán aquí dinámicamente -->
                 </div>
-                <button type="button" class="btn-secondary" style="width:100%; margin-top:10px; font-size:0.7rem; padding:8px;" onclick="window.app.addReceiptItem()">+ Añadir Servicio</button>
+                <button type="button" class="btn-secondary" style="width:100%; margin-top:10px; font-weight:700;" onclick="window.app.addReceiptItem()">+ Añadir Concepto / Empresa</button>
             </section>
 
             <div class="form-actions">
@@ -509,7 +501,7 @@ function renderReceiptDetail() {
             <table class="receipt-table">
                 <thead>
                     <tr>
-                        <th>Descripción</th>
+                        <th>Empresa / Servicio</th>
                         <th style="text-align:center;">Cant.</th>
                         <th style="text-align:right;">Subtotal</th>
                     </tr>
@@ -517,17 +509,34 @@ function renderReceiptDetail() {
                 <tbody>
                     ${receipt.items.map(item => `
                         <tr>
-                            <td>${item.desc}</td>
+                            <td>
+                                <strong style="display:block; font-size:0.7rem; color:var(--primary-emerald);">${item.brand}</strong>
+                                <span>${item.desc}</span>
+                            </td>
                             <td style="text-align:center;">${item.qty}</td>
-                            <td class="amount-col">${formatCurrency(item.qty * item.price)}</td>
+                            <td class="amount-col">${formatCurrency(item.qty * item.price, item.currency === 'USD' ? '$' : 'Bs.')}</td>
                         </tr>
                     `).join('')}
                 </tbody>
             </table>
 
             <div class="receipt-total-section">
-                <span class="total-label">TOTAL BS.</span>
-                <span class="total-amount">${formatCurrency(receipt.totalAmount)}</span>
+                ${receipt.totals && receipt.totals.BOB > 0 ? `
+                    <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:5px;">
+                        <span class="total-label" style="font-size:0.8rem;">TOTAL BOB</span>
+                        <span class="total-amount" style="font-size:1rem;">${formatCurrency(receipt.totals.BOB)}</span>
+                    </div>
+                ` : ''}
+                ${receipt.totals && receipt.totals.USD > 0 ? `
+                    <div style="display:flex; justify-content:space-between; width:100%;">
+                        <span class="total-label" style="font-size:0.8rem;">TOTAL USD</span>
+                        <span class="total-amount" style="font-size:1rem; color:#2d3748;">${formatCurrency(receipt.totals.USD, '$')}</span>
+                    </div>
+                ` : ''}
+                ${!receipt.totals ? `
+                    <span class="total-label">TOTAL BS.</span>
+                    <span class="total-amount">${formatCurrency(receipt.totalAmount)}</span>
+                ` : ''}
             </div>
 
             <div class="receipt-footer">
@@ -1720,17 +1729,40 @@ window.app = {
     },
     addReceiptItem: () => {
         const container = document.getElementById('items-container');
-        const row = document.createElement('div');
-        row.className = 'form-row item-row';
-        row.style.marginBottom = '10px';
-        row.style.gap = '8px';
-        row.innerHTML = `
-            <input type="text" name="itemDesc[]" placeholder="Servicio" style="flex:2;" required>
-            <input type="number" name="itemQty[]" placeholder="Cant" style="flex:0.5;" value="1" required>
-            <input type="number" name="itemPrice[]" placeholder="Precio" style="flex:1;" required>
-            <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="color:#ff4d4d;">✕</button>
+        const card = document.createElement('div');
+        card.className = 'receipt-item-card';
+        card.innerHTML = `
+            <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="position:absolute; top:8px; right:8px; color:#ff4d4d;">✕</button>
+            
+            <div class="item-field-group">
+                <label>Empresa / Marca</label>
+                <input type="text" name="itemBrand[]" placeholder="Nombre de la empresa" required>
+            </div>
+            
+            <div class="item-field-group">
+                <label>Servicio / Descripción</label>
+                <input type="text" name="itemDesc[]" placeholder="Descripción del trabajo" required>
+            </div>
+            
+            <div class="item-field-row">
+                <div class="item-field-group">
+                    <label>Cantidad</label>
+                    <input type="number" name="itemQty[]" value="1" min="1" required>
+                </div>
+                <div class="item-field-group">
+                    <label>Precio</label>
+                    <input type="number" name="itemPrice[]" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="item-field-group">
+                    <label>Moneda</label>
+                    <select name="itemCurrency[]" class="currency-select">
+                        <option value="BOB">BOB</option>
+                        <option value="USD">USD</option>
+                    </select>
+                </div>
+            </div>
         `;
-        container.appendChild(row);
+        container.appendChild(card);
     },
     handleSaveReceipt: async (event) => {
         event.preventDefault();
@@ -1738,27 +1770,38 @@ window.app = {
         
         // Recopilar items
         const items = [];
+        const brands = formData.getAll('itemBrand[]');
         const descs = formData.getAll('itemDesc[]');
         const qtys = formData.getAll('itemQty[]');
         const prices = formData.getAll('itemPrice[]');
+        const currencies = formData.getAll('itemCurrency[]');
         
-        let total = 0;
+        let totalBOB = 0;
+        let totalUSD = 0;
+
         descs.forEach((d, i) => {
             const q = parseFloat(qtys[i] || 0);
             const p = parseFloat(prices[i] || 0);
-            items.push({ desc: d, qty: q, price: p });
-            total += q * p;
+            const curr = currencies[i] || 'BOB';
+            const b = brands[i] || '';
+            
+            items.push({ brand: b, desc: d, qty: q, price: p, currency: curr });
+            
+            if (curr === 'BOB') totalBOB += q * p;
+            else totalUSD += q * p;
         });
 
         const newReceipt = {
             id: Date.now().toString(),
             debtor: formData.get('clientName'),
-            amount: total,
-            collateral: formData.get('brandName'),
+            amount: totalBOB > 0 ? totalBOB : totalUSD, // Guardamos el principal
+            collateral: items.length > 0 ? items[0].brand : 'Studio Sync', // Marca del primer item
             start_date: formData.get('date'),
             installments: {
                 receiptId: formData.get('receiptId'),
-                items: items
+                items: items,
+                totalBOB: totalBOB,
+                totalUSD: totalUSD
             },
             ref: 'STUDIO_SYNC'
         };
@@ -1774,7 +1817,8 @@ window.app = {
                 clientName: newReceipt.debtor,
                 brandName: newReceipt.collateral,
                 items: items,
-                totalAmount: total
+                totalAmount: newReceipt.amount,
+                totals: { BOB: totalBOB, USD: totalUSD }
             });
             
             navigate('receiptDetail', newReceipt.id);
@@ -1817,18 +1861,18 @@ window.app = {
 
             // Table
             const tableBody = receipt.items.map(item => [
-                item.desc,
+                `${item.brand}\n${item.desc}`,
                 item.qty,
-                formatCurrency(item.price),
-                formatCurrency(item.qty * item.price)
+                formatCurrency(item.price, item.currency === 'USD' ? '$' : 'Bs.'),
+                formatCurrency(item.qty * item.price, item.currency === 'USD' ? '$' : 'Bs.')
             ]);
 
             doc.autoTable({
                 startY: 85,
-                head: [['Descripción', 'Cant.', 'Precio Unit.', 'Subtotal']],
+                head: [['Empresa / Servicio', 'Cant.', 'Precio Unit.', 'Subtotal']],
                 body: tableBody,
                 headStyles: { fillColor: accentColor },
-                styles: { fontSize: 9 },
+                styles: { fontSize: 8, cellPadding: 3 },
                 columnStyles: {
                     1: { halign: 'center' },
                     2: { halign: 'right' },
@@ -1837,9 +1881,20 @@ window.app = {
             });
 
             const finalY = doc.lastAutoTable.finalY + 10;
-            doc.setFontSize(12);
+            doc.setFontSize(11);
             doc.setFont("helvetica", "bold");
-            doc.text(`TOTAL BS: ${formatCurrency(receipt.totalAmount)}`, 190, finalY, { align: 'right' });
+            
+            let currentY = finalY;
+            if (receipt.totals && receipt.totals.BOB > 0) {
+                doc.text(`TOTAL BOB: ${formatCurrency(receipt.totals.BOB)}`, 190, currentY, { align: 'right' });
+                currentY += 7;
+            }
+            if (receipt.totals && receipt.totals.USD > 0) {
+                doc.text(`TOTAL USD: ${formatCurrency(receipt.totals.USD, '$')}`, 190, currentY, { align: 'right' });
+            }
+            if (!receipt.totals) {
+                doc.text(`TOTAL BS: ${formatCurrency(receipt.totalAmount)}`, 190, currentY, { align: 'right' });
+            }
 
             doc.setFontSize(8);
             doc.setTextColor(...grayColor);
