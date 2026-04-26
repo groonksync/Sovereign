@@ -13,6 +13,7 @@ let state = {
     loans: [],
     debts: [], 
     expenses: [], // Mis Pagos
+    receipts: [], // Studio Sync Pro
     currentView: 'dashboard',
     selectedLoanId: null,
     isDarkMode: localStorage.getItem('sovereign-theme') === 'dark'
@@ -67,7 +68,7 @@ async function loadState() {
         }));
 
         // Protocolo (Mapeo v5.9 estable)
-        state.loans = allData.filter(l => l.ref !== 'DEUDA_DIARIA' && l.ref !== 'MI_PAGO').map(l => ({
+        state.loans = allData.filter(l => l.ref !== 'DEUDA_DIARIA' && l.ref !== 'MI_PAGO' && l.ref !== 'STUDIO_SYNC').map(l => ({
             id: l.id,
             debtor: l.debtor,
             amount: l.amount,
@@ -78,6 +79,19 @@ async function loadState() {
             guarantor: l.guarantor,
             installments: l.installments || []
         }));
+
+        state.receipts = allData.filter(l => l.ref === 'STUDIO_SYNC').map(r => {
+            const extra = typeof r.installments === 'object' ? r.installments : {};
+            return {
+                id: r.id,
+                receiptId: extra.receiptId || `SSP-${r.id.substring(0,4)}`,
+                date: r.start_date,
+                clientName: r.debtor,
+                brandName: r.collateral,
+                items: extra.items || [],
+                totalAmount: r.amount
+            };
+        });
 
         console.log("[Sovereign Cloud] Ecosistema auditado:", allData.length);
         applyTheme();
@@ -330,6 +344,209 @@ function renderDashboard() {
     `;
 }
 
+function renderStudioSync() {
+    return `
+        <header class="main-header">
+            <div class="user-info">
+                <div class="avatar">SSP</div>
+                <div class="greeting">
+                    <span>Studio</span>
+                    <h1>Sync Pro</h1>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn-icon theme-toggle" onclick="window.app.toggleTheme()">
+                    ${state.isDarkMode ? '☀️' : '🌙'}
+                </button>
+            </div>
+        </header>
+
+        <section class="summary-card gold-gradient">
+            <div class="card-content">
+                <span class="label">Total Facturado (Neto)</span>
+                <h2 class="amount">${formatCurrency(state.receipts.reduce((acc, r) => acc + r.totalAmount, 0))}</h2>
+                <div class="stats-row">
+                    <div class="stat">
+                        <span class="stat-label">Recibos Emitidos</span>
+                        <span class="stat-value">${state.receipts.length}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <main class="ledger-section">
+            <div class="section-header">
+                <h2>Historial de Recibos</h2>
+            </div>
+            <div class="loan-list">
+                ${state.receipts.length === 0 ? `
+                    <div class="empty-state">
+                        <p>No hay recibos registrados aún.</p>
+                        <button class="btn-primary" onclick="window.app.navigate('receiptRegister')">Emitir Primer Recibo</button>
+                    </div>
+                ` : state.receipts.map(r => `
+                    <div class="loan-card" onclick="window.app.navigate('receiptDetail', '${r.id}')">
+                        <div class="loan-info">
+                            <div class="debtor-icon" style="background:#2d3748; color:white;">${r.receiptId.split('-')[1] || 'RC'}</div>
+                            <div class="loan-details">
+                                <h3 style="font-size:0.8rem; color:var(--primary-emerald);">${r.receiptId}</h3>
+                                <p style="font-weight:700;">${r.clientName}</p>
+                                <p style="font-size:0.6rem;">${r.brandName} • ${formatDate(r.date)}</p>
+                            </div>
+                            <div class="loan-amount">
+                                <span class="current">${formatCurrency(r.totalAmount)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </main>
+
+        <button class="fab" onclick="window.app.navigate('receiptRegister')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+    `;
+}
+
+async function renderReceiptRegister() {
+    // Generar ID Incremental
+    let nextId = "SSP-001";
+    if (state.receipts.length > 0) {
+        const lastIdStr = state.receipts[0].receiptId; // Asumiendo orden descendente
+        const lastNum = parseInt(lastIdStr.split('-')[1]);
+        if (!isNaN(lastNum)) {
+            nextId = `SSP-${(lastNum + 1).toString().padStart(3, '0')}`;
+        }
+    }
+
+    return `
+        <header class="view-header">
+            <button class="back-btn" onclick="window.app.navigate('studioSync')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h1>Nuevo Recibo Pro</h1>
+        </header>
+
+        <form id="receipt-form" class="sovereign-form" onsubmit="window.app.handleSaveReceipt(event)">
+            <section class="form-section">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ID Recibo</label>
+                        <input type="text" name="receiptId" value="${nextId}" readonly style="background:rgba(0,0,0,0.05); font-weight:700;">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="date" name="date" value="${new Date().toISOString().split('T')[0]}" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Nombre del Cliente</label>
+                    <input type="text" name="clientName" placeholder="Ej: Juan Pérez" required>
+                </div>
+                <div class="form-group">
+                    <label>Marca / Empresa</label>
+                    <input type="text" name="brandName" placeholder="Ej: Studio Sync" required>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h3 class="section-title">Desglose de Servicios</h3>
+                <div id="items-container">
+                    <div class="form-row item-row" style="margin-bottom:10px; gap:8px;">
+                        <input type="text" name="itemDesc[]" placeholder="Servicio" style="flex:2;" required>
+                        <input type="number" name="itemQty[]" placeholder="Cant" style="flex:0.5;" value="1" required>
+                        <input type="number" name="itemPrice[]" placeholder="Precio" style="flex:1;" required>
+                    </div>
+                </div>
+                <button type="button" class="btn-secondary" style="width:100%; margin-top:10px; font-size:0.7rem; padding:8px;" onclick="window.app.addReceiptItem()">+ Añadir Servicio</button>
+            </section>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Guardar e Imprimir</button>
+            </div>
+        </form>
+    `;
+}
+
+function renderReceiptDetail() {
+    const receipt = state.receipts.find(r => r.id === state.selectedLoanId);
+    if (!receipt) return `<div class="empty-state"><p>Recibo no encontrado.</p></div>`;
+
+    return `
+        <header class="view-header">
+            <button class="back-btn" onclick="window.app.navigate('studioSync')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h1>Vista de Recibo</h1>
+            <button class="btn-icon" onclick="window.app.handleDeleteUniversal('${receipt.id}', 'studioSync')">🗑️</button>
+        </header>
+
+        <div class="receipt-paper" id="printable-receipt">
+            <div class="receipt-header">
+                <h2>STUDIO SYNC PRO</h2>
+                <p>Digital Media Production Services</p>
+            </div>
+
+            <div class="receipt-info-grid">
+                <div class="receipt-info-item">
+                    <label>RECIBO #</label>
+                    <span>${receipt.receiptId}</span>
+                </div>
+                <div class="receipt-info-item">
+                    <label>FECHA</label>
+                    <span>${formatDate(receipt.date)}</span>
+                </div>
+                <div class="receipt-info-item">
+                    <label>CLIENTE</label>
+                    <span>${receipt.clientName}</span>
+                </div>
+                <div class="receipt-info-item">
+                    <label>MARCA</label>
+                    <span>${receipt.brandName}</span>
+                </div>
+            </div>
+
+            <table class="receipt-table">
+                <thead>
+                    <tr>
+                        <th>Descripción</th>
+                        <th style="text-align:center;">Cant.</th>
+                        <th style="text-align:right;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${receipt.items.map(item => `
+                        <tr>
+                            <td>${item.desc}</td>
+                            <td style="text-align:center;">${item.qty}</td>
+                            <td class="amount-col">${formatCurrency(item.qty * item.price)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+
+            <div class="receipt-total-section">
+                <span class="total-label">TOTAL BS.</span>
+                <span class="total-amount">${formatCurrency(receipt.totalAmount)}</span>
+            </div>
+
+            <div class="receipt-footer">
+                <p>Este documento es un comprobante de servicio digital.</p>
+                <p>Generado mediante Sovereign AES-256 System.</p>
+            </div>
+        </div>
+
+        <div class="header-actions" style="justify-content:center; gap:20px; margin-top:20px;">
+            <button class="btn-print" onclick="window.print()">
+                🖨️ Imprimir Recibo
+            </button>
+            <button class="btn-print" style="background:var(--primary-emerald);" onclick="window.app.exportReceiptToPDF('${receipt.id}')">
+                📄 Exportar PDF
+            </button>
+        </div>
+    `;
+}
+
 function renderRegister() {
     return `
         <header class="view-header">
@@ -531,6 +748,9 @@ function render() {
             case 'debtEdit': content = renderDebtEdit(); break;
             case 'expenseDetail': content = renderExpenseDetail(); break;
             case 'expenseEdit': content = renderExpenseEdit(); break;
+            case 'studioSync': content = renderStudioSync(); break;
+            case 'receiptRegister': content = renderReceiptRegister(); break;
+            case 'receiptDetail': content = renderReceiptDetail(); break;
             default: content = renderDashboard();
         }
     } catch (e) {
@@ -563,9 +783,9 @@ function renderTabBar() {
                 ${categories.expenses.icon}
                 <span>${categories.expenses.label}</span>
             </button>
-            <button class="tab-item" onclick="window.open('https://drive.google.com/drive/folders/12VwI7kKvTy50t_Q13UngiSHEZ77KpQwu?usp=sharing')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                <span>Drive</span>
+            <button class="tab-item ${state.currentView.includes('Sync') || state.currentView.includes('receipt') ? 'active' : ''}" onclick="window.app.navigate('studioSync')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <span>Recibos</span>
             </button>
         </nav>
     `;
@@ -1497,6 +1717,137 @@ window.app = {
             render();
         };
         reader.readAsDataURL(file);
+    },
+    addReceiptItem: () => {
+        const container = document.getElementById('items-container');
+        const row = document.createElement('div');
+        row.className = 'form-row item-row';
+        row.style.marginBottom = '10px';
+        row.style.gap = '8px';
+        row.innerHTML = `
+            <input type="text" name="itemDesc[]" placeholder="Servicio" style="flex:2;" required>
+            <input type="number" name="itemQty[]" placeholder="Cant" style="flex:0.5;" value="1" required>
+            <input type="number" name="itemPrice[]" placeholder="Precio" style="flex:1;" required>
+            <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="color:#ff4d4d;">✕</button>
+        `;
+        container.appendChild(row);
+    },
+    handleSaveReceipt: async (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        
+        // Recopilar items
+        const items = [];
+        const descs = formData.getAll('itemDesc[]');
+        const qtys = formData.getAll('itemQty[]');
+        const prices = formData.getAll('itemPrice[]');
+        
+        let total = 0;
+        descs.forEach((d, i) => {
+            const q = parseFloat(qtys[i] || 0);
+            const p = parseFloat(prices[i] || 0);
+            items.push({ desc: d, qty: q, price: p });
+            total += q * p;
+        });
+
+        const newReceipt = {
+            id: Date.now().toString(),
+            debtor: formData.get('clientName'),
+            amount: total,
+            collateral: formData.get('brandName'),
+            start_date: formData.get('date'),
+            installments: {
+                receiptId: formData.get('receiptId'),
+                items: items
+            },
+            ref: 'STUDIO_SYNC'
+        };
+
+        try {
+            const { error } = await sb.from('loans').insert([newReceipt]);
+            if (error) throw error;
+            
+            state.receipts.unshift({
+                id: newReceipt.id,
+                receiptId: newReceipt.installments.receiptId,
+                date: newReceipt.start_date,
+                clientName: newReceipt.debtor,
+                brandName: newReceipt.collateral,
+                items: items,
+                totalAmount: total
+            });
+            
+            navigate('receiptDetail', newReceipt.id);
+        } catch (e) { alert(e.message); }
+    },
+    exportReceiptToPDF: async (id) => {
+        const receipt = state.receipts.find(r => r.id === id);
+        if (!receipt) return;
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // --- ESTILOS ---
+            const accentColor = [0, 72, 82]; 
+            const grayColor = [113, 128, 150];
+
+            // Header
+            doc.setFillColor(0,0,0);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
+            doc.text("STUDIO SYNC PRO", 105, 20, { align: 'center' });
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.text("DIGITAL MEDIA PRODUCTION SERVICES", 105, 28, { align: 'center' });
+
+            // Info
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            doc.text(`RECIBO #: ${receipt.receiptId}`, 20, 55);
+            doc.text(`FECHA: ${formatDate(receipt.date)}`, 140, 55);
+            
+            doc.setDrawColor(226, 232, 240);
+            doc.line(20, 60, 190, 60);
+
+            doc.text(`CLIENTE: ${receipt.clientName}`, 20, 70);
+            doc.text(`MARCA: ${receipt.brandName}`, 20, 77);
+
+            // Table
+            const tableBody = receipt.items.map(item => [
+                item.desc,
+                item.qty,
+                formatCurrency(item.price),
+                formatCurrency(item.qty * item.price)
+            ]);
+
+            doc.autoTable({
+                startY: 85,
+                head: [['Descripción', 'Cant.', 'Precio Unit.', 'Subtotal']],
+                body: tableBody,
+                headStyles: { fillColor: accentColor },
+                styles: { fontSize: 9 },
+                columnStyles: {
+                    1: { halign: 'center' },
+                    2: { halign: 'right' },
+                    3: { halign: 'right' }
+                }
+            });
+
+            const finalY = doc.lastAutoTable.finalY + 10;
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text(`TOTAL BS: ${formatCurrency(receipt.totalAmount)}`, 190, finalY, { align: 'right' });
+
+            doc.setFontSize(8);
+            doc.setTextColor(...grayColor);
+            doc.text("Gracias por confiar en Studio Sync Pro.", 105, 280, { align: 'center' });
+            doc.text("Generado por Sovereign System.", 105, 285, { align: 'center' });
+
+            doc.save(`Recibo_${receipt.receiptId}.pdf`);
+        } catch (e) { alert("Error PDF: " + e.message); }
     }
 };
 
