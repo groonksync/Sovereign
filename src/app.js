@@ -15,7 +15,7 @@ let state = {
     expenses: [], // Mis Pagos
     receipts: [], // Studio Sync Pro
     currentView: 'dashboard',
-    editorProTab: 'escritorio', // Sub-pestaña para Editor Pro
+    editorProTab: 'escritorio',
     selectedEditorProject: null,
     selectedLoanId: null,
     isDarkMode: localStorage.getItem('sovereign-theme') === 'dark'
@@ -90,8 +90,18 @@ async function loadState() {
                 date: r.start_date,
                 clientName: r.debtor,
                 brandName: r.collateral,
+                projectName: extra.projectName || '',
                 items: extra.items || [],
-                totalAmount: r.amount
+                totalAmount: r.amount,
+                totals: { 
+                    BOB: extra.totalBOB || 0, 
+                    USD: extra.totalUSD || 0, 
+                    EUR: extra.totalEUR || 0 
+                },
+                status: extra.status || 'Pagado',
+                paymentMethod: extra.paymentMethod || 'Transferencia',
+                terms: extra.terms || '',
+                watermarkEnabled: extra.watermarkEnabled !== false
             };
         });
 
@@ -357,16 +367,13 @@ function renderStudioSync() {
                 </div>
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
-                <button id="btn-google-auth" class="btn-icon" onclick="window.app.handleGoogleAuth()" title="Vincular Cuenta de Google (Cloud)" style="background:rgba(255,255,255,0.05); border:1px solid #1a1a1a; padding:8px; border-radius:10px; cursor:pointer; position:relative;">
-                    <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png" style="width:18px; height:18px;">
+                <button id="btn-google-auth" class="btn-icon" onclick="window.app.handleGoogleAuth()" title="Sincronizar Google Drive">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png" style="width:16px; height:16px;">
                     <div id="google-status-dot" style="position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:#4a4a4a; border-radius:50%; border:2px solid #000;"></div>
                 </button>
-                <button id="btn-drive-link" class="btn-icon" onclick="window.app.setupDriveFolder()" title="Vincular Carpeta Local (Chrome/Edge)" style="background:rgba(255,255,255,0.05); border:1px solid #1a1a1a; padding:8px; border-radius:10px; cursor:pointer; position:relative;">
-                    📁
-                    <div id="drive-status-dot" style="position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:#4a4a4a; border-radius:50%; border:2px solid #000;"></div>
+                <button class="btn-icon" onclick="window.app.exportDriveBackup()" title="Backup Seguro">
+                    <i data-lucide="save"></i>
                 </button>
-                <button class="btn-icon" onclick="window.app.exportDriveBackup()" title="Backup de Datos JSON" style="background:rgba(255,255,255,0.05); border:1px solid #1a1a1a; padding:8px; border-radius:10px; cursor:pointer;">💾</button>
-                <div class="avatar">MP</div>
             </div>
         </header>
 
@@ -403,7 +410,7 @@ function renderStudioSync() {
                                 <p style="font-size:0.6rem;">${r.brandName} • ${formatDate(r.date)}</p>
                             </div>
                             <div class="loan-amount">
-                                <span class="current">${formatCurrency(r.totalAmount)}</span>
+                                <span class="current">${formatCurrency(r.totals && r.totals.USD > 0 ? r.totals.USD : (r.totals && r.totals.EUR > 0 ? r.totals.EUR : (r.totals ? r.totals.BOB : r.totalAmount)), r.totals && r.totals.USD > 0 ? '$' : (r.totals && r.totals.EUR > 0 ? '€' : 'Bs.'))}</span>
                             </div>
                         </div>
                     </div>
@@ -412,7 +419,7 @@ function renderStudioSync() {
         </main>
 
         <button class="fab" onclick="window.app.navigate('receiptRegister')">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <i data-lucide="plus"></i>
         </button>
     `;
 }
@@ -432,12 +439,25 @@ function renderReceiptRegister() {
 
         <form id="receipt-form" class="sovereign-form" onsubmit="window.app.handleSaveReceipt(event)">
             <div class="noir-card">
-                <span class="noir-label">NOMBRE DEL CLIENTE</span>
-                <div class="noir-input-container">
-                    <div class="icon-box" style="cursor:default; color:#4a4a4a;">
-                        <i data-lucide="user"></i>
+                <div class="form-row" style="gap:15px; margin-bottom:15px;">
+                    <div class="form-group" style="flex:2;">
+                        <span class="noir-label">NOMBRE DEL CLIENTE</span>
+                        <div class="noir-input-container">
+                            <div class="icon-box" style="cursor:default; color:#4a4a4a;">
+                                <i data-lucide="user"></i>
+                            </div>
+                            <input type="text" name="clientName" class="glass-input" placeholder="Lisandro" required>
+                        </div>
                     </div>
-                    <input type="text" name="clientName" class="glass-input" placeholder="Juan Pérez" required>
+                    <div class="form-group" style="flex:1;">
+                        <span class="noir-label">PROYECTO</span>
+                        <div class="noir-input-container">
+                            <div class="icon-box" style="cursor:default; color:#4a4a4a;">
+                                <i data-lucide="folder"></i>
+                            </div>
+                            <input type="text" name="projectName" class="glass-input" placeholder="Ej: Proyecto 01">
+                        </div>
+                    </div>
                 </div>
                 
             <div class="noir-card">
@@ -521,7 +541,9 @@ function renderReceiptDetail() {
                 <button class="menu-btn" onclick="window.app.navigate('receiptEdit', '${receipt.id}')">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                 </button>
-                <button class="btn-icon" onclick="window.app.handleDeleteUniversal('${receipt.id}', 'studioSync')">🗑️</button>
+                <button class="btn-icon" onclick="window.app.handleDeleteUniversal('${receipt.id}', 'studioSync')">
+                    <i data-lucide="trash-2"></i>
+                </button>
             </div>
         </header>
 
@@ -544,6 +566,12 @@ function renderReceiptDetail() {
                     <label>CLIENTE</label>
                     <span>${receipt.clientName}</span>
                 </div>
+                ${receipt.projectName ? `
+                <div class="receipt-info-item">
+                    <label>PROYECTO</label>
+                    <span>${receipt.projectName}</span>
+                </div>
+                ` : ''}
             </div>
 
             <table class="receipt-table">
@@ -678,12 +706,25 @@ function renderReceiptEdit() {
             </div>
 
             <div class="noir-card">
-                <span class="noir-label">NOMBRE DEL CLIENTE</span>
-                <div class="noir-input-container">
-                    <div class="icon-box" style="cursor:default; color:#4a4a4a;">
-                        <i data-lucide="user"></i>
+                <div class="form-row" style="gap:15px; margin-bottom:15px;">
+                    <div class="form-group" style="flex:2;">
+                        <span class="noir-label">NOMBRE DEL CLIENTE</span>
+                        <div class="noir-input-container">
+                            <div class="icon-box" style="cursor:default; color:#4a4a4a;">
+                                <i data-lucide="user"></i>
+                            </div>
+                            <input type="text" name="clientName" class="glass-input" value="${receipt.clientName}" required>
+                        </div>
                     </div>
-                    <input type="text" name="clientName" class="glass-input" value="${receipt.clientName}" required>
+                    <div class="form-group" style="flex:1;">
+                        <span class="noir-label">PROYECTO</span>
+                        <div class="noir-input-container">
+                            <div class="icon-box" style="cursor:default; color:#4a4a4a;">
+                                <i data-lucide="folder"></i>
+                            </div>
+                            <input type="text" name="projectName" class="glass-input" value="${receipt.projectName || ''}" placeholder="Ej: Proyecto 01">
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="form-row" style="margin-top:20px; gap:20px;">
@@ -984,18 +1025,18 @@ function renderTabBar() {
     return `
         <nav class="bottom-tab-bar">
             <button class="tab-item ${state.currentView === 'dashboard' ? 'active' : ''}" onclick="window.app.navigate('dashboard')">
-                ${categories.dashboard.icon}
-                <span>${categories.dashboard.label}</span>
+                <i data-lucide="layout-grid"></i>
+                <span>Geral</span>
             </button>
             <button class="tab-item ${state.currentView === 'debts' ? 'active' : ''}" onclick="window.app.navigate('debts')">
-                ${categories.debts.icon}
-                <span>${categories.debts.label}</span>
+                <i data-lucide="users"></i>
+                <span>Deudores</span>
             </button>
             <button class="tab-item ${state.currentView === 'expenses' ? 'active' : ''}" onclick="window.app.navigate('expenses')">
-                ${categories.expenses.icon}
-                <span>${categories.expenses.label}</span>
+                <i data-lucide="credit-card"></i>
+                <span>Pagos</span>
             </button>
-            <button class="tab-item ${state.currentView.includes('Sync') || state.currentView.includes('receipt') ? 'active' : ''}" onclick="window.app.navigate('studioSync')">
+            <button class="tab-item ${state.currentView === 'studioSync' ? 'active' : ''}" onclick="window.app.navigate('studioSync')">
                 <i data-lucide="file-text"></i>
                 <span>Recibos</span>
             </button>
@@ -1782,15 +1823,6 @@ async function exportToPDF(loanId) {
 
 // --- INITIALIZATION ---
 window.app = {
-    handleEditorTabChange: (tab) => {
-        state.editorProTab = tab;
-        state.selectedEditorProject = null;
-        render();
-    },
-    selectEditorProject: (project) => {
-        state.selectedEditorProject = project;
-        render();
-    },
     navigate,
     handleSave,
     handleDelete,
@@ -2074,6 +2106,7 @@ window.app = {
             start_date: formData.get('date'),
             installments: {
                 receiptId: formData.get('receiptId'),
+                projectName: formData.get('projectName'),
                 items: items,
                 totalBOB: totalBOB,
                 totalUSD: totalUSD,
@@ -2151,6 +2184,13 @@ window.app = {
             doc.line(20, 60, 190, 60);
 
             doc.text(`CLIENTE: ${receipt.clientName}`, 20, 70);
+            if (receipt.projectName) {
+                doc.setFontSize(8);
+                doc.setTextColor(100, 100, 100);
+                doc.text(`PROYECTO: ${receipt.projectName}`, 20, 74);
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+            }
 
             // Table
             const tableBody = receipt.items.map(item => [
@@ -2331,6 +2371,7 @@ window.app = {
             start_date: formData.get('date'),
             installments: {
                 receiptId: formData.get('receiptId'),
+                projectName: formData.get('projectName'),
                 items: items,
                 totalBOB: totalBOB,
                 totalUSD: totalUSD,
@@ -2473,12 +2514,11 @@ const initApp = () => {
 
 initApp();
 
-/** --- PHASE 2: EDITOR PRO SUITE (ISOLATED UI) --- **/
+/** --- PHASE 2: EDITOR PRO SUITE (MIMETIZADO & RESPONSIVE) --- **/
 function renderEditorProSuite() {
     const activeTab = state.editorProTab || 'escritorio';
     const selectedProject = state.selectedEditorProject;
 
-    // --- MOCK DATA (FASE 2) ---
     const proyectos = [
         {
             id: 1, cliente: "Pollos 'El Gran Sabor'", titulo: "Campaña Redes Sociales Q2", tipo: "Edición Múltiple", estado: "En Curso", presupuesto: 1200, pagado: 600, entrega: "15 May", notas: "Ritmo rápido, transiciones dinámicas.", carpetaDrive: "/Editor_OS/Clientes/Pollos_El_Gran_Sabor",
@@ -2487,27 +2527,12 @@ function renderEditorProSuite() {
         }
     ];
 
-    const renderInternalNav = () => `
-        <div class="sidebar-internal" style="width:250px; border-right:1px solid rgba(255,255,255,0.05); padding:24px; display:flex; flex-direction:column; gap:8px;">
-            <div style="display:flex; align-items:center; gap:12px; margin-bottom:40px;">
-                <div style="width:32px; height:32px; background:#fff; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#000;">
-                    <i data-lucide="video" style="width:18px;"></i>
-                </div>
-                <span style="font-weight:900; font-size:0.8rem; letter-spacing:0.1em; text-transform:uppercase;">Editor Pro</span>
-            </div>
-            <p style="font-size:0.6rem; font-weight:900; color:#444; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:10px;">Navegación Interna</p>
-            <button class="noir-btn ${activeTab === 'escritorio' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('escritorio')">
-                <i data-lucide="layout-dashboard" style="width:16px;"></i> Escritorio
-            </button>
-            <button class="noir-btn ${activeTab === 'proyectos' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('proyectos')">
-                <i data-lucide="briefcase" style="width:16px;"></i> Proyectos
-            </button>
-            <button class="noir-btn ${activeTab === 'archivos' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('archivos')">
-                <i data-lucide="cloud" style="width:16px;"></i> Editor Cloud
-            </button>
-            <button class="noir-btn ${activeTab === 'finanzas' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('finanzas')">
-                <i data-lucide="credit-card" style="width:16px;"></i> Finanzas
-            </button>
+    const renderTopNav = () => `
+        <div class="pro-top-nav" style="display:flex; overflow-x:auto; gap:8px; padding:15px 20px; background:rgba(0,0,0,0.3); border-bottom:1px solid rgba(255,255,255,0.05); margin-bottom:25px; sticky top:0; z-index:100; scrollbar-width:none;">
+            <button class="noir-btn-tab ${activeTab === 'escritorio' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('escritorio')">Escritorio</button>
+            <button class="noir-btn-tab ${activeTab === 'proyectos' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('proyectos')">Proyectos</button>
+            <button class="noir-btn-tab ${activeTab === 'archivos' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('archivos')">Editor Cloud</button>
+            <button class="noir-btn-tab ${activeTab === 'finanzas' ? 'active' : ''}" onclick="window.app.handleEditorTabChange('finanzas')">Finanzas</button>
         </div>
     `;
 
@@ -2515,31 +2540,33 @@ function renderEditorProSuite() {
 
     if (activeTab === 'escritorio') {
         innerContent = `
-            <div class="animate-in fade-in" style="max-width:1000px; margin:0 auto;">
-                <header style="margin-bottom:50px;">
-                    <h2 style="font-size:2.5rem; font-weight:900; font-style:italic; text-transform:uppercase; letter-spacing:-0.05em;">
-                        Editor <span style="color:#666; font-weight:300; font-style:normal;">Pro</span>
+            <div class="animate-in" style="padding:0 20px;">
+                <header style="margin-bottom:30px;">
+                    <h2 style="font-size:1.8rem; font-weight:900; font-style:italic; text-transform:uppercase; letter-spacing:-0.03em;">
+                        Editor <span style="color:#444; font-weight:400; font-style:normal;">Pro</span>
                     </h2>
                 </header>
-                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:40px;">
-                    <div class="noir-card" style="grid-column: span 2; border-left: 2px solid #10b981;">
-                        <p style="font-size:0.6rem; font-weight:900; color:#666; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:8px;">Ingresos Proyectados (Mes)</p>
-                        <h3 style="font-size:2.5rem; font-weight:900;">,200.00</h3>
+                
+                <div style="display:grid; grid-template-columns: 1fr; gap:15px; margin-bottom:25px;">
+                    <div class="noir-card" style="border-left: 3px solid #10b981; background:linear-gradient(135deg, #141415 0%, #0c0c0d 100%);">
+                        <p class="noir-label-small">Ingresos Proyectados (Mes)</p>
+                        <h3 style="font-size:2.2rem; font-weight:900;">,200.00</h3>
                     </div>
-                    <div class="noir-card">
-                        <p style="font-size:0.6rem; font-weight:900; color:#666; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:8px;">Proyectos Activos</p>
-                        <h3 style="font-size:2.5rem; font-weight:900; color:#aaa;">${proyectos.length}</h3>
+                    <div class="noir-card" style="background:#141415;">
+                        <p class="noir-label-small">Proyectos Activos</p>
+                        <h3 style="font-size:2.2rem; font-weight:900; color:#555;">${proyectos.length}</h3>
                     </div>
                 </div>
-                <div class="noir-card" style="padding:30px;">
-                    <h3 style="font-size:0.65rem; font-weight:900; color:#666; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:24px; display:flex; align-items:center; gap:8px;">
-                        <i data-lucide="clock" style="width:14px;"></i> Próximas Entregas
+
+                <div class="noir-card" style="padding:25px;">
+                    <h3 class="noir-label-small" style="margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="clock" style="width:14px;"></i> Entregas Pendientes
                     </h3>
                     ${proyectos.map(p => `
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.02); margin-bottom:16px;">
-                            <div>
-                                <h4 style="font-weight:700; font-size:0.9rem;">${p.titulo}</h4>
-                                <p style="font-size:0.65rem; color:#666; font-style:italic; margin-top:2px;">${p.cliente}</p>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.03); margin-bottom:15px;">
+                            <div style="max-width:70%;">
+                                <h4 style="font-weight:700; font-size:0.85rem; line-height:1.2;">${p.titulo}</h4>
+                                <p style="font-size:0.6rem; color:#555; font-style:italic; margin-top:4px;">${p.cliente}</p>
                             </div>
                             <span class="noir-badge-pro">${p.entrega}</span>
                         </div>
@@ -2550,16 +2577,18 @@ function renderEditorProSuite() {
     } else if (activeTab === 'proyectos') {
         if (!selectedProject) {
             innerContent = `
-                <div class="animate-in fade-in" style="max-width:1000px; margin:0 auto;">
-                    <header style="margin-bottom:40px;"><h2 style="font-size:2.5rem; font-weight:900; font-style:italic; text-transform:uppercase;">Directorio de <span style="color:#666; font-weight:300;">Proyectos</span></h2></header>
-                    <div style="display:flex; flex-direction:column; gap:12px;">
+                <div class="animate-in" style="padding:0 20px;">
+                    <h2 style="font-size:1.5rem; font-weight:900; font-style:italic; text-transform:uppercase; margin-bottom:25px;">Pipeline</h2>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
                         ${proyectos.map(p => `
-                            <div onclick="window.app.selectEditorProject(${JSON.stringify(p).replace(/"/g, '&quot;')})" style="background:#141415; border:1px solid rgba(255,255,255,0.03); padding:20px 24px; border-radius:16px; display:flex; align-items:center; justify-content:between; cursor:pointer; transition:all 0.2s;" class="hover-border-white">
-                                <div style="display:flex; align-items:center; gap:24px; flex:1;">
-                                    <div style="width:48px; height:48px; background:#1a1a1b; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#555;"><i data-lucide="video" style="width:22px;"></i></div>
-                                    <div><h4 style="font-weight:900; text-transform:uppercase; font-style:italic; font-size:1rem;">${p.titulo}</h4><p style="font-size:0.65rem; font-weight:700; color:#666; margin-top:4px;">${p.cliente}</p></div>
+                            <div onclick="window.app.selectEditorProject(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="noir-card-interactive">
+                                <div style="display:flex; align-items:center; gap:15px;">
+                                    <div class="pro-icon-box"><i data-lucide="video" style="width:18px;"></i></div>
+                                    <div>
+                                        <h4 style="font-weight:900; text-transform:uppercase; font-size:0.85rem;">${p.titulo}</h4>
+                                        <p style="font-size:0.6rem; color:#555;">${p.cliente}</p>
+                                    </div>
                                 </div>
-                                <i data-lucide="chevron-right" style="color:#222;"></i>
                             </div>
                         `).join('')}
                     </div>
@@ -2567,25 +2596,25 @@ function renderEditorProSuite() {
             `;
         } else {
             innerContent = `
-                <div class="animate-in fade-in" style="max-width:1200px; margin:0 auto;">
-                    <button onclick="window.app.selectEditorProject(null)" style="background:none; border:none; color:#666; display:flex; align-items:center; gap:8px; margin-bottom:32px; font-weight:900; text-transform:uppercase; font-size:0.6rem; letter-spacing:0.3em; cursor:pointer;"><i data-lucide="chevron-left" style="width:14px;"></i> Volver al Pipeline</button>
-                    <h2 style="font-size:3.5rem; font-weight:900; font-style:italic; text-transform:uppercase; letter-spacing:-0.05em; margin-bottom:32px;">${selectedProject.titulo}</h2>
-                    <div class="noir-card" style="background:#111112; border:none; padding:32px;">
-                        <h3 style="font-size:0.65rem; font-weight:900; color:#fff; text-transform:uppercase; letter-spacing:0.3em; font-style:italic; margin-bottom:24px;">Dirección Creativa</h3>
-                        <p style="font-size:1rem; color:#aaa; font-weight:300; font-style:italic; border-left:2px solid rgba(255,255,255,0.05); padding-left:24px;">"${selectedProject.notas}"</p>
+                <div class="animate-in" style="padding:0 20px;">
+                    <button onclick="window.app.selectEditorProject(null)" class="back-link"><i data-lucide="chevron-left" style="width:14px;"></i> Volver</button>
+                    <h2 style="font-size:2.2rem; font-weight:900; font-style:italic; text-transform:uppercase; margin-bottom:25px; line-height:1;">${selectedProject.titulo}</h2>
+                    <div class="noir-card" style="background:#111; border:none;">
+                        <h3 class="noir-label-small" style="color:#fff; margin-bottom:15px;">Briefing</h3>
+                        <p style="font-size:0.9rem; color:#888; font-style:italic; border-left:2px solid #333; padding-left:15px;">"${selectedProject.notes}"</p>
                     </div>
                 </div>
             `;
         }
     } else if (activeTab === 'archivos') {
         innerContent = `
-            <div class="animate-in fade-in" style="max-width:1000px; margin:0 auto;">
-                <header style="margin-bottom:50px;"><h2 style="font-size:2.5rem; font-weight:900; font-style:italic; text-transform:uppercase;">Editor <span style="color:#666; font-weight:300;">Cloud Sync</span></h2></header>
-                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;">
+            <div class="animate-in" style="padding:0 20px;">
+                <h2 style="font-size:1.5rem; font-weight:900; font-style:italic; text-transform:uppercase; margin-bottom:25px;">Editor Cloud</h2>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
                     ${proyectos.map(p => `
-                        <div class="noir-card" style="cursor:pointer; transition:all 0.2s;">
-                            <div style="width:48px; height:48px; background:#1a1a1b; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#555; margin-bottom:24px;"><i data-lucide="folder" style="width:24px;"></i></div>
-                            <h4 style="font-weight:900; font-size:1.1rem; text-transform:uppercase; font-style:italic; color:#eee;">${p.cliente}</h4>
+                        <div class="noir-card" style="text-align:center;">
+                            <i data-lucide="folder" style="width:30px; color:#333; margin-bottom:10px;"></i>
+                            <h4 style="font-weight:900; font-size:0.75rem; text-transform:uppercase;">${p.cliente}</h4>
                         </div>
                     `).join('')}
                 </div>
@@ -2593,22 +2622,34 @@ function renderEditorProSuite() {
         `;
     } else if (activeTab === 'finanzas') {
         innerContent = `
-            <div class="animate-in fade-in" style="max-width:1000px; margin:0 auto;">
-                <header style="margin-bottom:50px;"><h2 style="font-size:2.5rem; font-weight:900; font-style:italic; text-transform:uppercase;">Reporte <span style="color:#666; font-weight:300;">Financiero</span></h2></header>
-                <div class="noir-card" style="padding:32px; border-left:4px solid #10b981; background:linear-gradient(to right, rgba(16,185,129,0.05), transparent);">
-                    <h3 style="font-size:0.75rem; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:#10b981; margin-bottom:16px;">Ganancia Neta Acumulada (2026)</h3>
-                    <h2 style="font-size:4rem; font-weight:900; letter-spacing:-0.05em;">,500<span style="font-size:1.5rem; color:#666; margin-left:8px;">USD</span></h2>
+            <div class="animate-in" style="padding:0 20px;">
+                <h2 style="font-size:1.5rem; font-weight:900; font-style:italic; text-transform:uppercase; margin-bottom:25px;">Finanzas</h2>
+                <div class="noir-card" style="border-left:4px solid #10b981;">
+                    <p class="noir-label-small" style="color:#10b981;">Ganancia Neta 2026</p>
+                    <h2 style="font-size:2.5rem; font-weight:900;">,500 <span style="font-size:1rem; color:#444;">USD</span></h2>
                 </div>
             </div>
         `;
     }
 
     return `
-        <div style="display:flex; height:100vh; background:#0c0c0d; color:#f3f4f6;">
-            ${renderInternalNav()}
-            <main style="flex:1; overflow-y:auto; padding:40px 60px;">
+        <div style="background:#0c0c0d; min-height:100vh; color:#f3f4f6; padding-bottom:100px;">
+            ${renderTopNav()}
+            <div class="content-wrapper">
                 ${innerContent}
-            </main>
+            </div>
         </div>
     `;
 }
+
+/** --- UTILS & HELPERS --- **/
+window.app.handleEditorTabChange = (tab) => {
+    state.editorProTab = tab;
+    state.selectedEditorProject = null;
+    render();
+};
+
+window.app.selectEditorProject = (project) => {
+    state.selectedEditorProject = project;
+    render();
+};

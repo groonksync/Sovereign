@@ -751,3 +751,74 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* --- MIMETIZADO EDITOR PRO --- */
+.noir-btn-tab {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    color: #666;
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.noir-btn-tab.active {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+}
+
+.noir-label-small {
+    font-size: 0.55rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.noir-card-interactive {
+    background: #111;
+    border: 1px solid rgba(255,255,255,0.03);
+    padding: 18px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.noir-card-interactive:active {
+    transform: scale(0.98);
+    background: #1a1a1b;
+}
+
+.pro-icon-box {
+    width: 40px;
+    height: 40px;
+    background: #1a1a1b;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #444;
+}
+
+.back-link {
+    background: none;
+    border: none;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.6rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
