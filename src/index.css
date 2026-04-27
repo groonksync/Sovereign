@@ -1102,50 +1102,83 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
 .sv-nexus-highlight-blue { background: rgba(59, 130, 246, 0.3); border-radius: 4px; padding: 2px 4px; }
 .sv-nexus-timestamp { color: #10b981; font-weight: 800; font-family: monospace; background: rgba(16, 185, 129, 0.1); padding: 2px 6px; border-radius: 4px; }
 
-/* --- NEXUS LAYOUT UTILS --- */
-.sv-nexus-grid-12 { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2rem; }
-.sv-nexus-col-3 { grid-column: span 3 / span 3; }
-.sv-nexus-col-9 { grid-column: span 9 / span 9; }
-.sv-nexus-flex { display: flex; }
-.sv-nexus-flex-col { flex-direction: column; }
-.sv-nexus-items-center { align-items: center; }
-.sv-nexus-justify-between { justify-content: space-between; }
-.sv-nexus-gap-2 { gap: 0.5rem; }
-.sv-nexus-gap-4 { gap: 1rem; }
-.sv-nexus-gap-8 { gap: 2rem; }
-.sv-nexus-w-full { width: 100%; }
-.sv-nexus-mt-3 { margin-top: 0.75rem; }
-.sv-nexus-mb-4 { margin-bottom: 1rem; }
-.sv-nexus-text-xs { font-size: 0.75rem; }
-.sv-nexus-text-sm { font-size: 0.875rem; }
-.sv-nexus-text-3xl { font-size: 1.875rem; }
-.sv-nexus-font-black { font-weight: 900; }
-.sv-nexus-uppercase { text-transform: uppercase; }
-.sv-nexus-tracking-tighter { letter-spacing: -0.05em; }
-.sv-nexus-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.hidden { display: none !important; }
-
-.flex { display: flex; }
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-
-.fixed { position: fixed; }
-.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
-.z-\[2000\] { z-index: 2000; }
-.backdrop-blur-sm { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
-.backdrop-blur-md { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-.bg-black\/95 { background-color: rgba(0, 0, 0, 0.95); }
-
-.animate-in {
-    animation: sv-fade-in 0.4s ease-out forwards;
+/* --- SOVEREIGN NEXUS: ELITE PRODUCTION SUITE (DNA) --- */
+.sv-nexus-elite {
+    --bg-pure: #000000;
+    --bg-card: #0a0a0a;
+    --bg-input: #050505;
+    --text-white: #ffffff;
+    --text-gray: #a1a1aa;
+    --emerald: #10b981;
+    --emerald-hover: #059669;
+    --amber: #f59e0b;
+    --border-soft: rgba(255, 255, 255, 0.06);
+    
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--bg-pure);
+    background-image: radial-gradient(circle at 50% 0%, #1a1a1a 0%, #000000 50%);
+    color: var(--text-white);
+    letter-spacing: -0.02em;
+    min-height: 100vh;
 }
 
-@keyframes sv-fade-in {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+.sv-nexus-elite .top-nav {
+    height: 64px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--border-soft);
+    padding: 0 32px;
 }
 
-.monolith-nav-btn.active i {
-    color: var(--monolith-emerald);
+.sv-nexus-elite .nav-link {
+    padding: 8px 16px; border-radius: 100px; color: var(--text-gray);
+    font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.1em; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;
+    background: transparent; border: none; cursor: pointer;
 }
+
+.sv-nexus-elite .nav-link i { color: #fff; width: 14px; }
+.sv-nexus-elite .nav-link:hover { color: #fff; background: rgba(255, 255, 255, 0.03); }
+.sv-nexus-elite .nav-link.active { color: var(--text-white); background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.1); }
+
+.sv-nexus-elite .card-nexus {
+    background: var(--bg-card); border: 1px solid var(--border-soft);
+    border-radius: 20px; padding: 32px; transition: transform 0.3s ease, border-color 0.3s ease;
+}
+.sv-nexus-elite .card-nexus:hover { border-color: rgba(255,255,255,0.1); }
+
+.sv-nexus-elite .mega-kpi-main {
+    font-size: 5.5rem; font-weight: 800; line-height: 1; letter-spacing: -0.05em;
+    background: linear-gradient(180deg, #fff 30%, #666 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.sv-nexus-elite .btn-pro {
+    background: #ffffff; color: #000000; font-weight: 800; text-transform: uppercase;
+    font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 24px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;
+}
+.sv-nexus-elite .btn-pro.emerald { background: var(--emerald); color: #000; }
+.sv-nexus-elite .btn-pro.emerald:hover { background: var(--emerald-hover); }
+
+.sv-nexus-elite .input-pro {
+    width: 100%; background-color: var(--bg-input); border: 1px solid var(--border-soft);
+    border-radius: 12px; padding: 14px 16px; font-size: 0.85rem; font-weight: 600; color: #fff; outline: none;
+}
+.sv-nexus-elite .input-pro:focus { border-color: var(--emerald); }
+
+.sv-nexus-elite .intel-editor {
+    background: var(--bg-input); border: 1px solid var(--border-soft); min-height: 250px;
+    border-radius: 12px; padding: 20px; outline: none; line-height: 1.7; font-size: 0.9rem; color: #fff;
+}
+
+.sv-nexus-elite .highlight-emerald { background: rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 2px 4px; }
+.sv-nexus-elite .highlight-amber { background: rgba(245, 158, 11, 0.3); border-radius: 4px; padding: 2px 4px; }
+.sv-nexus-elite .timestamp-tag { color: var(--emerald); font-weight: 800; background: rgba(16, 185, 129, 0.1); padding: 2px 6px; border-radius: 4px; }
+
+.sv-nexus-elite .view-section { display: none; }
+.sv-nexus-elite .view-section.active { display: block; animation: fadeUp 0.5s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.sv-nexus-elite .custom-scroll::-webkit-scrollbar { width: 4px; }
+.sv-nexus-elite .custom-scroll::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
