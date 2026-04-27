@@ -1,12 +1,12 @@
 :root {
-    --bg-main: #1A1A1E; /* Gris Oscuro Complementario */
-    --bg-card: #252529;
-    --bg-input: #2C2C31;
-    --border: #3A3A3F;
+    --bg-main: #212124; /* Gris Estudio (No negro) */
+    --bg-card: #2B2B30; /* Gris Complementario para cuadros */
+    --bg-input: #323238;
+    --border: #3F3F46;
     --text-main: #E1E1E6;
     --text-dim: #A1A1A6;
     --accent: #F59E0B;
-    --accent-dim: rgba(245, 158, 11, 0.15);
+    --accent-dim: rgba(245, 158, 11, 0.2);
     --radius: 12px;
 }
 
@@ -23,28 +23,15 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* --- FIX: Evitar textos cortados --- */
-.exec-card, .nav-link, td, th {
-    word-break: break-word; /* Romper palabras largas si es necesario */
-    overflow-wrap: break-word;
-}
-
-.kpi-value {
-    font-size: clamp(1.4rem, 4vw, 1.8rem); /* Tamaño fluido para que no se corte en móviles */
-    font-weight: 800;
-    color: #fff;
-    line-height: 1.2;
-}
-
 .app-container {
     display: flex;
     min-height: 100vh;
 }
 
-/* SIDEBAR */
+/* SIDEBAR REFINADA */
 .sidebar {
     width: 260px;
-    background: var(--bg-card);
+    background: #252529; /* Gris Sidebar */
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
@@ -79,7 +66,7 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 0.9rem 1.25rem;
+    padding: 1rem 1.25rem;
     color: var(--text-dim);
     text-decoration: none;
     font-size: 13px;
@@ -87,7 +74,7 @@ body {
     border-radius: 8px;
     transition: all 0.2s;
     cursor: pointer;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
 .nav-link:hover {
@@ -100,11 +87,11 @@ body {
     color: var(--accent);
 }
 
-/* CONTENT */
+/* CONTENT AREA */
 .main-content {
     flex: 1;
     margin-left: 260px;
-    padding: 3rem;
+    padding: 3.5rem;
     width: calc(100% - 260px);
 }
 
@@ -112,8 +99,8 @@ body {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 1.75rem; /* Aumentado para mejor respiro */
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    padding: 1.75rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
 }
 
 .kpi-label {
@@ -122,8 +109,16 @@ body {
     text-transform: uppercase;
     color: var(--text-dim);
     letter-spacing: 0.1em;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     display: block;
+}
+
+.kpi-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+    word-break: break-all;
 }
 
 .exec-input {
@@ -133,7 +128,6 @@ body {
     padding: 1rem;
     border-radius: 10px;
     color: #fff;
-    font-size: 14px;
     outline: none;
 }
 
@@ -148,11 +142,10 @@ body {
     font-size: 13px;
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 8px;
 }
 
-/* TABLES */
+/* TABLES & LISTS */
 .pro-table {
     width: 100%;
     border-collapse: collapse;
@@ -173,28 +166,6 @@ body {
     border-bottom: 1px solid var(--border);
 }
 
-.status-pill {
-    padding: 4px 12px;
-    border-radius: 8px;
-    font-size: 10px;
-    font-weight: 800;
-}
-
-.status-paid { background: rgba(52, 211, 153, 0.15); color: #34d399; }
-.status-pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
-
-/* MODALS */
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.75);
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-}
-
 /* RESPONSIVE */
 @media (max-width: 1024px) {
     .sidebar { width: 80px; }
@@ -204,10 +175,8 @@ body {
 
 @media (max-width: 640px) {
     .app-container { flex-direction: column; }
-    .sidebar { position: fixed; bottom: 0; top: auto; width: 100%; height: 70px; flex-direction: row; border-right: none; border-top: 1px solid var(--border); }
+    .sidebar { position: fixed; bottom: 0; top: auto; width: 100%; height: 75px; flex-direction: row; border-right: none; border-top: 1px solid var(--border); }
     .sidebar-logo { display: none; }
     .nav-group { display: flex; justify-content: space-around; padding: 0; }
-    .main-content { margin-left: 0; width: 100%; padding: 1.5rem; margin-bottom: 80px; }
-    .exec-card { padding: 1.25rem; }
-    .kpi-value { font-size: 1.5rem; }
+    .main-content { margin-left: 0; width: 100%; padding: 1.5rem; margin-bottom: 85px; }
 }
