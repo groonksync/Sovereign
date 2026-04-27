@@ -1,10 +1,10 @@
 :root {
-    --bg-main: #232328; /* Gris Oscuro Complementario */
-    --bg-card: #2D2D33; /* Gris para Bloques */
-    --bg-input: #35353C;
-    --border: #3F3F46;
-    --text-main: #E1E1E6;
-    --text-dim: #A1A1A6;
+    --bg-main: #0F172A; /* Deep Ocean */
+    --bg-card: #1E293B; /* Slate Blue Card */
+    --bg-input: #334155;
+    --border: #475569;
+    --text-main: #F1F5F9;
+    --text-dim: #94A3B8;
     --accent: #F59E0B;
     --accent-dim: rgba(245, 158, 11, 0.2);
     --radius: 12px;
@@ -30,7 +30,7 @@ body {
 
 .sidebar {
     width: 260px;
-    background: #27272C; /* Gris Sidebar */
+    background: #0B1120; /* Darker Sidebar */
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
@@ -91,7 +91,7 @@ body {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 1.75rem;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
 }
 
 .kpi-label {
@@ -109,7 +109,6 @@ body {
     font-weight: 800;
     color: #fff;
     line-height: 1.2;
-    word-break: break-all;
 }
 
 .exec-input {
@@ -166,15 +165,11 @@ body {
 .status-paid { background: rgba(52, 211, 153, 0.15); color: #34d399; }
 .status-pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
 
-.status-picker .status-option.active.border-emerald-500 { border-color: #10b981 !important; color: #10b981; }
-.status-picker .status-option.active.border-amber-500 { border-color: #f59e0b !important; color: #f59e0b; }
-.status-picker .status-option.active.border-blue-500 { border-color: #3b82f6 !important; color: #3b82f6; }
-
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.75);
-    backdrop-filter: blur(8px);
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     justify-content: center;

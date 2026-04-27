@@ -1328,7 +1328,7 @@ function renderDebts() {
                                     </span>
                                 </td>
                                 <td class="text-right">
-                                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-700"></i>
+                                    <button onclick="event.stopPropagation(); window.app.deleteProject('${p.id}')" class="p-2 hover:text-red-500 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </td>
                             </tr>
                         `).join('')}
@@ -2465,7 +2465,7 @@ async function renderSovereignNexus() {
                                 ${state.nexusProjects.map(p => `
                                     <div class="p-5 flex justify-between items-center hover:bg-white/[0.03] cursor-pointer" onclick="window.app.selectProject('${p.id}')">
                                         <span class="text-xs font-bold uppercase">${p.name}</span>
-                                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-700"></i>
+                                        <button onclick="event.stopPropagation(); window.app.deleteProject('${p.id}')" class="p-2 hover:text-red-500 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                     </div>
                                 `).join('')}
                             </div>
@@ -2500,7 +2500,7 @@ async function renderSovereignNexus() {
                                                     <td class="font-bold text-xs uppercase">${d.title}</td>
                                                     <td class="font-bold">${formatCurrency(d.price)}</td>
                                                     <td><span class="status-pill ${d.status_paid === 'paid' ? 'status-paid' : 'status-pending'}">${d.status_paid === 'paid' ? 'Liquidado' : 'Pendiente'}</span></td>
-                                                    <td><i data-lucide="edit-3" class="w-4 h-4 text-gray-700"></i></td>
+                                                    <td class="flex gap-2"><i data-lucide="edit-3" class="w-4 h-4 text-gray-500"></i><button onclick="event.stopPropagation(); window.app.deleteDeliverable('${d.id}')" class="hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
                                                 </tr>
                                             `).join('')}
                                         </tbody>
@@ -2630,6 +2630,22 @@ window.app = {
             window.app.closeModals();
             await loadState();
         } catch (e) { alert("Error: " + e.message); }
+    },
+    deleteProject: async (id) => {
+        if (!confirm('¿Eliminar proyecto?')) return;
+        try {
+            await sb.from('nexus_projects').delete().eq('id', id);
+            state.nexusProjects = null;
+            await loadState();
+        } catch (e) { alert(e.message); }
+    },
+    deleteDeliverable: async (id) => {
+        if (!confirm('¿Eliminar ítem?')) return;
+        try {
+            await sb.from('nexus_deliverables').delete().eq('id', id);
+            state.nexusProjects = null;
+            await loadState();
+        } catch (e) { alert(e.message); }
     },
     handleSaveLoan: async (event) => {
         event.preventDefault();
