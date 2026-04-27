@@ -409,3 +409,79 @@ body {
     align-items: center;
     margin-bottom: 40px;
 }
+
+/* --- RESPONSIVE OPTIMIZATIONS (ELYSIAN STUDIO OS) --- */
+
+@media (max-width: 1024px) {
+    .elysian-session-header {
+        flex-direction: column;
+        gap: 2rem;
+        height: auto;
+        padding: 2rem;
+        align-items: flex-start;
+    }
+    
+    .elysian-session-header .flex.gap-16 {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .grid-cols-4, .grid-cols-3, .grid-cols-2 {
+        grid-template-columns: 1fr !important;
+    }
+
+    .col-span-2, .col-span-3 {
+        grid-column: span 1 / span 1 !important;
+    }
+    
+    .mega-value {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .elysian-top-nav {
+        padding: 0 1rem;
+        overflow-x: auto;
+        justify-content: flex-start;
+    }
+    
+    .elysian-top-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-item span {
+        display: none;
+    }
+    
+    .nav-item {
+        padding: 0 1rem;
+    }
+
+    main {
+        padding: 1rem !important;
+    }
+
+    .view-header-pro {
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: flex-start;
+    }
+    
+    .mega-value {
+        font-size: 2rem;
+    }
+}
+
+/* Fix for Editor Pro (Nexus) Styles in Elysian */
+.nexus-card {
+    background: #0f0f0f;
+    border: 1px solid rgba(255,255,255,0.03);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+}
+
+.nexus-card:hover {
+    border-color: rgba(255,255,255,0.1);
+}

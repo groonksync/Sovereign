@@ -271,7 +271,8 @@ function renderTopNav() {
         { id: 'dashboard', icon: 'layout', label: 'Escritorio' },
         { id: 'debts', icon: 'users', label: 'Clientes' },
         { id: 'expenses', icon: 'database', label: 'Almacén' },
-        { id: 'studio-sync', icon: 'file-text', label: 'Finanzas' }
+        { id: 'studio-sync', icon: 'file-text', label: 'Finanzas' },
+        { id: 'sovereign-nexus', icon: 'star', label: 'Editor Pro' }
     ];
 
     return `
@@ -993,6 +994,77 @@ async function render() {
                 <main class="px-8 pb-32">
                     ${content}
                 </main>
+            </div>
+
+            <!-- MODALS ELYSIAN -->
+            <div id="modalProject" class="modal-overlay" style="display: none;">
+                <div class="elysian-card max-w-lg w-full !bg-[#0c0c0c] border-white/10">
+                    <h3 class="text-2xl font-black uppercase tracking-tighter mb-8 text-white text-center">Nuevo Proyecto Nexus</h3>
+                    <div class="space-y-4">
+                        <div class="elysian-input-group">
+                            <i data-lucide="user" class="elysian-input-icon w-4 h-4"></i>
+                            <input id="clientName" type="text" class="elysian-input" placeholder="Nombre de la Marca">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="elysian-input-group">
+                                <i data-lucide="link" class="elysian-input-icon w-4 h-4"></i>
+                                <input id="driveUrl" type="text" class="elysian-input" placeholder="URL Drive">
+                            </div>
+                            <div class="elysian-input-group">
+                                <i data-lucide="video" class="elysian-input-icon w-4 h-4"></i>
+                                <input id="meetUrl" type="text" class="elysian-input" placeholder="URL Meet">
+                            </div>
+                        </div>
+                        <div class="elysian-input-group">
+                            <i data-lucide="calendar" class="elysian-input-icon w-4 h-4"></i>
+                            <input id="endDate" type="date" class="elysian-input">
+                        </div>
+                        <textarea id="projectDesc" class="elysian-input h-24 resize-none !p-4" placeholder="Notas estratégicas..."></textarea>
+                        <div class="flex gap-4 pt-6">
+                            <button onclick="window.app.closeModals()" class="flex-1 py-3 text-[10px] font-bold uppercase text-gray-600 hover:text-white transition-all">Cancelar</button>
+                            <button onclick="window.app.createProject()" class="elysian-btn-primary flex-1">Crear Protocolo</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="modalOperation" class="modal-overlay" style="display: none;">
+                <div class="elysian-card max-w-3xl w-full h-[70vh] !p-0 flex flex-col overflow-hidden !bg-[#0c0c0c]">
+                    <div class="p-8 border-b border-white/5 flex justify-between items-center">
+                        <h2 id="del-modal-title" class="text-xl font-black uppercase tracking-tighter text-white">Item de Producción</h2>
+                        <button onclick="window.app.closeModals()" class="text-gray-600 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-10 space-y-6">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="elysian-input-group">
+                                <i data-lucide="tag" class="elysian-input-icon w-4 h-4"></i>
+                                <input id="del-title" type="text" class="elysian-input" placeholder="Título del Item">
+                            </div>
+                            <div class="elysian-input-group">
+                                <i data-lucide="dollar-sign" class="elysian-input-icon w-4 h-4"></i>
+                                <input id="del-price" type="number" class="elysian-input" placeholder="Precio">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="elysian-input-group">
+                                <i data-lucide="activity" class="elysian-input-icon w-4 h-4"></i>
+                                <select id="del-status" class="elysian-input">
+                                    <option value="pending">Pendiente de Cobro</option>
+                                    <option value="paid">Liquidado</option>
+                                </select>
+                            </div>
+                            <div class="elysian-input-group">
+                                <i data-lucide="link" class="elysian-input-icon w-4 h-4"></i>
+                                <input id="del-link-empresa" type="text" class="elysian-input" placeholder="URL de Entrega">
+                            </div>
+                        </div>
+                        <div id="del-notes-editor" contenteditable="true" class="bg-black/40 border border-white/5 p-8 flex-1 text-white/80 text-sm leading-relaxed outline-none focus:border-white/20 transition-all rounded-2xl min-h-[200px]" placeholder="Notas de feedback..."></div>
+                    </div>
+                    <div class="p-8 border-t border-white/5 flex gap-6">
+                        <button onclick="window.app.closeModals()" class="flex-1 py-4 text-[10px] font-bold uppercase text-gray-600 hover:text-white transition-all">Cerrar</button>
+                        <button id="btn-save-op" onclick="window.app.saveDeliverable()" class="elysian-btn-primary flex-1">Sincronizar Datos</button>
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -2406,7 +2478,6 @@ const currencyMap = { 'USD': '$', 'BOB': 'Bs.', 'EUR': '€' };
 async function renderSovereignNexus() {
     const activeTab = state.nexusTab || 'dashboard';
     
-    // Protocolo de Carga DNA
     if (state.nexusProjects === null) {
         try {
             const { data: projs, error } = await sb
@@ -2418,13 +2489,12 @@ async function renderSovereignNexus() {
             state.nexusProjects = projs || [];
             setTimeout(() => render(), 10);
         } catch (e) {
-            console.error("Error loading Nexus DNA:", e);
+            console.error("Error loading Nexus:", e);
             state.nexusProjects = [];
         }
-        return `<div class="flex items-center justify-center h-screen bg-black"><div class="animate-pulse text-amber-500 font-black tracking-[0.5em] text-[10px]">SYNCING NEXUS...</div></div>`;
+        return `<div class="flex items-center justify-center h-64"><div class="animate-pulse text-white font-black tracking-[0.5em] text-[10px]">INICIALIZANDO NEXUS...</div></div>`;
     }
 
-    // KPIs Real-Time
     let totalPaid = 0;
     let totalPending = 0;
     state.nexusProjects.forEach(p => {
@@ -2446,353 +2516,158 @@ async function renderSovereignNexus() {
     };
     window.app.closeModals = () => { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); };
 
-    window.app.updateProjectField = async (projectId, field, value) => {
-        const proj = state.nexusProjects.find(p => p.id === projectId);
-        if (!proj) return;
-        let finalValue = value === '' ? null : value;
-        try {
-            const { error } = await sb.from('nexus_projects').update({ [field]: finalValue }).eq('id', projectId);
-            if (error) throw error;
-            proj[field] = finalValue;
-            if (field === 'status') render();
-        } catch (e) { console.error("Sync Error:", e); }
-    };
-
-    window.app.saveAllNexus = async (btn) => {
-        const proj = state.nexusProjects.find(p => p.id === state.activeNexusProjectId);
-        if (!proj) return;
-        const editor = document.getElementById('nexus-planning-editor');
-        const notes = editor ? editor.innerHTML : proj.description;
-        
-        try {
-            const { error } = await sb.from('nexus_projects').update({ description: notes }).eq('id', proj.id);
-            if (error) throw error;
-            proj.description = notes;
-            if (btn) {
-                const original = btn.innerText;
-                btn.innerText = "DONE ✓";
-                btn.classList.add('bg-emerald-500/20', 'text-emerald-500');
-                setTimeout(() => {
-                    btn.innerText = original;
-                    btn.classList.remove('bg-emerald-500/20', 'text-emerald-500');
-                }, 2000);
-            }
-        } catch (e) { console.error("Save Error:", e); }
-    };
-
-    window.app.createProject = async () => {
-        const name = document.getElementById('clientName').value;
-        const desc = document.getElementById('projectDesc').value;
-        const drive = document.getElementById('driveUrl').value;
-        const meet = document.getElementById('meetUrl').value;
-        const date = document.getElementById('endDate').value;
-        if (!name) return;
-        try {
-            const { data, error } = await sb.from('nexus_projects').insert([{ 
-                name: name, description: desc || '', drive_url: drive || '', 
-                meet_url: meet || '', delivery_date: date || null, currency: 'BOB', price: 0
-            }]).select().single();
-            if (error) throw error;
-            state.nexusProjects.unshift({ ...data, nexus_deliverables: [] });
-            state.activeNexusProjectId = data.id;
-            window.app.closeModals();
-            render();
-        } catch (e) { alert("Error: " + e.message); }
-    };
-
-    window.app.openOperationModal = (delId = null) => {
-        const modalTitle = document.getElementById('del-modal-title');
-        const editor = document.getElementById('del-notes-editor');
-        if (delId) {
-            const d = activeProject.nexus_deliverables.find(item => item.id === delId);
-            state.editingDeliverableId = delId;
-            modalTitle.innerText = "Editar Operación";
-            document.getElementById('del-title').value = d.title || '';
-            document.getElementById('del-price').value = d.price || '';
-            document.getElementById('del-status').value = d.status_paid || 'pending';
-            document.getElementById('del-link-empresa').value = d.link_empresa || '';
-            editor.innerHTML = d.notes_html || '';
-        } else {
-            state.editingDeliverableId = null;
-            modalTitle.innerText = "Nueva Operación";
-            document.getElementById('del-title').value = '';
-            document.getElementById('del-price').value = '';
-            document.getElementById('del-status').value = 'pending';
-            document.getElementById('del-link-empresa').value = '';
-            editor.innerHTML = '';
-        }
-        window.app.openModal('modalOperation');
-    };
-
-    window.app.saveDeliverable = async () => {
-        if (!activeProject) return;
-        const payload = {
-            project_id: activeProject.id,
-            title: document.getElementById('del-title').value,
-            price: Number(document.getElementById('del-price').value),
-            status_paid: document.getElementById('del-status').value,
-            link_empresa: document.getElementById('del-link-empresa').value,
-            notes_html: document.getElementById('del-notes-editor').innerHTML
-        };
-        try {
-            let res;
-            if (state.editingDeliverableId) res = await sb.from('nexus_deliverables').update(payload).eq('id', state.editingDeliverableId).select().single();
-            else res = await sb.from('nexus_deliverables').insert([payload]).select().single();
-            if (res.error) throw res.error;
-            if (state.editingDeliverableId) {
-                const idx = activeProject.nexus_deliverables.findIndex(d => d.id === state.editingDeliverableId);
-                activeProject.nexus_deliverables[idx] = res.data;
-            } else activeProject.nexus_deliverables.push(res.data);
-            window.app.closeModals();
-            render();
-        } catch (e) { console.error("Sync Error:", e); }
-    };
-
-    // --- HTML RENDER DNA ---
+    // --- HTML RENDER ---
     return `
-    <div class="animate-reveal editor-pro-view min-h-screen bg-[#050505] pb-32">
-        <nav class="p-6 border-b border-white/[0.03] flex justify-between items-center bg-[#080808]">
-            <div class="flex items-center gap-12">
-                <h1 class="text-lg font-black uppercase tracking-[0.3em] text-white">Editor Pro</h1>
-                <div class="tab-pill-container !bg-black/40">
+        <div class="animate-reveal space-y-10">
+            <div class="view-header-pro">
+                <div>
+                    <h1 class="view-title">Editor Pro Nexus</h1>
+                    <p class="view-subtitle">Suite de Producción de Elite</p>
+                </div>
+                <div class="tab-pill-container !bg-[#1a1a1a]">
                     <button onclick="window.app.switchNexusTab('dashboard')" class="tab-pill ${activeTab === 'dashboard' ? 'active' : ''}">Escritorio</button>
-                    <button onclick="window.app.switchNexusTab('nexus')" class="tab-pill ${activeTab === 'nexus' ? 'active' : ''}">Clientes</button>
-                    <button onclick="window.app.switchNexusTab('cloud')" class="tab-pill ${activeTab === 'cloud' ? 'active' : ''}">Almacén</button>
+                    <button onclick="window.app.switchNexusTab('nexus')" class="tab-pill ${activeTab === 'nexus' ? 'active' : ''}">Proyectos</button>
                     <button onclick="window.app.switchNexusTab('finance')" class="tab-pill ${activeTab === 'finance' ? 'active' : ''}">Finanzas</button>
                 </div>
             </div>
-            <p class="text-[9px] uppercase tracking-[0.4em] text-gray-600 font-bold">Onyx Reserve DNA</p>
-        </nav>
 
-        <main>
-            ${(() => {
-                if (activeTab === 'dashboard') {
-                    return `
-                    <div class="p-10 max-w-6xl mx-auto animate-reveal">
-                        <div class="flex items-center gap-6 mb-12">
-                            <div class="h-[1px] flex-1 bg-white/[0.05]"></div>
-                            <h2 class="text-[10px] font-bold uppercase text-gray-500 tracking-[10px]">Radar Operativo</h2>
-                            <div class="h-[1px] flex-1 bg-white/[0.05]"></div>
+            <main>
+                ${(() => {
+                    if (activeTab === 'dashboard') {
+                        return `
+                        <div class="grid grid-cols-3 gap-6">
+                            <div class="elysian-card">
+                                <span class="info-label text-emerald-500">Liquidez Confirmada</span>
+                                <h2 class="mega-value text-white mt-4">${formatCurrency(totalPaid)}</h2>
+                            </div>
+                            <div class="elysian-card">
+                                <span class="info-label text-amber-500">Cartera Pendiente</span>
+                                <h2 class="mega-value text-white mt-4">${formatCurrency(totalPending)}</h2>
+                            </div>
+                            <div class="elysian-card">
+                                <span class="info-label">Proyectos en Curso</span>
+                                <h2 class="mega-value text-white mt-4">${state.nexusProjects.length}</h2>
+                            </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div class="onyx-card">
-                                <p class="text-[9px] font-black text-amber-500 uppercase mb-4 tracking-widest">Entregas</p>
-                                <div class="space-y-3">
-                                    ${state.nexusProjects.filter(p => p.delivery_date && Math.ceil((new Date(p.delivery_date) - new Date()) / 86400000) < 7).map(p => `
-                                        <div class="flex justify-between items-center py-2 border-b border-white/[0.03]">
-                                            <p class="text-white text-[11px] font-medium uppercase">${p.name}</p>
-                                            <span class="badge-gold">Prox.</span>
-                                        </div>
-                                    `).join('') || '<p class="opacity-20 text-[9px] uppercase tracking-widest">Sin Pendientes</p>'}
-                                </div>
-                            </div>
-                            <div class="onyx-card">
-                                <p class="text-[9px] font-black text-blue-500 uppercase mb-4 tracking-widest">Infraestructura</p>
-                                <div class="space-y-3">
-                                    ${state.nexusProjects.filter(p => !p.drive_url).map(p => `
-                                        <div class="flex justify-between items-center py-2 border-b border-white/[0.03]">
-                                            <p class="text-white text-[11px] font-medium uppercase">${p.name}</p>
-                                            <span class="text-[9px] text-blue-400 font-bold">DRIVE?</span>
-                                        </div>
-                                    `).join('') || '<p class="opacity-20 text-[9px] uppercase tracking-widest">Al día</p>'}
-                                </div>
-                            </div>
-                            <div class="onyx-card">
-                                <p class="text-[9px] font-black text-emerald-500 uppercase mb-4 tracking-widest">Liquidez</p>
+                        <div class="grid grid-cols-2 gap-6 mt-10">
+                            <div class="elysian-card">
+                                <h3 class="info-label mb-6">Próximas Entregas</h3>
                                 <div class="space-y-4">
-                                    <div class="flex justify-between items-center border-b border-white/[0.03] pb-2">
-                                        <p class="text-white text-[11px]">COBRADO</p>
-                                        <p class="text-emerald-500 font-bold text-[11px]">${formatCurrency(totalPaid)}</p>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <p class="text-white text-[11px]">PENDIENTE</p>
-                                        <p class="text-amber-500 font-bold text-[11px]">${formatCurrency(totalPending)}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>`;
-                }
-
-                if (activeTab === 'nexus') {
-                    return `
-                    <div class="h-[calc(100vh-200px)] flex animate-reveal">
-                        <aside class="w-72 border-r border-white/[0.03] bg-[#080808] flex flex-col h-full">
-                            <div class="p-6">
-                                <button onclick="window.app.openModal('modalProject')" class="onyx-button w-full">+ Nuevo Cliente</button>
-                            </div>
-                            <div class="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll">
-                                ${state.nexusProjects.map(p => `
-                                    <div onclick="window.app.selectProject('${p.id}')" 
-                                        class="p-4 rounded-xl cursor-pointer transition-all border 0.5px ${state.activeNexusProjectId === p.id ? 'bg-[#121212] border-amber-500/30' : 'border-transparent hover:bg-white/[0.02]'}">
-                                        <p class="text-[11px] font-bold uppercase tracking-wider ${state.activeNexusProjectId === p.id ? 'text-amber-500' : 'text-gray-500'}">${p.name}</p>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </aside>
-
-                        <main class="flex-1 overflow-y-auto custom-scroll">
-                            ${!activeProject ? `<div class="h-full flex items-center justify-center text-[10px] text-gray-800 uppercase tracking-[20px]">Atelier Nexus Protocol...</div>` : `
-                                <div class="max-w-[1200px] mx-auto p-16 space-y-16">
-                                    <div class="flex justify-between items-end border-b border-white/[0.03] pb-12">
-                                        <div>
-                                            <p class="text-[10px] uppercase tracking-[0.4em] text-amber-500 font-bold mb-4">Strategic Atelier</p>
-                                            <h1 class="text-5xl font-black text-white uppercase tracking-tighter">${activeProject.name}</h1>
+                                    ${state.nexusProjects.filter(p => p.delivery_date).slice(0,5).map(p => `
+                                        <div class="flex justify-between items-center p-4 bg-white/5 rounded-xl border border-white/5">
+                                            <span class="text-xs font-black uppercase">${p.name}</span>
+                                            <span class="text-[9px] font-bold text-gray-500">${formatDate(p.delivery_date)}</span>
                                         </div>
-                                        <button onclick="window.app.saveAllNexus(this)" class="onyx-button">Sincronizar</button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div class="elysian-card">
+                                <h3 class="info-label mb-6">Estatus de Infraestructura</h3>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center p-4 bg-white/5 rounded-xl border border-white/5">
+                                        <span class="text-xs font-black uppercase">Servidor Nexus Cloud</span>
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_emerald]"></div>
+                                            <span class="text-[8px] font-bold text-gray-500 uppercase">ONLINE</span>
+                                        </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    }
 
-                                    <div class="grid grid-cols-12 gap-16">
-                                        <div class="col-span-12 lg:col-span-8">
-                                            <div class="onyx-card !p-0 overflow-hidden">
-                                                <div class="px-8 py-5 border-b border-white/[0.03] flex justify-between items-center bg-black/20">
-                                                    <span class="text-[10px] uppercase font-bold tracking-widest text-gray-500">Planificación Operativa</span>
-                                                </div>
-                                                <div id="nexus-planning-editor" contenteditable="true" class="p-12 min-h-[500px] text-white/90 text-lg leading-relaxed font-serif outline-none selection:bg-amber-500/20">
-                                                    ${activeProject.description || ''}
-                                                </div>
+                    if (activeTab === 'nexus') {
+                        return `
+                        <div class="grid grid-cols-12 gap-8">
+                            <aside class="col-span-3 space-y-4">
+                                <button onclick="window.app.openModal('modalProject')" class="elysian-btn-primary w-full !py-4">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                    <span>Nuevo Proyecto</span>
+                                </button>
+                                <div class="space-y-2">
+                                    ${state.nexusProjects.map(p => `
+                                        <div onclick="window.app.selectProject('${p.id}')" 
+                                            class="p-4 rounded-xl cursor-pointer border ${state.activeNexusProjectId === p.id ? 'bg-white/10 border-white/20' : 'bg-transparent border-transparent hover:bg-white/5'} transition-all">
+                                            <p class="text-[10px] font-black uppercase tracking-wider ${state.activeNexusProjectId === p.id ? 'text-white' : 'text-gray-600'}">${p.name}</p>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </aside>
+
+                            <section class="col-span-9">
+                                ${!activeProject ? `<div class="h-64 flex items-center justify-center elysian-card border-dashed"><p class="text-[10px] text-gray-700 uppercase tracking-[15px]">SELECCIONE PROTOCOLO...</p></div>` : `
+                                    <div class="space-y-8">
+                                        <div class="elysian-card flex justify-between items-end">
+                                            <div>
+                                                <p class="info-label text-amber-500 mb-2">Protocolo Activo</p>
+                                                <h2 class="text-4xl font-black text-white uppercase tracking-tighter">${activeProject.name}</h2>
+                                            </div>
+                                            <div class="flex gap-3">
+                                                <button onclick="window.open('${activeProject.drive_url}', '_blank')" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all">
+                                                    <i data-lucide="external-link" class="w-4 h-4 text-gray-500"></i>
+                                                </button>
+                                                <button onclick="window.app.openOperationModal()" class="elysian-btn-primary">
+                                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                                    <span>Añadir Operación</span>
+                                                </button>
                                             </div>
                                         </div>
 
-                                        <aside class="col-span-12 lg:col-span-4 space-y-8">
-                                            <div class="onyx-card">
-                                                <p class="text-[10px] uppercase font-bold tracking-widest text-gray-500 mb-6">Finanzas</p>
-                                                <div class="space-y-6">
-                                                    <div>
-                                                        <label class="text-[9px] uppercase tracking-widest text-gray-600 block mb-2">Inversión Total</label>
-                                                        <input type="number" value="${activeProject.price || 0}" class="bg-transparent border-none text-2xl font-black text-white w-full outline-none" onblur="window.app.updateProjectField('${activeProject.id}', 'price', this.value)">
+                                        <div class="grid grid-cols-1 gap-4">
+                                            ${(activeProject.nexus_deliverables || []).map(d => `
+                                                <div class="elysian-card !p-6 flex justify-between items-center hover:border-white/20 transition-all cursor-pointer" onclick="window.app.openOperationModal('${d.id}')">
+                                                    <div class="flex items-center gap-6">
+                                                        <div class="w-1.5 h-1.5 rounded-full ${d.status_paid === 'paid' ? 'bg-emerald-500 shadow-[0_0_8px_emerald]' : 'bg-amber-500 animate-pulse'}"></div>
+                                                        <div>
+                                                            <h4 class="text-sm font-black text-white uppercase mb-1">${d.title}</h4>
+                                                            <p class="text-[9px] text-gray-600 font-bold uppercase tracking-widest">${d.status_paid === 'paid' ? 'Liquidado' : 'Pendiente de Cobro'}</p>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </div>
-                                            <div class="onyx-card">
-                                                <p class="text-[10px] uppercase font-bold tracking-widest text-gray-500 mb-6">Cronograma</p>
-                                                <div class="space-y-4">
-                                                    <div class="flex flex-col gap-1">
-                                                        <span class="text-[8px] uppercase text-gray-600">Meeting</span>
-                                                        <input type="date" value="${activeProject.meeting_date || ''}" class="bg-transparent border-none text-xs text-white w-full outline-none" onchange="window.app.updateProjectField('${activeProject.id}', 'meeting_date', this.value)">
+                                                    <div class="text-right">
+                                                        <p class="text-xs font-black text-white">${formatCurrency(d.price)}</p>
                                                     </div>
-                                                    <div class="flex flex-col gap-1">
-                                                        <span class="text-[8px] uppercase text-gray-600">Delivery</span>
-                                                        <input type="date" value="${activeProject.delivery_date || ''}" class="bg-transparent border-none text-xs text-amber-500 w-full outline-none font-bold" onchange="window.app.updateProjectField('${activeProject.id}', 'delivery_date', this.value)">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </aside>
-                                    </div>
-                                </div>
-                            `}
-                        </main>
-                    </div>`;
-                }
-
-                if (activeTab === 'cloud') {
-                    return `
-                    <div class="p-12 max-w-4xl mx-auto animate-reveal">
-                        <h2 class="text-2xl font-black text-white uppercase tracking-tighter mb-8 text-center">Almacén Cloud</h2>
-                        <div class="grid gap-4">
-                            ${state.nexusProjects.map(p => `
-                                <div class="onyx-card flex items-center justify-between !p-6 !bg-[#080808]">
-                                    <p class="text-[11px] font-black text-white uppercase tracking-wider">${p.name}</p>
-                                    <div class="flex gap-2">
-                                        <button onclick="window.open('${p.drive_url}', '_blank')" class="onyx-button !py-2 !px-5 text-[9px]">Drive</button>
-                                        <button onclick="window.open('${p.meet_url}', '_blank')" class="onyx-button !py-2 !px-5 text-[9px]">Meet</button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>`;
-                }
-
-                if (activeTab === 'finance') {
-                    return `
-                    <div class="p-12 max-w-5xl mx-auto animate-reveal">
-                        <h2 class="text-4xl font-black text-white uppercase tracking-tighter mb-12 text-center">Libro de Cobros</h2>
-                        <div class="grid grid-cols-2 gap-8 mb-16">
-                            <div class="onyx-card border-l-4 border-emerald-500">
-                                <p class="text-[9px] text-gray-500 uppercase mb-2">Liquidado</p>
-                                <p class="text-4xl font-black text-white">${formatCurrency(totalPaid)}</p>
-                            </div>
-                            <div class="onyx-card border-l-4 border-amber-500">
-                                <p class="text-[9px] text-gray-500 uppercase mb-2">Pendiente</p>
-                                <p class="text-4xl font-black text-amber-500">${formatCurrency(totalPending)}</p>
-                            </div>
-                        </div>
-                        <div class="space-y-3">
-                            ${state.nexusProjects.map(p => {
-                                const pDeliverables = p.nexus_deliverables || [];
-                                if (pDeliverables.length === 0) return '';
-                                return `
-                                    <div class="mb-10">
-                                        <p class="text-[9px] text-gray-600 uppercase tracking-[4px] font-bold mb-4 ml-2">${p.name}</p>
-                                        <div class="grid gap-2">
-                                            ${pDeliverables.map(d => `
-                                                <div class="onyx-card flex justify-between items-center !p-4 hover:border-amber-500/20 transition-all cursor-pointer" onclick="window.app.openOperationModal('${d.id}')">
-                                                    <div class="flex items-center gap-4">
-                                                        <div class="w-1.5 h-1.5 rounded-full ${d.status_paid === 'paid' ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}"></div>
-                                                        <p class="text-[11px] font-bold text-white uppercase">${d.title}</p>
-                                                    </div>
-                                                    <p class="text-xs font-black text-white">${formatCurrency(d.price)}</p>
                                                 </div>
                                             `).join('')}
                                         </div>
-                                    </div>`;
-                            }).join('')}
-                        </div>
-                    </div>`;
-                }
-                return '';
-            })()}
-        </main>
+                                    </div>
+                                `}
+                            </section>
+                        </div>`;
+                    }
 
-        <!-- MODALS ONYX RESERVE -->
-        <div id="modalProject" class="modal-overlay" style="display: none;">
-            <div class="onyx-card max-w-lg w-full !bg-[#080808] border-white/10">
-                <h3 class="text-2xl font-black uppercase tracking-tighter mb-8 text-white text-center">Nuevo Cliente</h3>
-                <div class="space-y-4">
-                    <input id="clientName" type="text" class="onyx-input" placeholder="Nombre de la Marca">
-                    <div class="grid grid-cols-2 gap-4">
-                        <input id="driveUrl" type="text" class="onyx-input" placeholder="URL Drive">
-                        <input id="meetUrl" type="text" class="onyx-input" placeholder="URL Meet">
-                    </div>
-                    <input id="endDate" type="date" class="onyx-input">
-                    <textarea id="projectDesc" class="onyx-input h-24 resize-none" placeholder="Notas estratégicas iniciales..."></textarea>
-                    <div class="flex gap-4 pt-6">
-                        <button onclick="window.app.closeModals()" class="flex-1 py-3 text-[10px] font-bold uppercase text-gray-600 hover:text-white transition-all">Cancelar</button>
-                        <button onclick="window.app.createProject()" class="onyx-button flex-1">Crear Proyecto</button>
-                    </div>
-                </div>
-            </div>
+                    if (activeTab === 'finance') {
+                        return `
+                        <div class="space-y-8">
+                            <div class="grid grid-cols-2 gap-6">
+                                <div class="elysian-card">
+                                    <span class="info-label text-emerald-500">Recaudación Ejecutada</span>
+                                    <h2 class="mega-value text-white mt-4">${formatCurrency(totalPaid)}</h2>
+                                </div>
+                                <div class="elysian-card">
+                                    <span class="info-label text-amber-500">Capital en Tránsito</span>
+                                    <h2 class="mega-value text-white mt-4">${formatCurrency(totalPending)}</h2>
+                                </div>
+                            </div>
+                            <div class="elysian-card">
+                                <h3 class="info-label mb-8">Libro de Operaciones Nexus</h3>
+                                <div class="space-y-4">
+                                    ${state.nexusProjects.map(p => (p.nexus_deliverables || []).map(d => `
+                                        <div class="flex justify-between items-center p-4 border-b border-white/5">
+                                            <div>
+                                                <p class="text-[10px] font-black text-white uppercase">${d.title}</p>
+                                                <p class="text-[8px] text-gray-600 font-bold uppercase tracking-widest">${p.name}</p>
+                                            </div>
+                                            <p class="text-xs font-black ${d.status_paid === 'paid' ? 'text-emerald-500' : 'text-amber-500'}">${formatCurrency(d.price)}</p>
+                                        </div>
+                                    `).join('')).join('')}
+                                </div>
+                            </div>
+                        </div>`;
+                    }
+                    return '';
+                })()}
+            </main>
         </div>
-
-        <div id="modalOperation" class="modal-overlay" style="display: none;">
-            <div class="onyx-card max-w-4xl w-full h-[80vh] !p-0 flex flex-col overflow-hidden !bg-[#080808]">
-                <div class="p-8 border-b border-white/[0.03] flex justify-between items-center">
-                    <h2 id="del-modal-title" class="text-2xl font-black uppercase tracking-tighter text-white">Item de Producción</h2>
-                    <button onclick="window.app.closeModals()" class="text-gray-600 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
-                </div>
-                <div class="flex-1 overflow-y-auto custom-scroll p-10">
-                    <div class="grid grid-cols-12 gap-10">
-                        <div class="col-span-5 space-y-6">
-                            <input id="del-title" type="text" class="onyx-input" placeholder="Título del Item">
-                            <input id="del-price" type="number" class="onyx-input" placeholder="Precio">
-                            <select id="del-status" class="onyx-input">
-                                <option value="pending">Pendiente</option>
-                                <option value="paid">Pagado</option>
-                            </select>
-                            <input id="del-link-empresa" type="text" class="onyx-input" placeholder="URL de Entrega">
-                        </div>
-                        <div class="col-span-7 flex flex-col h-full">
-                            <div id="del-notes-editor" contenteditable="true" class="bg-black/40 border border-white/[0.03] p-8 flex-1 text-white/80 text-sm leading-relaxed outline-none focus:border-amber-500/20 transition-all" placeholder="Notas de feedback..."></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="p-8 border-t border-white/[0.03] flex gap-6">
-                    <button onclick="window.app.closeModals()" class="flex-1 py-4 text-[10px] font-bold uppercase text-gray-600 hover:text-white transition-all">Cancelar</button>
-                    <button id="btn-save-op" onclick="window.app.saveDeliverable()" class="onyx-button flex-1">Guardar</button>
-                </div>
-            </div>
-        </div>
-    </div>
     `;
 }
 
