@@ -18,18 +18,6 @@ try {
 }
 
 // --- INITIAL STATE & DATA MANAGEMENT ---
-// PRUEBA DE CONEXIÓN INICIAL
-(async () => {
-    try {
-        if (!supabase) throw new Error("La librería de Supabase no se cargó. Revisa tu conexión a internet.");
-        const { error } = await sb.from('nexus_projects').select('count', { count: 'exact', head: true });
-        if (error) throw error;
-        console.log("Conexión con Supabase: ESTABLE");
-    } catch (e) {
-        alert("⚠️ FALLO DE CONEXIÓN: " + e.message + "\n\nSugerencia: Si abres el archivo desde el buscador de archivos, intenta usar un servidor local (localhost) o revisa tu internet.");
-    }
-})();
-
 let state = {
     loans: [],
     debts: [], 
