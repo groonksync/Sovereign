@@ -2600,7 +2600,7 @@ async function renderSovereignNexus() {
     const stages = { briefing: 0, production: 0, feedback: 0, finished: 0 };
     
     state.nexusProjects.forEach(p => {
-        stages[p.pipeline || 'briefing']++;
+        stages[p.status || 'briefing']++;
         (p.nexus_deliverables || []).forEach(d => {
             if (d.status === 'paid') totalPaid += Number(d.price || 0);
             else totalPending += Number(d.price || 0);
@@ -2631,7 +2631,7 @@ async function renderSovereignNexus() {
         try {
             const { data, error } = await sb
                 .from('nexus_projects')
-                .insert([{ name, description: desc, pipeline: 'briefing' }])
+                .insert([{ name, description: desc, status: 'briefing' }])
                 .select()
                 .single();
             
@@ -2794,7 +2794,7 @@ async function renderSovereignNexus() {
                                 ${state.nexusProjects.map(p => `
                                     <div onclick="window.app.selectProject('${p.id}')" class="p-5 rounded-2xl border ${state.activeNexusProjectId === p.id ? 'border-emerald-500 bg-white/[0.03]' : 'border-white/5 bg-black'} cursor-pointer hover:border-white/20 transition-all">
                                         <p class="text-sm font-black text-white uppercase truncate">${p.name}</p>
-                                        <p class="text-[8px] text-gray-500 uppercase mt-1">${p.pipeline || 'briefing'}</p>
+                                        <p class="text-[8px] text-gray-500 uppercase mt-1">${p.status || 'briefing'}</p>
                                     </div>
                                 `).join('')}
                             </div>
@@ -2813,11 +2813,11 @@ async function renderSovereignNexus() {
                                             <div class="flex-1">
                                                 <h3 class="text-6xl font-black text-white uppercase tracking-tighter mb-4">${activeProject.name}</h3>
                                                 <div class="flex items-center gap-4">
-                                                    <select onchange="window.app.updateProjectField('pipeline', this.value)" class="bg-[#111] border border-white/10 rounded-lg px-4 py-2 text-[10px] font-black text-emerald-400 uppercase outline-none">
-                                                        <option value="briefing" ${activeProject.pipeline === 'briefing' ? 'selected' : ''}>Briefing</option>
-                                                        <option value="production" ${activeProject.pipeline === 'production' ? 'selected' : ''}>En Edición</option>
-                                                        <option value="feedback" ${activeProject.pipeline === 'feedback' ? 'selected' : ''}>Revisiones</option>
-                                                        <option value="finished" ${activeProject.pipeline === 'finished' ? 'selected' : ''}>Finalizado</option>
+                                                    <select onchange="window.app.updateProjectField('status', this.value)" class="bg-[#111] border border-white/10 rounded-lg px-4 py-2 text-[10px] font-black text-emerald-400 uppercase outline-none">
+                                                        <option value="briefing" ${activeProject.status === 'briefing' ? 'selected' : ''}>Briefing</option>
+                                                        <option value="production" ${activeProject.status === 'production' ? 'selected' : ''}>En Edición</option>
+                                                        <option value="feedback" ${activeProject.status === 'feedback' ? 'selected' : ''}>Revisiones</option>
+                                                        <option value="finished" ${activeProject.status === 'finished' ? 'selected' : ''}>Finalizado</option>
                                                     </select>
                                                     <div class="flex gap-2">
                                                         ${Object.keys(activeProject.branding_json || {}).map(k => `<span class="branding-chip">${k}</span>`).join('')}
