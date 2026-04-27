@@ -2407,7 +2407,7 @@ const initApp = async () => {
     }
 };
 
-initApp();
+
 
 
 /** --- EDITOR PRO: ELITE PRODUCTION SUITE (ONYX RESERVE DNA) --- **/
@@ -2515,161 +2515,136 @@ async function renderSovereignNexus() {
     `;
 }
 
-// --- ELYSIAN FUNCTIONAL HELPERS ---
-function updateStatus(element, status) {
-    const parent = element.closest('.status-picker');
-    parent.querySelectorAll('.status-option').forEach(opt => opt.classList.remove('active'));
-    element.classList.add('active');
-    parent.nextElementSibling.value = status;
-}
 
-async function handlePhotoUpload(event) {
-    const files = event.target.files;
-    const preview = document.getElementById('photo-preview');
-    if (!preview) return;
-
-    for (let file of files) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const div = document.createElement('div');
-            div.className = 'relative group';
-            div.innerHTML = `
-                <img src="${e.target.result}" class="w-full h-20 object-cover rounded-lg border border-white/10">
-                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center rounded-lg cursor-pointer" onclick="this.parentElement.remove()">
-                    <i data-lucide="trash-2" class="w-4 h-4 text-white"></i>
-                </div>
-            `;
-            preview.appendChild(div);
-            if (window.lucide) window.lucide.createIcons();
+// --- CONSOLIDATED OPERATIONAL LOGIC (Sovereign Executive v7.0) ---
+window.app = {
+    navigate: (view, id = null) => {
+        state.currentView = view;
+        if (id) state.selectedLoanId = id;
+        render();
+    },
+    handleSync: async () => {
+        await loadState();
+    },
+    switchNexusTab: (tab) => {
+        state.nexusTab = tab;
+        render();
+    },
+    selectProject: (id) => {
+        state.activeNexusProjectId = id;
+        state.nexusTab = 'nexus';
+        render();
+    },
+    openModal: (id) => {
+        const m = document.getElementById(id);
+        if(m) m.style.display = 'flex';
+        if (window.lucide) window.lucide.createIcons();
+    },
+    closeModals: () => {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+    },
+    updateStatus: (element, status) => {
+        const parent = element.closest('.status-picker');
+        if (!parent) return;
+        parent.querySelectorAll('.status-option').forEach(opt => opt.classList.remove('active', 'border-emerald-500', 'border-amber-500', 'border-blue-500'));
+        element.classList.add('active');
+        if(status === 'Vigente') element.classList.add('border-emerald-500');
+        if(status === 'Mora') element.classList.add('border-amber-500');
+        if(status === 'Pagado') element.classList.add('border-blue-500');
+        const input = parent.nextElementSibling;
+        if (input && input.type === 'hidden') input.value = status;
+    },
+    handlePhotoUpload: (event) => {
+        const files = event.target.files;
+        const preview = document.getElementById('photo-preview');
+        if (!preview) return;
+        for (let file of files) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement('div');
+                div.className = 'relative group';
+                div.innerHTML = `<img src="${e.target.result}" class="w-full h-20 object-cover rounded-lg border border-white/10">`;
+                preview.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        }
+    },
+    createProject: async () => {
+        const name = document.getElementById('clientName').value;
+        if (!name) { alert("Nombre requerido"); return; }
+        try {
+            const { data, error } = await sb.from('nexus_projects').insert([{ 
+                name: name, 
+                description: document.getElementById('projectDesc')?.value || '',
+                drive_url: document.getElementById('driveUrl')?.value || '',
+                meet_url: document.getElementById('meetUrl')?.value || '',
+                delivery_date: document.getElementById('endDate')?.value || null
+            }]).select().single();
+            if (error) throw error;
+            state.nexusProjects = null;
+            window.app.closeModals();
+            await loadState();
+        } catch (e) { alert("Error: " + e.message); }
+    },
+    openOperationModal: (delId = null) => {
+        const activeProject = (state.nexusProjects || []).find(p => p.id === state.activeNexusProjectId);
+        if (!activeProject) { alert("Seleccione un proyecto primero"); return; }
+        const modalTitle = document.getElementById('del-modal-title');
+        const editor = document.getElementById('del-notes-editor');
+        
+        if (delId) {
+            const d = activeProject.nexus_deliverables.find(item => item.id === delId);
+            state.editingDeliverableId = delId;
+            modalTitle.innerText = "Editar Operación";
+            document.getElementById('del-title').value = d.title || '';
+            document.getElementById('del-price').value = d.price || '';
+            document.getElementById('del-status').value = d.status_paid || 'pending';
+            document.getElementById('del-link-empresa').value = d.link_empresa || '';
+            editor.innerHTML = d.notes_html || '';
+        } else {
+            state.editingDeliverableId = null;
+            modalTitle.innerText = "Nueva Operación";
+            document.getElementById('del-title').value = '';
+            document.getElementById('del-price').value = '';
+            document.getElementById('del-status').value = 'pending';
+            document.getElementById('del-link-empresa').value = '';
+            editor.innerHTML = '';
+        }
+        window.app.openModal('modalOperation');
+    },
+    saveDeliverable: async () => {
+        const activeProject = (state.nexusProjects || []).find(p => p.id === state.activeNexusProjectId);
+        if (!activeProject) return;
+        const payload = {
+            project_id: activeProject.id,
+            title: document.getElementById('del-title').value,
+            price: Number(document.getElementById('del-price').value),
+            status_paid: document.getElementById('del-status').value,
+            link_empresa: document.getElementById('del-link-empresa').value,
+            notes_html: document.getElementById('del-notes-editor').innerHTML
         };
-        reader.readAsDataURL(file);
-    }
-}
-
-function addReceiptItem() {
-    const container = document.getElementById('items-container');
-    const div = document.createElement('div');
-    div.className = 'elysian-card !p-4 animate-reveal flex gap-4 items-center';
-    div.innerHTML = `
-        <div class="flex-1 space-y-3">
-            <input type="text" name="itemBrand" class="elysian-input !p-3 !pl-10" placeholder="Servicio / Marca">
-            <input type="text" name="itemDesc" class="elysian-input !p-3 !pl-10" placeholder="Descripción">
-        </div>
-        <div class="w-32 space-y-3">
-            <input type="number" name="itemQty" class="elysian-input !p-3" placeholder="Cant." value="1">
-            <input type="number" name="itemPrice" class="elysian-input !p-3" placeholder="Precio">
-        </div>
-        <button type="button" class="text-gray-600 hover:text-white" onclick="this.parentElement.remove()">
-            <i data-lucide="trash-2" class="w-5 h-5"></i>
-        </button>
-    `;
-    container.appendChild(div);
-    if (window.lucide) window.lucide.createIcons();
-}
-
-async function handleSync() {
-    const btn = event.currentTarget;
-    const originalContent = btn.innerHTML;
-    btn.innerHTML = '<i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i><span>Sincronizando...</span>';
-    if (window.lucide) window.lucide.createIcons();
-    
-    try {
-        await init(); // Recargar datos
-        btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i><span>Sincronizado</span>';
-        setTimeout(() => {
-            btn.innerHTML = originalContent;
-            if (window.lucide) window.lucide.createIcons();
-        }, 2000);
-    } catch (e) {
-        btn.innerHTML = '<span>Error</span>';
-        setTimeout(() => { btn.innerHTML = originalContent; }, 2000);
-    }
-}
-
-
-// --- RESTORED GLOBAL COMMANDS (v6.0 EXECUTIVE) ---
-window.app.updateStatus = (element, status) => {
-    const parent = element.closest('.status-picker');
-    parent.querySelectorAll('.status-option').forEach(opt => opt.classList.remove('active', 'border-emerald-500', 'border-amber-500', 'border-blue-500'));
-    element.classList.add('active');
-    if(status === 'Vigente') element.classList.add('border-emerald-500');
-    if(status === 'Mora') element.classList.add('border-amber-500');
-    if(status === 'Pagado') element.classList.add('border-blue-500');
-    parent.nextElementSibling.value = status;
-};
-
-window.app.openOperationModal = (delId = null) => {
-    const modalTitle = document.getElementById('del-modal-title');
-    const editor = document.getElementById('del-notes-editor');
-    const projects = state.nexusProjects || [];
-    const activeProject = projects.find(p => p.id === state.activeNexusProjectId);
-    if (!activeProject) return;
-
-    if (delId) {
-        const d = activeProject.nexus_deliverables.find(item => item.id === delId);
-        state.editingDeliverableId = delId;
-        modalTitle.innerText = "Editar Operación";
-        document.getElementById('del-title').value = d.title || '';
-        document.getElementById('del-price').value = d.price || '';
-        document.getElementById('del-status').value = d.status_paid || 'pending';
-        document.getElementById('del-link-empresa').value = d.link_empresa || '';
-        editor.innerHTML = d.notes_html || '';
-    } else {
-        state.editingDeliverableId = null;
-        modalTitle.innerText = "Nueva Operación";
-        document.getElementById('del-title').value = '';
-        document.getElementById('del-price').value = '';
-        document.getElementById('del-status').value = 'pending';
-        document.getElementById('del-link-empresa').value = '';
-        editor.innerHTML = '';
-    }
-    window.app.openModal('modalOperation');
-};
-
-window.app.saveDeliverable = async () => {
-    const projects = state.nexusProjects || [];
-    const activeProject = projects.find(p => p.id === state.activeNexusProjectId);
-    if (!activeProject) return;
-    
-    const payload = {
-        project_id: activeProject.id,
-        title: document.getElementById('del-title').value,
-        price: Number(document.getElementById('del-price').value),
-        status_paid: document.getElementById('del-status').value,
-        link_empresa: document.getElementById('del-link-empresa').value,
-        notes_html: document.getElementById('del-notes-editor').innerHTML
-    };
-    try {
-        if (state.editingDeliverableId) await sb.from('nexus_deliverables').update(payload).eq('id', state.editingDeliverableId);
-        else await sb.from('nexus_deliverables').insert([payload]);
-        state.nexusProjects = null;
-        window.app.closeModals();
-        loadState();
-    } catch (e) { alert("Error: " + e.message); }
-};
-
-window.app.handlePhotoUpload = (event) => {
-    const files = event.target.files;
-    const preview = document.getElementById('photo-preview');
-    if (!preview) return;
-    for (let file of files) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const div = document.createElement('div');
-            div.className = 'relative group';
-            div.innerHTML = `<img src="${e.target.result}" class="w-full h-20 object-cover rounded-lg border border-white/10">`;
-            preview.appendChild(div);
-        };
-        reader.readAsDataURL(file);
+        try {
+            if (state.editingDeliverableId) await sb.from('nexus_deliverables').update(payload).eq('id', state.editingDeliverableId);
+            else await sb.from('nexus_deliverables').insert([payload]);
+            state.nexusProjects = null;
+            window.app.closeModals();
+            await loadState();
+        } catch (e) { alert("Error: " + e.message); }
+    },
+    handleSaveLoan: async (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const loan = Object.fromEntries(formData.entries());
+        // Añadir ref para Protocolo por defecto
+        loan.ref = 'PROTOCOLO';
+        try {
+            const { error } = await sb.from('loans').insert([loan]);
+            if (error) throw error;
+            window.app.navigate('dashboard');
+            await loadState();
+        } catch (e) { alert("Error al guardar protocolo"); }
     }
 };
 
-window.app.navigate = (view, id = null) => {
-    state.currentView = view;
-    if (id) state.selectedLoanId = id;
-    render();
-};
-
-window.app.handleSync = async () => {
-    await loadState();
-};
+// --- INITIALIZATION ---
+loadState();
