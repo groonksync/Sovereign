@@ -266,86 +266,40 @@ function navigate(view, id = null) {
 }
 
 // --- ELYSIAN HELPERS ---
-function renderTopNav() {
-    const tabs = [
+function renderSidebar() {
+    const navItems = [
         { id: 'dashboard', icon: 'layout', label: 'Escritorio' },
         { id: 'debts', icon: 'users', label: 'Clientes' },
-        { id: 'expenses', icon: 'database', label: 'Almacén' },
+        { id: 'expenses', icon: 'credit-card', label: 'Egresos' },
         { id: 'studio-sync', icon: 'file-text', label: 'Finanzas' },
-        { id: 'sovereign-nexus', icon: 'star', label: 'Editor Pro' }
+        { id: 'sovereign-nexus', icon: 'layers', label: 'Editor Pro' }
     ];
 
     return `
-        <nav class="elysian-top-nav">
-            <div class="flex items-center gap-3 mr-8">
-                <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center">
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-icon">
                     <svg viewBox="0 0 24 24" width="18" height="18" stroke="black" stroke-width="3" fill="none"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                 </div>
-                <div class="flex flex-col">
-                    <span class="text-[11px] font-black tracking-tighter leading-none">ELYSIAN</span>
-                    <span class="text-[7px] font-bold text-gray-500 tracking-[0.2em] leading-none mt-1">STUDIO OS</span>
-                </div>
+                <span class="text-white font-bold tracking-tighter">SOVEREIGN</span>
             </div>
-            <div class="flex gap-2">
-                ${tabs.map(tab => `
-                    <div class="nav-item ${state.currentView === tab.id ? 'active' : ''}" onclick="window.app.navigate('${tab.id}')">
-                        <i data-lucide="${tab.icon}" class="w-4 h-4"></i>
-                        <span>${tab.label}</span>
+            <nav class="nav-group">
+                ${navItems.map(item => `
+                    <div class="nav-link ${state.currentView === item.id ? 'active' : ''}" onclick="window.app.navigate('${item.id}')">
+                        <i data-lucide="${item.icon}" class="w-4 h-4"></i>
+                        <span>${item.label}</span>
                     </div>
                 `).join('')}
-            </div>
-            <div class="ml-auto flex items-center gap-6">
-                <i data-lucide="search" class="w-4 h-4 text-gray-500 cursor-pointer"></i>
-                <div class="relative">
-                    <i data-lucide="bell" class="w-4 h-4 text-gray-500 cursor-pointer"></i>
-                    <div class="absolute -top-1 -right-1 w-1.5 h-1.5 bg-white rounded-full"></div>
-                </div>
-                <div class="w-8 h-8 rounded-full bg-[#1a1a1a] border border-white/5 flex items-center justify-center cursor-pointer">
-                    <i data-lucide="user" class="w-4 h-4 text-gray-500"></i>
+            </nav>
+            <div class="p-6 border-t border-white/5">
+                <div class="flex items-center gap-3 text-gray-500 hover:text-white transition-all cursor-pointer" onclick="window.app.handleSync()">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    <span class="text-[11px] font-bold uppercase tracking-widest">Sincronizar</span>
                 </div>
             </div>
-        </nav>
+        </aside>
     `;
 }
-
-function renderSessionHeader() {
-    const today = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-    return `
-        <header class="elysian-session-header">
-            <div class="flex gap-16">
-                <div class="session-info-group">
-                    <span class="info-label">Identificador de Sesión</span>
-                    <div class="flex items-center gap-3">
-                        <span class="info-value">SOVEREIGN <span class="text-gray-500 font-light">01</span></span>
-                        <div class="status-indicator">
-                            <div class="dot"></div>
-                            <span>En Línea</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="session-info-group">
-                    <span class="info-label">Fecha Límite</span>
-                    <span class="info-value">${today}</span>
-                </div>
-                <div class="session-info-group">
-                    <span class="info-label">Latencia de Red</span>
-                    <span class="info-value">14ms <span class="text-gray-500 text-xs font-bold ml-1">/ ESTABLE</span></span>
-                </div>
-            </div>
-            <div class="flex gap-3">
-                <button class="elysian-btn-primary" onclick="window.app.handleSync()">
-                    <i data-lucide="share-2" class="w-4 h-4"></i>
-                    <span>Ejecutar Sync</span>
-                </button>
-                <button class="w-11 h-11 rounded-xl bg-[#1a1a1a] border border-white/5 flex items-center justify-center text-white hover:bg-[#222] transition-all" onclick="window.app.navigate('register')">
-                    <i data-lucide="plus" class="w-5 h-5"></i>
-                </button>
-            </div>
-        </header>
-    `;
-}
-
-// --- RENDERERS ---
 
 function renderDashboard() {
     const totalAssets = state.loans.reduce((acc, loan) => acc + parseFloat(loan.amount || 0), 0);
@@ -800,69 +754,66 @@ function renderReceiptEdit() {
 
 function renderRegister() {
     return `
-        <div class="animate-reveal max-w-4xl mx-auto">
-            <div class="view-header-pro">
+        <div class="animate-reveal max-w-2xl mx-auto space-y-10">
+            <header class="flex justify-between items-center">
                 <div>
-                    <h1 class="view-title">Alta de Cliente</h1>
-                    <p class="view-subtitle">Protocolo de Registro de Activos</p>
+                    <h1 class="text-3xl font-bold tracking-tight">Alta de Cliente</h1>
+                    <p class="text-gray-500 text-sm mt-1">Registro de nuevo protocolo de activo financiero.</p>
                 </div>
-                <button class="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center hover:bg-white/5" onclick="window.app.navigate('dashboard')">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                <button class="text-gray-500 hover:text-white" onclick="window.app.navigate('dashboard')">
+                    <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
-            </div>
+            </header>
 
-            <form id="loan-form" class="space-y-8" onsubmit="window.app.handleSave(event)">
-                <div class="grid grid-cols-3 gap-6">
-                    <div class="col-span-2 elysian-card space-y-6">
-                        <div class="elysian-input-group">
-                            <i data-lucide="user" class="elysian-input-icon w-4 h-4"></i>
-                            <input type="text" name="debtor" class="elysian-input" placeholder="Nombre Completo del Cliente" required>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="elysian-input-group">
-                                <i data-lucide="dollar-sign" class="elysian-input-icon w-4 h-4"></i>
-                                <input type="number" name="amount" class="elysian-input" placeholder="Importe Principal" required>
-                            </div>
-                            <div class="elysian-input-group">
-                                <i data-lucide="calendar" class="elysian-input-icon w-4 h-4"></i>
-                                <input type="date" name="startDate" class="elysian-input" required>
-                            </div>
-                        </div>
-                        <div class="elysian-input-group">
-                            <i data-lucide="message-square" class="elysian-input-icon w-4 h-4"></i>
-                            <input type="text" name="reason" class="elysian-input" placeholder="Descripción del Activo / Servicio">
-                        </div>
+            <form id="loan-form" class="space-y-6" onsubmit="window.app.handleSaveLoan(event)">
+                <div class="exec-card space-y-5">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Identificación del Deudor</label>
+                        <input type="text" name="debtor" class="exec-input" placeholder="Nombre completo o razón social" required>
                     </div>
-
-                    <div class="space-y-6">
-                        <div class="elysian-card">
-                            <span class="info-label mb-4 block">Estatus Inicial</span>
-                            <div class="status-picker">
-                                <div class="status-option paid active" onclick="window.app.updateStatus(this, 'Pagado')">
-                                    <i data-lucide="check-circle"></i>
-                                    <span>Liquidado</span>
-                                </div>
-                                <div class="status-option pending" onclick="window.app.updateStatus(this, 'Pendiente')">
-                                    <i data-lucide="clock"></i>
-                                    <span>Pendiente</span>
-                                </div>
-                            </div>
-                            <input type="hidden" name="status" value="Pagado">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Capital Principal (Bs.)</label>
+                            <input type="number" name="amount" class="exec-input" placeholder="0.00" required>
                         </div>
-
-                        <div class="elysian-card">
-                            <span class="info-label mb-4 block">Evidencia Digital</span>
-                            <div class="photo-uploader" onclick="document.getElementById('photo-input').click()">
-                                <i data-lucide="camera"></i>
-                                <span>Cargar Captura</span>
-                            </div>
-                            <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="window.app.handlePhotoUpload(event)">
-                            <div id="photo-preview" class="mt-4 grid grid-cols-3 gap-2"></div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Rendimiento Mensual (%)</label>
+                            <input type="number" name="interest" class="exec-input" placeholder="%" required>
                         </div>
                     </div>
                 </div>
 
-                <button type="submit" class="elysian-btn-primary w-full !py-6 text-sm">Registrar en Protocolo</button>
+                <div class="exec-card space-y-5">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Fecha de Inicio</label>
+                            <input type="date" name="start_date" class="exec-input" required>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Fecha de Liquidación</label>
+                            <input type="date" name="end_date" class="exec-input" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="exec-card space-y-4">
+                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Garantías y Avales</span>
+                        <input type="text" name="guarantor" class="exec-input" placeholder="Nombre del Garante">
+                        <textarea name="collateral" class="exec-input h-24" placeholder="Descripción de activos colaterales..."></textarea>
+                    </div>
+                    <div class="exec-card space-y-4">
+                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Evidencia Digital</span>
+                        <div class="border-2 border-dashed border-white/5 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-white/10 transition-all" onclick="document.getElementById('photo-input').click()">
+                            <i data-lucide="camera" class="w-8 h-8 text-gray-700 mb-2"></i>
+                            <span class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Subir Captura</span>
+                        </div>
+                        <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="window.app.handlePhotoUpload(event)">
+                        <div id="photo-preview" class="grid grid-cols-3 gap-2 mt-2"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="exec-btn-primary w-full !py-5 text-sm uppercase tracking-widest font-black">Registrar Activo</button>
             </form>
         </div>
     `;
@@ -996,111 +947,71 @@ async function render() {
             case 'debts': content = renderDebts(); break;
             case 'expenses': content = renderExpenses(); break;
             case 'register': content = renderRegister(); break;
-            case 'debtRegister': content = renderDebtRegister(); break;
-            case 'expenseRegister': content = renderExpenseRegister(); break;
             case 'details': content = renderDetails(); break;
-            case 'debtDetail': content = renderDebtDetail(); break;
-            case 'debtEdit': content = renderDebtEdit(); break;
-            case 'expenseDetail': content = renderExpenseDetail(); break;
-            case 'expenseEdit': content = renderExpenseEdit(); break;
             case 'studio-sync': content = renderStudioSync(); break;
             case 'receiptRegister': content = renderReceiptRegister(); break;
-            case 'receiptDetail': content = renderReceiptDetail(); break;
-            case 'receiptEdit': content = renderReceiptEdit(); break;
             case 'sovereign-nexus': content = await renderSovereignNexus(); break;
             default: content = renderDashboard();
         }
     } catch (e) {
         console.error("Render Error:", e);
-        content = `<div class="p-20 text-center"><p class="text-red-500 font-bold">Error en la secuencia de renderizado.</p></div>`;
+        content = `<div class="p-20"><p class="text-red-500">Error en el sistema operativo.</p></div>`;
     }
 
     app.innerHTML = `
-        <div class="min-h-screen bg-[#0c0c0c] text-white selection:bg-white selection:text-black">
-            ${renderTopNav()}
-            <div class="max-w-[1400px] mx-auto">
-                ${renderSessionHeader()}
-                <main class="px-8 pb-32">
-                    ${content}
-                </main>
-            </div>
+        <div class="app-container">
+            ${renderSidebar()}
+            <main class="main-content">
+                ${content}
+            </main>
 
-            <!-- MODALS ELYSIAN -->
+            <!-- MODALS EXECUTIVE -->
             <div id="modalProject" class="modal-overlay" style="display: none;">
-                <div class="elysian-card max-w-lg w-full !bg-[#0c0c0c] border-white/10">
-                    <h3 class="text-2xl font-black uppercase tracking-tighter mb-8 text-white text-center">Nuevo Proyecto Nexus</h3>
+                <div class="exec-card max-w-lg w-full !bg-[#161618] border-white/5 shadow-2xl">
+                    <h3 class="text-xl font-bold mb-6 text-white">Nuevo Proyecto Nexus</h3>
                     <div class="space-y-4">
-                        <div class="elysian-input-group">
-                            <i data-lucide="user" class="elysian-input-icon w-4 h-4"></i>
-                            <input id="clientName" type="text" class="elysian-input" placeholder="Nombre de la Marca">
-                        </div>
+                        <input id="clientName" type="text" class="exec-input" placeholder="Nombre del Cliente">
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="elysian-input-group">
-                                <i data-lucide="link" class="elysian-input-icon w-4 h-4"></i>
-                                <input id="driveUrl" type="text" class="elysian-input" placeholder="URL Drive">
-                            </div>
-                            <div class="elysian-input-group">
-                                <i data-lucide="video" class="elysian-input-icon w-4 h-4"></i>
-                                <input id="meetUrl" type="text" class="elysian-input" placeholder="URL Meet">
-                            </div>
+                            <input id="driveUrl" type="text" class="exec-input" placeholder="Drive URL">
+                            <input id="meetUrl" type="text" class="exec-input" placeholder="Meet URL">
                         </div>
-                        <div class="elysian-input-group">
-                            <i data-lucide="calendar" class="elysian-input-icon w-4 h-4"></i>
-                            <input id="endDate" type="date" class="elysian-input">
-                        </div>
-                        <textarea id="projectDesc" class="elysian-input h-24 resize-none !p-4" placeholder="Notas estratégicas..."></textarea>
-                        <div class="flex gap-4 pt-6">
-                            <button onclick="window.app.closeModals()" class="flex-1 py-3 text-[10px] font-bold uppercase text-gray-600 hover:text-white transition-all">Cancelar</button>
-                            <button onclick="window.app.createProject()" class="elysian-btn-primary flex-1">Crear Protocolo</button>
+                        <input id="endDate" type="date" class="exec-input">
+                        <textarea id="projectDesc" class="exec-input h-24" placeholder="Notas estratégicas..."></textarea>
+                        <div class="flex gap-4 pt-4">
+                            <button onclick="window.app.closeModals()" class="flex-1 py-3 text-xs font-bold text-gray-500 hover:text-white transition-all">Cancelar</button>
+                            <button onclick="window.app.createProject()" class="exec-btn-primary flex-1">Crear Proyecto</button>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div id="modalOperation" class="modal-overlay" style="display: none;">
-                <div class="elysian-card max-w-3xl w-full h-[70vh] !p-0 flex flex-col overflow-hidden !bg-[#0c0c0c]">
-                    <div class="p-8 border-b border-white/5 flex justify-between items-center">
-                        <h2 id="del-modal-title" class="text-xl font-black uppercase tracking-tighter text-white">Item de Producción</h2>
-                        <button onclick="window.app.closeModals()" class="text-gray-600 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+                <div class="exec-card max-w-2xl w-full h-[60vh] !p-0 flex flex-col overflow-hidden !bg-[#161618] border-white/5 shadow-2xl">
+                    <div class="p-6 border-b border-white/5 bg-white/[0.01] flex justify-between items-center">
+                        <h2 id="del-modal-title" class="text-lg font-bold text-white">Detalle de Operación</h2>
+                        <button onclick="window.app.closeModals()" class="text-gray-500 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
                     </div>
-                    <div class="flex-1 overflow-y-auto p-10 space-y-6">
-                        <div class="grid grid-cols-2 gap-6">
-                            <div class="elysian-input-group">
-                                <i data-lucide="tag" class="elysian-input-icon w-4 h-4"></i>
-                                <input id="del-title" type="text" class="elysian-input" placeholder="Título del Item">
-                            </div>
-                            <div class="elysian-input-group">
-                                <i data-lucide="dollar-sign" class="elysian-input-icon w-4 h-4"></i>
-                                <input id="del-price" type="number" class="elysian-input" placeholder="Precio">
-                            </div>
+                    <div class="flex-1 overflow-y-auto p-8 space-y-4">
+                        <input id="del-title" type="text" class="exec-input" placeholder="Título del Item">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input id="del-price" type="number" class="exec-input" placeholder="Monto">
+                            <select id="del-status" class="exec-input">
+                                <option value="pending">Pendiente</option>
+                                <option value="paid">Pagado</option>
+                            </select>
                         </div>
-                        <div class="grid grid-cols-2 gap-6">
-                            <div class="elysian-input-group">
-                                <i data-lucide="activity" class="elysian-input-icon w-4 h-4"></i>
-                                <select id="del-status" class="elysian-input">
-                                    <option value="pending">Pendiente de Cobro</option>
-                                    <option value="paid">Liquidado</option>
-                                </select>
-                            </div>
-                            <div class="elysian-input-group">
-                                <i data-lucide="link" class="elysian-input-icon w-4 h-4"></i>
-                                <input id="del-link-empresa" type="text" class="elysian-input" placeholder="URL de Entrega">
-                            </div>
-                        </div>
-                        <div id="del-notes-editor" contenteditable="true" class="bg-black/40 border border-white/5 p-8 flex-1 text-white/80 text-sm leading-relaxed outline-none focus:border-white/20 transition-all rounded-2xl min-h-[200px]" placeholder="Notas de feedback..."></div>
+                        <input id="del-link-empresa" type="text" class="exec-input" placeholder="Enlace de Entrega">
+                        <div id="del-notes-editor" contenteditable="true" class="bg-black/20 border border-white/5 p-6 rounded-lg text-sm min-h-[150px] outline-none focus:border-amber-500/30 text-white/80"></div>
                     </div>
-                    <div class="p-8 border-t border-white/5 flex gap-6">
-                        <button onclick="window.app.closeModals()" class="flex-1 py-4 text-[10px] font-bold uppercase text-gray-600 hover:text-white transition-all">Cerrar</button>
-                        <button id="btn-save-op" onclick="window.app.saveDeliverable()" class="elysian-btn-primary flex-1">Sincronizar Datos</button>
+                    <div class="p-6 border-t border-white/5 flex gap-4">
+                        <button onclick="window.app.closeModals()" class="flex-1 py-3 text-xs font-bold text-gray-500">Cerrar</button>
+                        <button id="btn-save-op" onclick="window.app.saveDeliverable()" class="exec-btn-primary flex-1">Sincronizar Datos</button>
                     </div>
                 </div>
             </div>
         </div>
     `;
     
-    const loader = document.querySelector('.loader');
-    if (loader) loader.style.display = 'none';
-
     if (window.lucide) window.lucide.createIcons();
     window.scrollTo(0, 0);
 }
