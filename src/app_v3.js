@@ -2503,7 +2503,9 @@ async function renderSovereignNexus() {
                     meet_url,
                     company_url,
                     preference_url,
-                    end_date,
+                    delivery_date: end_date || null,
+                    meeting_date: null,
+                    video_quantity: 0,
                     status: 'briefing' 
                 }])
                 .select()
@@ -2525,10 +2527,17 @@ async function renderSovereignNexus() {
     window.app.updateProjectField = async (projectId, field, value) => {
         const proj = state.nexusProjects.find(p => p.id === projectId);
         if (!proj) return;
+        
+        // Corregir fechas vacías
+        let finalValue = value;
+        if (['delivery_date', 'meeting_date', 'end_date', 'start_date'].includes(field) && value === '') {
+            finalValue = null;
+        }
+
         try {
-            const { error } = await sb.from('nexus_projects').update({ [field]: value }).eq('id', projectId);
+            const { error } = await sb.from('nexus_projects').update({ [field]: finalValue }).eq('id', projectId);
             if (error) throw error;
-            proj[field] = value;
+            proj[field] = finalValue;
             if (field === 'status') render();
         } catch (e) { console.error("Update Error:", e); }
     };
