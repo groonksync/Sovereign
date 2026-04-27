@@ -309,7 +309,7 @@ function renderDashboard() {
                 <p class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-4">Capital Total en Protocolo</p>
                 <h2 class="mega-kpi-main">${formatCurrency(totalAssets)}</h2>
                 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mt-10">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 mt-10">
                     <div class="text-center">
                         <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Recaudación Mes</p>
                         <p class="text-xl font-black text-emerald-500">${formatCurrency(totalRecaudacionProyectada)}</p>
@@ -335,7 +335,7 @@ function renderDashboard() {
                     <button class="btn-pro py-2 text-[10px]" onclick="window.app.navigate('register')">+ Nuevo Contrato</button>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="nexus-grid">
                     ${state.loans.map(loan => {
                         const totalInst = (loan.installments || []).length;
                         const paidInst = (loan.installments || []).filter(i => i.paid).length;
@@ -414,11 +414,11 @@ function renderStudioSync() {
                         <h4 class="text-xs font-black text-amber-500 uppercase tracking-widest ml-2 flex items-center gap-2">
                             <i data-lucide="clock" class="w-3 h-3"></i> Saldos Pendientes de Clientes
                         </h4>
-                        <div class="space-y-4">
+                        <div class="nexus-grid">
                             ${pendingReceipts.map(r => `
-                                <div class="card-nexus p-6 flex justify-between items-center border-l-4 border-l-amber-500 bg-amber-500/5 hover:bg-amber-500/10 cursor-pointer" onclick="window.app.navigate('receiptDetail', '${r.id}')">
+                                <div class="card-nexus p-6 flex justify-between items-center border-l-4 border-l-amber-500 bg-amber-500/5 hover:bg-amber-500/10 cursor-pointer group transition-all" onclick="window.app.navigate('receiptDetail', '${r.id}')">
                                     <div class="flex items-center gap-5">
-                                        <div class="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500 font-black">${r.clientName.substring(0, 2).toUpperCase()}</div>
+                                        <div class="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500 font-black group-hover:bg-amber-500 group-hover:text-black transition-all">${r.clientName.substring(0, 2).toUpperCase()}</div>
                                         <div>
                                             <h3 class="text-lg font-black text-white uppercase">${r.clientName}</h3>
                                             <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${r.brandName || 'Video Edition'} • Pendiente</p>
@@ -438,11 +438,11 @@ function renderStudioSync() {
                     <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest ml-2 flex items-center gap-2">
                         <i data-lucide="check-circle" class="w-3 h-3"></i> Historial de Cobros Finalizados
                     </h4>
-                    <div class="space-y-4">
+                    <div class="nexus-grid">
                         ${state.receipts.filter(r => r.status !== 'Pendiente').length === 0 ? `
-                            <div class="py-10 text-center opacity-20"><p class="font-black uppercase tracking-widest text-[10px]">Sin cobros finalizados</p></div>
+                            <div class="col-span-full py-10 text-center opacity-20"><p class="font-black uppercase tracking-widest text-[10px]">Sin cobros finalizados</p></div>
                         ` : state.receipts.filter(r => r.status !== 'Pendiente').map(r => `
-                            <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer group" onclick="window.app.navigate('receiptDetail', '${r.id}')">
+                            <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer group transition-all" onclick="window.app.navigate('receiptDetail', '${r.id}')">
                                 <div class="flex items-center gap-5">
                                     <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-black transition-all">
                                         <i data-lucide="file-text"></i>
@@ -1045,7 +1045,7 @@ function renderTabBar() {
     const tabs = [
         { id: 'dashboard', icon: 'layout', label: 'Escritorio' },
         { id: 'debts', icon: 'users', label: 'Deudores' },
-        { id: 'expenses', icon: 'arrow-down-circle', label: 'Pagos' },
+        { id: 'expenses', icon: 'arrow-down-circle', label: 'Gastos' },
         { id: 'studio-sync', icon: 'file-text', label: 'Recibos' },
         { id: 'sovereign-nexus', icon: 'activity', label: 'Nexus' }
     ];
@@ -1054,10 +1054,10 @@ function renderTabBar() {
         <nav class="fixed bottom-0 left-0 right-0 h-20 bg-black/80 backdrop-blur-3xl border-t border-white/5 px-6 flex items-center justify-around z-50">
             ${tabs.map(tab => `
                 <button onclick="window.app.navigate('${tab.id}')" 
-                    class="flex flex-col items-center gap-1 transition-all duration-300 ${state.activeView === tab.id ? 'text-emerald-500' : 'text-gray-500 hover:text-white'}">
-                    <i data-lucide="${tab.icon}" class="w-5 h-5 ${state.activeView === tab.id ? 'fill-emerald-500/20' : ''}"></i>
+                    class="flex flex-col items-center gap-1 transition-all duration-300 ${state.currentView === tab.id ? 'text-emerald-500' : 'text-gray-500 hover:text-white'}">
+                    <i data-lucide="${tab.icon}" class="w-5 h-5 ${state.currentView === tab.id ? 'fill-emerald-500/20' : ''}"></i>
                     <span class="text-[9px] font-black uppercase tracking-widest">${tab.label}</span>
-                    ${state.activeView === tab.id ? '<div class="w-1 h-1 bg-emerald-500 rounded-full mt-1"></div>' : ''}
+                    ${state.currentView === tab.id ? '<div class="w-1 h-1 bg-emerald-500 rounded-full mt-1"></div>' : ''}
                 </button>
             `).join('')}
         </nav>
@@ -1065,37 +1065,46 @@ function renderTabBar() {
 }
 
 function renderExpenses() {
-    const totalExpenses = state.expenses.reduce((acc, exp) => acc + parseFloat(exp.amount), 0);
+    const totalExpenses = state.expenses.reduce((acc, exp) => acc + parseFloat(exp.amount || 0), 0);
     return `
         <div class="sv-nexus-elite flex flex-col p-8 space-y-10 pb-32">
             <header class="flex justify-between items-center">
                 <div class="greeting">
-                    <span class="text-[10px] font-black text-amber-500 tracking-[0.3em] uppercase">Expense Protocol</span>
-                    <h1 class="text-3xl font-black text-white uppercase tracking-tighter">Control de Pagos</h1>
+                    <span class="text-[10px] font-black text-amber-500 tracking-[0.3em] uppercase">Gestión de Salidas</span>
+                    <h1 class="text-3xl font-black text-white uppercase tracking-tighter">Mis Gastos</h1>
                 </div>
-                <button class="btn-pro emerald py-2" onclick="window.app.navigate('register_expense')">+ Nuevo Pago</button>
+                <button class="btn-pro amber py-2" onclick="window.app.navigate('expenseRegister')">+ Nuevo Compromiso</button>
             </header>
 
             <section class="card-nexus p-16 text-center border-amber-500/20">
-                <p class="text-[11px] font-black text-amber-500 uppercase tracking-[0.4em] mb-4">Total Egresado</p>
+                <p class="text-[11px] font-black text-amber-500 uppercase tracking-[0.4em] mb-4">Total Egresos Mensual</p>
                 <h2 class="mega-kpi-main" style="background: linear-gradient(180deg, #fff 30%, #f59e0b 100%); -webkit-background-clip: text;">${formatCurrency(totalExpenses)}</h2>
             </section>
 
             <main class="space-y-6">
-                <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest ml-2">Historial de Salidas</h4>
-                <div class="space-y-4">
+                <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest ml-2 flex items-center gap-2">
+                    <i data-lucide="calendar" class="w-3 h-3"></i> Compromisos Fijos y Variables
+                </h4>
+                <div class="nexus-grid">
                     ${state.expenses.length === 0 ? `
-                        <div class="py-20 text-center opacity-20"><p class="font-black uppercase tracking-widest text-xs">Sin registros</p></div>
+                        <div class="col-span-full py-20 text-center opacity-20"><p class="font-black uppercase tracking-widest text-xs">Sin gastos registrados</p></div>
                     ` : state.expenses.map(exp => `
-                        <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02]">
-                            <div class="flex items-center gap-5">
-                                <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500"><i data-lucide="arrow-down-right"></i></div>
-                                <div>
-                                    <h3 class="text-lg font-black text-white uppercase">${exp.description || exp.name}</h3>
-                                    <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${exp.category} • ${formatDate(exp.date || exp.payDate)}</p>
+                        <div class="card-nexus p-8 hover:bg-white/[0.02] cursor-pointer border-l-4 border-l-amber-500 group transition-all" onclick="window.app.navigate('expenseDetail', '${exp.id}')">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-black transition-all">
+                                        <i data-lucide="shopping-cart"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-black text-white uppercase">${exp.debtor}</h3>
+                                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${exp.category || 'General'} • Día ${new Date(exp.payDate).getDate()}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-2xl font-black text-white">${formatCurrency(exp.amount)}</span>
+                                    <p class="text-[9px] font-black uppercase text-amber-500">Pendiente</p>
                                 </div>
                             </div>
-                            <span class="text-xl font-black text-amber-500">-${formatCurrency(exp.amount)}</span>
                         </div>
                     `).join('')}
                 </div>
@@ -1423,12 +1432,12 @@ function renderDebts() {
                         <h4 class="text-xs font-black text-blue-500 uppercase tracking-widest ml-2 flex items-center gap-2">
                             <i data-lucide="layers" class="w-3 h-3"></i> Intereses Protocolo Nexus
                         </h4>
-                        <div class="space-y-4">
+                        <div class="nexus-grid">
                             ${combinedDebts.filter(d => d.isProtocol).map(debt => `
-                                <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer border-l-4 border-l-blue-500" 
+                                <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer border-l-4 border-l-blue-500 group transition-all" 
                                      onclick="window.app.navigate('details', '${debt.originalLoanId}')">
                                     <div class="flex items-center gap-5">
-                                        <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 font-black">${(debt.debtor || '??').substring(0, 2).toUpperCase()}</div>
+                                        <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 font-black group-hover:bg-blue-500 group-hover:text-black transition-all">${(debt.debtor || '??').substring(0, 2).toUpperCase()}</div>
                                         <div>
                                             <h3 class="text-lg font-black text-white uppercase">${debt.debtor || 'Sin Nombre'}</h3>
                                             <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Contrato Nexus • ${formatDate(debt.start_date)}</p>
@@ -1439,7 +1448,7 @@ function renderDebts() {
                                         <p class="text-[9px] font-black uppercase text-blue-500">Recurrente</p>
                                     </div>
                                 </div>
-                            `).join('') || '<p class="text-center py-10 opacity-20 text-[10px] font-black uppercase tracking-widest">Sin intereses de protocolo</p>'}
+                            `).join('') || '<p class="col-span-full text-center py-10 opacity-20 text-[10px] font-black uppercase tracking-widest">Sin intereses de protocolo</p>'}
                         </div>
                     </section>
 
@@ -1448,12 +1457,12 @@ function renderDebts() {
                         <h4 class="text-xs font-black text-emerald-500 uppercase tracking-widest ml-2 flex items-center gap-2">
                             <i data-lucide="user" class="w-3 h-3"></i> Cartera de Deudores Personal
                         </h4>
-                        <div class="space-y-4">
+                        <div class="nexus-grid">
                             ${combinedDebts.filter(d => !d.isProtocol).map(debt => `
-                                <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer border-l-4 border-l-emerald-500" 
+                                <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer border-l-4 border-l-emerald-500 group transition-all" 
                                      onclick="window.app.navigate('debtDetail', '${debt.id}')">
                                     <div class="flex items-center gap-5">
-                                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black">${(debt.debtor || '??').substring(0, 2).toUpperCase()}</div>
+                                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black group-hover:bg-emerald-500 group-hover:text-black transition-all">${(debt.debtor || '??').substring(0, 2).toUpperCase()}</div>
                                         <div>
                                             <h3 class="text-lg font-black text-white uppercase">${debt.debtor || 'Sin Nombre'}</h3>
                                             <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Préstamo Directo • ${formatDate(debt.start_date)}</p>
@@ -1464,7 +1473,7 @@ function renderDebts() {
                                         <p class="text-[9px] font-black uppercase text-emerald-500">${debt.interest || 0}% Int. Mensual</p>
                                     </div>
                                 </div>
-                            `).join('') || '<p class="text-center py-10 opacity-20 text-[10px] font-black uppercase tracking-widest">Sin deudores personales</p>'}
+                            `).join('') || '<p class="col-span-full text-center py-10 opacity-20 text-[10px] font-black uppercase tracking-widest">Sin deudores personales</p>'}
                         </div>
                     </section>
                 </main>

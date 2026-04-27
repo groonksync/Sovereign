@@ -560,6 +560,45 @@ body.dark-mode {
     width: 100%;
 }
 
+/* GRID SYSTEM RESPONSIVO */
+.nexus-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .nexus-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .mega-kpi-main {
+        font-size: 5rem !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .nexus-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .sv-nexus-elite {
+        padding: 3rem 6rem !important;
+    }
+}
+
+/* AJUSTES DE ALINEACIÓN */
+.view-section {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.card-nexus {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
 .noir-grid-3 {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
