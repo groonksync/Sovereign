@@ -1,17 +1,17 @@
 :root {
-    --primary-emerald: #004852;
-    --primary-light: #2DD4BF;
-    --background-bone: #F5F5F0;
-    --surface-white: #FFFFFF;
-    --slate-gray: #4A5568;
-    --text-main: #004852;
-    --text-muted: #4A5568;
-    --warning-gold: #D97706;
-    --border-radius: 8px;
-    --font-inter: 'Inter', -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, oxygen, ubuntu, cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.05);
-    --border-light: 1px solid rgba(0, 72, 82, 0.08);
-    --card-bg: #FFFFFF;
+    --primary-emerald: #10B981;
+    --primary-light: #34D399;
+    --background-bone: #000000;
+    --surface-white: #0A0A0A;
+    --slate-gray: #A0AEC0;
+    --text-main: #FFFFFF;
+    --text-muted: #718096;
+    --warning-gold: #F59E0B;
+    --border-radius: 20px;
+    --font-inter: 'Plus Jakarta Sans', sans-serif;
+    --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --border-light: 1px solid rgba(255, 255, 255, 0.06);
+    --card-bg: #0A0A0A;
 }
 
 body.dark-mode {

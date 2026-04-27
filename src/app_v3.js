@@ -272,7 +272,6 @@ function renderDashboard() {
     const activeContracts = state.loans.length;
     const avgInterest = state.loans.length > 0 ? (state.loans.reduce((acc, l) => acc + parseFloat(l.interest_rate || l.interest || 0), 0) / state.loans.length).toFixed(1) : 0;
     
-    // Cálculo de ganancias reales (Solo cuotas pagadas)
     const totalInterestEarned = state.loans.reduce((acc, loan) => {
         const paidInterest = (loan.installments || [])
             .filter(inst => inst.paid)
@@ -281,134 +280,127 @@ function renderDashboard() {
     }, 0);
 
     return `
-        <header class="main-header">
-            <div class="user-info">
-                <div class="avatar">AS</div>
-                <div class="greeting">
-                    <span>Bienvenido,</span>
-                    <h1>Arquitecto Soberano</h1>
+        <div class="sv-nexus-elite flex flex-col p-8 space-y-10">
+            <header class="flex justify-between items-center">
+                <div class="user-info">
+                    <div class="avatar bg-emerald-500 text-black font-black">AS</div>
+                    <div class="greeting">
+                        <span class="text-[10px] font-black text-emerald-500 tracking-[0.3em] uppercase">Sovereign Protocol Active</span>
+                        <h1 class="text-3xl font-black text-white uppercase tracking-tighter">Arquitecto Soberano</h1>
+                    </div>
                 </div>
-            </div>
-            <div class="header-actions">
-                <button class="btn-icon theme-toggle" onclick="window.app.toggleTheme()" title="Cambiar Tema">
-                    ${state.isDarkMode ? '☀️' : '🌙'}
-                </button>
-                <a href="https://drive.google.com/drive/folders/12VwI7kKvTy50t_Q13UngiSHEZ77KpQwu?usp=sharing" target="_blank" class="btn-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                </a>
-                <button class="menu-btn" onclick="alert('Sistema de Auditoría Sovereign AES-256 Activo')">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="12" x2="12" y2="12"></line><circle cx="12.01" cy="8" r="0.5" fill="currentColor"></circle></svg>
-                </button>
-            </div>
-        </header>
+                <div class="header-actions">
+                    <button class="btn-pro ghost py-2" onclick="window.app.toggleTheme()">
+                        ${state.isDarkMode ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>'}
+                    </button>
+                </div>
+            </header>
 
-        <section class="summary-card">
-            <div class="card-glass"></div>
-            <div class="card-content">
-                <span class="label">Capital Prestado en Protocolo</span>
-                <h2 class="amount">${formatCurrency(totalAssets)}</h2>
+            <section class="card-nexus p-20 text-center bg-gradient-to-b from-white/[0.02] to-transparent">
+                <p class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-4">Capital Prestado en Protocolo</p>
+                <h2 class="mega-kpi-main">${formatCurrency(totalAssets)}</h2>
                 
-                <div class="earnings-summary-box">
-                    <span class="label-xs">Ganancias por Interés (Cobrado)</span>
-                    <span class="val-xs bold highlight">${formatCurrency(totalInterestEarned)}</span>
+                <div class="flex justify-center gap-10 mt-10">
+                    <div class="text-center">
+                        <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Interés Cobrado</p>
+                        <p class="text-2xl font-black text-emerald-500">${formatCurrency(totalInterestEarned)}</p>
+                    </div>
+                    <div class="text-center border-l border-white/10 pl-10">
+                        <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Contratos</p>
+                        <p class="text-2xl font-black text-white">${activeContracts}</p>
+                    </div>
+                    <div class="text-center border-l border-white/10 pl-10">
+                        <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Rendimiento</p>
+                        <p class="text-2xl font-black text-amber-500">${avgInterest}%</p>
+                    </div>
                 </div>
+            </section>
 
-                <div class="stats-row">
-                    <div class="stat">
-                        <span class="stat-label">Contratos Activos</span>
-                        <span class="stat-value">${activeContracts}</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">Rendimiento Prom.</span>
-                        <span class="stat-value">${avgInterest}%</span>
-                    </div>
+            <main class="space-y-6">
+                <div class="flex justify-between items-center bg-white/[0.01] p-4 rounded-2xl border border-white/5">
+                    <h4 class="text-xs font-black text-emerald-500 uppercase tracking-widest ml-2">Libro Mayor Activo</h4>
+                    <button class="btn-pro py-2 text-[10px]" onclick="window.app.navigate('register')">+ Nuevo Contrato</button>
                 </div>
-            </div>
-        </section>
-
-        <main class="ledger-section">
-            <div class="section-header">
-                <h2>Libro Mayor Activo</h2>
-            </div>
-            
-            <div class="loan-list">
-                ${state.loans.length === 0 ? `
-                    <div class="empty-state">
-                        <p>No hay contratos activos en el protocolo.</p>
-                        <button class="btn-primary" onclick="window.app.navigate('register')">Iniciar Nuevo Contrato</button>
-                    </div>
-                ` : state.loans.map(loan => `
-                    <div class="loan-card" onclick="window.app.navigate('details', '${loan.id}')">
-                        <div class="loan-info">
-                            <div class="debtor-icon">${loan.debtor.substring(0, 2).toUpperCase()}</div>
-                            <div class="loan-details">
-                                <h3>${loan.debtor}</h3>
-                                <p>Vence: ${formatDate(loan.end_date)}</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    ${state.loans.length === 0 ? `
+                        <div class="col-span-2 py-20 text-center opacity-20">
+                            <p class="font-black uppercase tracking-widest text-xs">Sin contratos activos</p>
+                        </div>
+                    ` : state.loans.map(loan => `
+                        <div class="card-nexus p-8 hover:bg-white/[0.02] cursor-pointer transition-all border-l-4 border-l-emerald-500" onclick="window.app.navigate('details', '${loan.id}')">
+                            <div class="flex justify-between items-start mb-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black text-lg">
+                                        ${loan.debtor.substring(0, 2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-black text-white uppercase">${loan.debtor}</h3>
+                                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Vence: ${formatDate(loan.end_date)}</p>
+                                    </div>
+                                </div>
+                                <span class="text-2xl font-black text-white">${formatCurrency(loan.amount)}</span>
                             </div>
-                            <div class="loan-amount">
-                                <span class="current">${formatCurrency(loan.amount)}</span>
+                            <div class="pipeline-bar">
+                                <div class="pipeline-segment bg-emerald-500" style="width: 45%;"></div>
+                            </div>
+                            <div class="flex justify-between mt-3 text-[9px] font-black uppercase text-emerald-500/50">
+                                <span>45% Completado</span>
+                                <span class="text-emerald-500">Activo</span>
                             </div>
                         </div>
-                        <div class="progress-container">
-                            <div class="progress-bar" style="width: 45%;"></div>
-                        </div>
-                        <div class="progress-labels">
-                            <span>45% completado</span>
-                            <span class="status positive">Activo</span>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        </main>
-
-        <button class="fab" onclick="window.app.navigate('register')">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        </button>
+                    `).join('')}
+                </div>
+            </main>
+        </div>
     `;
 }
 
 function renderStudioSync() {
+    const totalFacturado = state.receipts.reduce((acc, r) => acc + r.totalAmount, 0);
+
     return `
-        <header class="main-header">
-            <div class="user-info">
-                <div class="avatar" style="background:var(--primary-emerald);">SS</div>
+        <div class="sv-nexus-elite flex flex-col p-8 space-y-10 pb-32">
+            <header class="flex justify-between items-center">
                 <div class="greeting">
-                    <h1>Studio Sync Pro</h1>
-                    <p>Gestión de Producción</p>
+                    <span class="text-[10px] font-black text-blue-500 tracking-[0.3em] uppercase">Billing Protocol</span>
+                    <h1 class="text-3xl font-black text-white uppercase tracking-tighter">Gestión de Recibos</h1>
                 </div>
-            </div>
-            <div style="display:flex; gap:10px; align-items:center;">
-                <button id="btn-google-auth" class="btn-icon" onclick="window.app.handleGoogleAuth()" title="Sincronizar Google Drive">
-                    <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png" style="width:16px; height:16px;">
-                    <div id="google-status-dot" style="position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:#4a4a4a; border-radius:50%; border:2px solid #000;"></div>
-                </button>
-                <button class="btn-icon" onclick="window.app.exportDriveBackup()" title="Backup Seguro">
-                    <i data-lucide="save"></i>
-                </button>
-            </div>
-        </header>
-
-        <section class="summary-card gold-gradient">
-            <div class="card-content">
-                <span class="label">Total Facturado (Neto)</span>
-                <h2 class="amount">${formatCurrency(state.receipts.reduce((acc, r) => acc + r.totalAmount, 0))}</h2>
-                <div class="stats-row">
-                    <div class="stat">
-                        <span class="stat-label">Recibos Emitidos</span>
-                        <span class="stat-value">${state.receipts.length}</span>
-                    </div>
+                <div class="flex gap-4">
+                    <button class="btn-pro ghost py-2" onclick="window.app.handleGoogleAuth()" title="Sync Drive">
+                        <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png" class="w-4 h-4">
+                    </button>
+                    <button class="btn-pro emerald py-2" onclick="window.app.navigate('receipt_form')">+ Nuevo Recibo</button>
                 </div>
-            </div>
-        </section>
+            </header>
 
-        <main class="ledger-section">
-            <div class="section-header">
-                <h2>Historial de Recibos</h2>
-            </div>
-            <div class="loan-list">
-                ${state.receipts.length === 0 ? `
-                    <div class="empty-state">
-                        <p>No hay recibos registrados aún.</p>
+            <section class="card-nexus p-16 text-center border-blue-500/20">
+                <p class="text-[11px] font-black text-blue-500 uppercase tracking-[0.4em] mb-4">Total Facturado</p>
+                <h2 class="mega-kpi-main" style="background: linear-gradient(180deg, #fff 30%, #3b82f6 100%); -webkit-background-clip: text;">${formatCurrency(totalFacturado)}</h2>
+            </section>
+
+            <main class="space-y-6">
+                <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest ml-2">Archivo de Cobros</h4>
+                <div class="space-y-4">
+                    ${state.receipts.length === 0 ? `
+                        <div class="py-20 text-center opacity-20"><p class="font-black uppercase tracking-widest text-xs">Sin recibos emitidos</p></div>
+                    ` : state.receipts.map(r => `
+                        <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02]">
+                            <div class="flex items-center gap-5">
+                                <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500"><i data-lucide="file-text"></i></div>
+                                <div>
+                                    <h3 class="text-lg font-black text-white uppercase">${r.clientName}</h3>
+                                    <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Nº ${r.receiptNumber} • ${formatDate(r.date)}</p>
+                                </div>
+                            </div>
+                            <span class="text-xl font-black text-white">${formatCurrency(r.totalAmount)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </main>
+        </div>
+    `;
+}
                         <button class="btn-primary" onclick="window.app.navigate('receiptRegister')">Emitir Primer Recibo</button>
                     </div>
                 ` : state.receipts.map(r => `
@@ -897,94 +889,73 @@ function renderDetails() {
     if (!loan) return navigate('dashboard');
 
     return `
-        <header class="view-header">
-            <button class="back-btn" onclick="window.app.navigate('dashboard')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            </button>
-            <h1>Gestión de Activos</h1>
-            <button class="delete-btn" onclick="window.app.handleDelete('${loan.id}')">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </button>
-        </header>
+        <div class="sv-nexus-elite flex flex-col p-8 space-y-10 pb-32">
+            <header class="flex justify-between items-center">
+                <button class="btn-pro ghost py-2" onclick="window.app.navigate('dashboard')">
+                    <i data-lucide="arrow-left"></i> Volver
+                </button>
+                <div class="flex gap-4">
+                    <button class="btn-pro ghost py-2 text-red-500 border-red-500/20" onclick="window.app.handleDelete('${loan.id}')">
+                        <i data-lucide="trash-2"></i> Eliminar
+                    </button>
+                </div>
+            </header>
 
-        <div class="details-container">
-            <div class="loan-metrics-card">
-                <div class="metric-main">
-                    <span class="label">Capital Actual</span>
-                    <h2 class="amount">${formatCurrency(loan.amount)}</h2>
-                </div>
-                <div class="metric-grid">
-                    <div class="m-item">
-                        <span class="m-label">Tasa</span>
-                        <span class="m-val">${loan.interest}%</span>
+            <section class="card-nexus p-16 text-center border-emerald-500/20">
+                <p class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-4">Balance Actual del Contrato</p>
+                <h2 class="mega-kpi-main">${formatCurrency(loan.amount)}</h2>
+                
+                <div class="flex justify-center gap-10 mt-10">
+                    <div class="text-center">
+                        <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Interés</p>
+                        <p class="text-2xl font-black text-white">${loan.interest || 0}%</p>
                     </div>
-                    <div class="m-item">
-                        <span class="m-label">Vence</span>
-                        <span class="m-val">${formatDate(loan.end_date)}</span>
-                    </div>
-                </div>
-                <div class="progress-row">
-                    <div class="progress-bar-large"><div class="fill" style="width: 45%"></div></div>
-                    <span>45% Reembolsado</span>
-                </div>
-            </div>
-
-            <section class="detail-section">
-                <h2 class="section-title">Perfil del Cliente</h2>
-                <div class="profile-row">
-                    <div class="profile-info">
-                        <p class="name">${loan.debtor}</p>
-                        <p class="status-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg> Identidad Verificada</p>
-                    </div>
-                    <div class="credit-score">
-                        <span class="score">720</span>
-                        <span class="label">FICO</span>
+                    <div class="text-center border-l border-white/10 pl-10">
+                        <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Vencimiento</p>
+                        <p class="text-2xl font-black text-white">${formatDate(loan.end_date)}</p>
                     </div>
                 </div>
             </section>
 
-            <section class="detail-section">
-                <div class="section-flex">
-                    <h2 class="section-title">Control de Pagos (Interés)</h2>
-                    <button class="btn-text" onclick="window.app.handleExtendLoan('${loan.id}')">+ Ampliar Plazo</button>
-                </div>
-                <div class="payment-schedule">
-                    ${(loan.installments || []).map(inst => `
-                        <div class="payment-row ${inst.paid ? 'is-paid' : ''}">
-                            <div class="p-info">
-                                <span class="p-month">Mes ${inst.month}</span>
-                                <span class="p-date">${formatDate(inst.dueDate)}</span>
-                            </div>
-                            <div class="p-action">
-                                <span class="p-amount">${formatCurrency(inst.amount)}</span>
-                                <button class="check-btn ${inst.paid ? 'checked' : ''}" 
-                                        onclick="window.app.handleToggleInstallment('${loan.id}', ${inst.id})">
-                                    ${inst.paid ? 'Cobrado' : 'Marcar Pago'}
-                                </button>
+            <main class="space-y-10">
+                <section class="card-nexus p-8">
+                    <h2 class="text-xs font-black text-emerald-500 uppercase tracking-[0.2em] mb-6">Perfil del Deudor</h2>
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-6">
+                            <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black text-2xl">${loan.debtor.substring(0,2).toUpperCase()}</div>
+                            <div>
+                                <h3 class="text-2xl font-black text-white uppercase">${loan.debtor}</h3>
+                                <p class="text-xs text-emerald-500 font-black uppercase flex items-center gap-2"><i data-lucide="shield-check" class="w-3 h-3"></i> Identidad Verificada</p>
                             </div>
                         </div>
-                    `).join('')}
-                </div>
-            </section>
-
-            <section class="detail-section">
-                <div class="section-flex">
-                    <h2 class="section-title">Garantía y Aval</h2>
-                    <a href="https://drive.google.com/drive/folders/12VwI7kKvTy50t_Q13UngiSHEZ77KpQwu?usp=sharing" target="_blank" class="text-link">Ver Documentos ↗</a>
-                </div>
-                <div class="collateral-card">
-                    <p class="collateral-desc">${loan.collateral || 'Sin descripción detallada'}</p>
-                    <div class="guarantor-info">
-                        <span class="label">Garante:</span>
-                        <span class="val">${loan.guarantor}</span>
                     </div>
-                    <div class="legal-status">
-                        <span class="status-dot"></span> Gravamen Activo
-                    </div>
-                </div>
-            </section>
+                </section>
 
-            <button class="btn-primary full-width" onclick="window.app.exportToPDF('${loan.id}')">Exportar PDF del Contrato</button>
+                <section class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xs font-black text-gray-500 uppercase tracking-widest ml-2">Cronograma de Pagos</h2>
+                        <button class="btn-pro ghost py-2 text-[10px]" onclick="window.app.handleExtendLoan('${loan.id}')">+ Ampliar Plazo</button>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4">
+                        ${(loan.installments || []).map(inst => `
+                            <div class="card-nexus p-6 flex justify-between items-center ${inst.paid ? 'opacity-40 border-dashed' : 'border-l-4 border-l-amber-500'}">
+                                <div class="flex items-center gap-6">
+                                    <div>
+                                        <p class="text-lg font-black text-white uppercase">Mes ${inst.month}</p>
+                                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${formatDate(inst.dueDate)}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-6">
+                                    <span class="text-2xl font-black ${inst.paid ? 'text-emerald-500' : 'text-white'}">${formatCurrency(inst.amount)}</span>
+                                    <button onclick="window.app.toggleInstallment('${loan.id}', ${inst.month})" class="w-10 h-10 rounded-full flex items-center justify-center ${inst.paid ? 'bg-emerald-500 text-black' : 'border border-white/20 text-gray-500'}">
+                                        <i data-lucide="${inst.paid ? 'check' : 'circle'}"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </section>
+            </main>
         </div>
     `;
 }
@@ -1033,45 +1004,67 @@ async function render() {
 }
 
 function renderTabBar() {
-    const categories = {
-        'dashboard': { label: 'Protocolo', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>' },
-        'debts': { label: 'Deudores', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' },
-        'expenses': { label: 'Pagos', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>' }
-    };
+    const tabs = [
+        { id: 'dashboard', icon: 'layout', label: 'Escritorio' },
+        { id: 'debts', icon: 'users', label: 'Deudores' },
+        { id: 'expenses', icon: 'arrow-down-circle', label: 'Pagos' },
+        { id: 'studio-sync', icon: 'file-text', label: 'Recibos' },
+        { id: 'sovereign-nexus', icon: 'activity', label: 'Nexus' }
+    ];
 
     return `
-        <nav class="bottom-tab-bar">
-            <button class="tab-item ${state.currentView === 'dashboard' ? 'active' : ''}" onclick="window.app.navigate('dashboard')">
-                <i data-lucide="layout-grid"></i>
-                <span>Geral</span>
-            </button>
-            <button class="tab-item ${state.currentView === 'debts' ? 'active' : ''}" onclick="window.app.navigate('debts')">
-                <i data-lucide="users"></i>
-                <span>Deudores</span>
-            </button>
-            <button class="tab-item ${state.currentView === 'expenses' ? 'active' : ''}" onclick="window.app.navigate('expenses')">
-                <i data-lucide="credit-card"></i>
-                <span>Pagos</span>
-            </button>
-            <button class="tab-item ${state.currentView === 'studioSync' ? 'active' : ''}" onclick="window.app.navigate('studioSync')">
-                <i data-lucide="file-text"></i>
-                <span>Recibos</span>
-            </button>
-            <button class="tab-item ${state.currentView === 'nexus' ? 'active' : ''}" onclick="window.app.navigate('nexus')">
-                <i data-lucide="activity"></i>
-                <span>Nexus</span>
-            </button>
+        <nav class="fixed bottom-0 left-0 right-0 h-20 bg-black/80 backdrop-blur-3xl border-t border-white/5 px-6 flex items-center justify-around z-50">
+            ${tabs.map(tab => `
+                <button onclick="window.app.navigate('${tab.id}')" 
+                    class="flex flex-col items-center gap-1 transition-all duration-300 ${state.activeView === tab.id ? 'text-emerald-500' : 'text-gray-500 hover:text-white'}">
+                    <i data-lucide="${tab.icon}" class="w-5 h-5 ${state.activeView === tab.id ? 'fill-emerald-500/20' : ''}"></i>
+                    <span class="text-[9px] font-black uppercase tracking-widest">${tab.label}</span>
+                    ${state.activeView === tab.id ? '<div class="w-1 h-1 bg-emerald-500 rounded-full mt-1"></div>' : ''}
+                </button>
+            `).join('')}
         </nav>
     `;
 }
 
 function renderExpenses() {
-    const totalMonthlyExpenses = state.expenses.reduce((acc, e) => acc + parseFloat(e.amount || 0), 0);
-    const categories = {
-        'internet': { title: 'Servicios Digitales', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>' },
-        'banco': { title: 'Compromisos Bancarios', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"></path><path d="M3 10h18"></path><path d="M5 6l7-3 7 3"></path><path d="M4 10v11"></path><path d="M20 10v11"></path><path d="M8 14v3"></path><path d="M12 14v3"></path><path d="M16 14v3"></path></svg>' },
-        'producto': { title: 'Artículos y Productos', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>' }
-    };
+    const totalExpenses = state.expenses.reduce((acc, exp) => acc + parseFloat(exp.amount), 0);
+    return `
+        <div class="sv-nexus-elite flex flex-col p-8 space-y-10 pb-32">
+            <header class="flex justify-between items-center">
+                <div class="greeting">
+                    <span class="text-[10px] font-black text-amber-500 tracking-[0.3em] uppercase">Expense Protocol</span>
+                    <h1 class="text-3xl font-black text-white uppercase tracking-tighter">Control de Pagos</h1>
+                </div>
+                <button class="btn-pro emerald py-2" onclick="window.app.navigate('register_expense')">+ Nuevo Pago</button>
+            </header>
+
+            <section class="card-nexus p-16 text-center border-amber-500/20">
+                <p class="text-[11px] font-black text-amber-500 uppercase tracking-[0.4em] mb-4">Total Egresado</p>
+                <h2 class="mega-kpi-main" style="background: linear-gradient(180deg, #fff 30%, #f59e0b 100%); -webkit-background-clip: text;">${formatCurrency(totalExpenses)}</h2>
+            </section>
+
+            <main class="space-y-6">
+                <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest ml-2">Historial de Salidas</h4>
+                <div class="space-y-4">
+                    ${state.expenses.length === 0 ? `
+                        <div class="py-20 text-center opacity-20"><p class="font-black uppercase tracking-widest text-xs">Sin registros</p></div>
+                    ` : state.expenses.map(exp => `
+                        <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02]">
+                            <div class="flex items-center gap-5">
+                                <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500"><i data-lucide="arrow-down-right"></i></div>
+                                <div>
+                                    <h3 class="text-lg font-black text-white uppercase">${exp.description}</h3>
+                                    <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${exp.category} • ${formatDate(exp.date)}</p>
+                                </div>
+                            </div>
+                            <span class="text-xl font-black text-amber-500">-${formatCurrency(exp.amount)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </main>
+        </div>
+    `;
+}
 
     return `
         <header class="main-header">
@@ -1373,6 +1366,62 @@ function renderDebtDetail() {
     `;
 }
 
+function renderDebts() {
+    const manualDebts = state.debts;
+    const protocolInterests = extractProtocolInterests();
+    const combinedDebts = [...manualDebts, ...protocolInterests];
+    
+    const totalMonthlyInterest = combinedDebts.reduce((acc, d) => {
+        if (d.isProtocol) return acc + parseFloat(d.amount);
+        const rate = parseFloat(d.interest || 0) / 100;
+        return acc + (parseFloat(d.amount || 0) * rate);
+    }, 0);
+
+    const totalManualCapital = manualDebts.reduce((acc, d) => acc + parseFloat(d.amount || 0), 0);
+
+    return `
+        <div class="sv-nexus-elite flex flex-col p-8 space-y-10 pb-32">
+            <header class="flex justify-between items-center">
+                <div class="greeting">
+                    <span class="text-[10px] font-black text-emerald-500 tracking-[0.3em] uppercase">Collection Protocol</span>
+                    <h1 class="text-3xl font-black text-white uppercase tracking-tighter">Control de Deudores</h1>
+                </div>
+                <button class="btn-pro emerald py-2" onclick="window.app.navigate('add_debt')">+ Nueva Deuda</button>
+            </header>
+
+            <section class="card-nexus p-16 text-center">
+                <p class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-4">Intereses a Recaudar</p>
+                <h2 class="mega-kpi-main">${formatCurrency(totalMonthlyInterest)}</h2>
+                <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mt-4">Capital en Riesgo: ${formatCurrency(totalManualCapital)}</p>
+            </section>
+
+            <main class="space-y-6">
+                <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest ml-2">Lista de Deudores Activos</h4>
+                <div class="space-y-4">
+                    ${combinedDebts.length === 0 ? `
+                        <div class="py-20 text-center opacity-20"><p class="font-black uppercase tracking-widest text-xs">Sin deudas activas</p></div>
+                    ` : combinedDebts.map(debt => `
+                        <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer border-l-4 ${debt.isProtocol ? 'border-l-blue-500' : 'border-l-emerald-500'}" 
+                             onclick="${debt.isProtocol ? `window.app.navigate('details', '${debt.projectId}')` : `window.app.navigate('debtDetail', '${debt.id}')`}">
+                            <div class="flex items-center gap-5">
+                                <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-white font-black">${debt.debtor.substring(0, 2).toUpperCase()}</div>
+                                <div>
+                                    <h3 class="text-lg font-black text-white uppercase">${debt.debtor}</h3>
+                                    <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${debt.isProtocol ? 'Protocolo Nexus' : 'Préstamo Directo'} • ${formatDate(debt.start_date)}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xl font-black text-white">${formatCurrency(debt.amount)}</span>
+                                <p class="text-[9px] font-black uppercase text-emerald-500">${debt.interest || 0}% Int.</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </main>
+        </div>
+    `;
+}
+
 function renderDebtEdit() {
     const debt = state.debts.find(d => d.id === state.selectedLoanId);
     if (!debt) return navigate('debts');
@@ -1426,43 +1475,6 @@ function renderDebtEdit() {
     `;
 }
 
-function renderDebts() {
-    const manualDebts = state.debts;
-    const protocolInterests = extractProtocolInterests();
-    const combinedDebts = [...manualDebts, ...protocolInterests];
-    
-    const protocolEntries = combinedDebts.filter(d => d.isProtocol);
-    const manualEntries = combinedDebts.filter(d => !d.isProtocol);
-
-    // Card 1: Total intereses a recaudar (Manuales + Protocolo)
-    const totalMonthlyInterest = combinedDebts.reduce((acc, d) => {
-        if (d.isProtocol) return acc + parseFloat(d.amount); // La cuota ya es el interés
-        const rate = parseFloat(d.interest || 0) / 100;
-        return acc + (parseFloat(d.amount || 0) * rate);
-    }, 0);
-
-    // Card 2: Capital puro de deudores (Solo deudas manuales)
-    const totalManualCapital = manualDebts.reduce((acc, d) => acc + parseFloat(d.amount || 0), 0);
-
-    // Alertas Proactivas (2 días)
-    const today = new Date();
-    const upcoming = combinedDebts.filter(d => {
-        if (!d.start_date) return false;
-        const startDay = new Date(d.start_date).getDate();
-        const collectionDate = new Date(today.getFullYear(), today.getMonth(), startDay);
-        const diffDays = Math.ceil((collectionDate - today) / (1000 * 60 * 60 * 24));
-        return diffDays >= 0 && diffDays <= 2;
-    });
-
-    return `
-        <header class="main-header">
-            <div class="user-info">
-                <div class="avatar">DV</div>
-                <div class="greeting">
-                    <span>Libro de</span>
-                    <h1>Cobros y Deudas</h1>
-                </div>
-            </div>
         </header>
 
         <section class="summary-card gold-gradient">
