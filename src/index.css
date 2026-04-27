@@ -1102,7 +1102,7 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
 .sv-nexus-highlight-blue { background: rgba(59, 130, 246, 0.3); border-radius: 4px; padding: 2px 4px; }
 .sv-nexus-timestamp { color: #10b981; font-weight: 800; font-family: monospace; background: rgba(16, 185, 129, 0.1); padding: 2px 6px; border-radius: 4px; }
 
-/* --- SOVEREIGN NEXUS: ELITE PRODUCTION SUITE (DNA) --- */
+/* --- SOVEREIGN NEXUS: ELITE PRODUCTION SUITE (DNA DEFINITIVO) --- */
 .sv-nexus-elite {
     --bg-pure: #000000;
     --bg-card: #0a0a0a;
@@ -1128,6 +1128,9 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
     backdrop-filter: blur(24px);
     border-bottom: 1px solid var(--border-soft);
     padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .sv-nexus-elite .nav-link {
@@ -1137,15 +1140,14 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
     background: transparent; border: none; cursor: pointer;
 }
 
-.sv-nexus-elite .nav-link i { color: #fff; width: 14px; }
-.sv-nexus-elite .nav-link:hover { color: #fff; background: rgba(255, 255, 255, 0.03); }
+.sv-nexus-elite .nav-link i { width: 14px; }
+.sv-nexus-elite .nav-link:hover:not(.active) { color: #fff; background: rgba(255, 255, 255, 0.03); }
 .sv-nexus-elite .nav-link.active { color: var(--text-white); background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.1); }
 
 .sv-nexus-elite .card-nexus {
     background: var(--bg-card); border: 1px solid var(--border-soft);
-    border-radius: 20px; padding: 32px; transition: transform 0.3s ease, border-color 0.3s ease;
+    border-radius: 24px; padding: 32px;
 }
-.sv-nexus-elite .card-nexus:hover { border-color: rgba(255,255,255,0.1); }
 
 .sv-nexus-elite .mega-kpi-main {
     font-size: 5.5rem; font-weight: 800; line-height: 1; letter-spacing: -0.05em;
@@ -1153,23 +1155,27 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 
+.sv-nexus-elite .pipeline-bar { height: 8px; border-radius: 12px; background: #111; overflow: hidden; display: flex; }
+.sv-nexus-elite .pipeline-segment { height: 100%; transition: width 0.5s ease; }
+
 .sv-nexus-elite .btn-pro {
     background: #ffffff; color: #000000; font-weight: 800; text-transform: uppercase;
     font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 24px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;
+    display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;
 }
 .sv-nexus-elite .btn-pro.emerald { background: var(--emerald); color: #000; }
 .sv-nexus-elite .btn-pro.emerald:hover { background: var(--emerald-hover); }
+.sv-nexus-elite .btn-pro:hover { transform: scale(1.02); }
 
 .sv-nexus-elite .input-pro {
     width: 100%; background-color: var(--bg-input); border: 1px solid var(--border-soft);
-    border-radius: 12px; padding: 14px 16px; font-size: 0.85rem; font-weight: 600; color: #fff; outline: none;
+    border-radius: 12px; padding: 14px 18px; font-size: 0.9rem; font-weight: 600; color: #fff; outline: none;
 }
 .sv-nexus-elite .input-pro:focus { border-color: var(--emerald); }
 
 .sv-nexus-elite .intel-editor {
-    background: var(--bg-input); border: 1px solid var(--border-soft); min-height: 250px;
-    border-radius: 12px; padding: 20px; outline: none; line-height: 1.7; font-size: 0.9rem; color: #fff;
+    background: var(--bg-input); border: 1px solid var(--border-soft); min-height: 300px;
+    border-radius: 16px; padding: 24px; outline: none; line-height: 1.8; color: #fff;
 }
 
 .sv-nexus-elite .highlight-emerald { background: rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 2px 4px; }
@@ -1177,7 +1183,9 @@ input:checked + .switch-slider:before { transform: translateX(20px); }
 .sv-nexus-elite .timestamp-tag { color: var(--emerald); font-weight: 800; background: rgba(16, 185, 129, 0.1); padding: 2px 6px; border-radius: 4px; }
 
 .sv-nexus-elite .view-section { display: none; }
-.sv-nexus-elite .view-section.active { display: block; animation: fadeUp 0.5s ease; }
+.sv-nexus-elite .view-section.active { display: block; animation: svFadeUp 0.4s ease; }
+
+@keyframes svFadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 .sv-nexus-elite .custom-scroll::-webkit-scrollbar { width: 4px; }
