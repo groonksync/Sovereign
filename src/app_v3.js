@@ -277,6 +277,8 @@ function renderDashboard() {
             .filter(inst => inst.paid)
             .reduce((sum, inst) => sum + parseFloat(inst.amount), 0);
         return acc + paidInterest;
+    }, 0);
+
     const protocolInterests = extractProtocolInterests();
     const totalRecaudacionProyectada = [...state.debts, ...protocolInterests].reduce((acc, d) => {
         if (d.isProtocol) return acc + parseFloat(d.amount);
