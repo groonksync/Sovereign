@@ -401,31 +401,6 @@ function renderStudioSync() {
         </div>
     `;
 }
-                        <button class="btn-primary" onclick="window.app.navigate('receiptRegister')">Emitir Primer Recibo</button>
-                    </div>
-                ` : state.receipts.map(r => `
-                    <div class="loan-card" onclick="window.app.navigate('receiptDetail', '${r.id}')">
-                        <div class="loan-info">
-                            <div class="debtor-icon" style="background:#2d3748; color:white;">${r.receiptId.split('-')[1] || 'RC'}</div>
-                            <div class="loan-details">
-                                <h3 style="font-size:0.8rem; color:var(--primary-emerald);">${r.receiptId}</h3>
-                                <p style="font-weight:700;">${r.clientName}</p>
-                                <p style="font-size:0.6rem;">${r.brandName} • ${formatDate(r.date)}</p>
-                            </div>
-                            <div class="loan-amount">
-                                <span class="current">${formatCurrency(r.totals && r.totals.USD > 0 ? r.totals.USD : (r.totals && r.totals.EUR > 0 ? r.totals.EUR : (r.totals ? r.totals.BOB : r.totalAmount)), r.totals && r.totals.USD > 0 ? '$' : (r.totals && r.totals.EUR > 0 ? '€' : 'Bs.'))}</span>
-                            </div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        </main>
-
-        <button class="fab" onclick="window.app.navigate('receiptRegister')">
-            <i data-lucide="plus"></i>
-        </button>
-    `;
-}
 
 function renderReceiptRegister() {
     const year = new Date().getFullYear();
@@ -1053,8 +1028,8 @@ function renderExpenses() {
                             <div class="flex items-center gap-5">
                                 <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500"><i data-lucide="arrow-down-right"></i></div>
                                 <div>
-                                    <h3 class="text-lg font-black text-white uppercase">${exp.description}</h3>
-                                    <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${exp.category} • ${formatDate(exp.date)}</p>
+                                    <h3 class="text-lg font-black text-white uppercase">${exp.description || exp.name}</h3>
+                                    <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${exp.category} • ${formatDate(exp.date || exp.payDate)}</p>
                                 </div>
                             </div>
                             <span class="text-xl font-black text-amber-500">-${formatCurrency(exp.amount)}</span>
@@ -1066,60 +1041,6 @@ function renderExpenses() {
     `;
 }
 
-    return `
-        <header class="main-header">
-            <div class="user-info">
-                <div class="avatar">MP</div>
-                <div class="greeting">
-                    <span>Control de</span>
-                    <h1>Mis Pagos</h1>
-                </div>
-            </div>
-        </header>
-
-        <section class="summary-card dark-gradient">
-            <div class="card-content">
-                <span class="label">Total Mensual Proyectado</span>
-                <h2 class="amount">${formatCurrency(totalMonthlyExpenses)}</h2>
-                <p style="font-size: 0.65rem; opacity: 0.8; margin-top: -10px;">Obligaciones y suscripciones activas</p>
-            </div>
-        </section>
-
-        <main class="ledger-section">
-            <div class="loan-list">
-                ${state.expenses.length === 0 ? `
-                    <div class="empty-state">
-                        <p>No tienes pagos programados registrados.</p>
-                        <button class="btn-primary" onclick="window.app.navigate('expenseRegister')">Agregar Primer Pago</button>
-                    </div>
-                ` : state.expenses.map(exp => {
-                    const daysLeft = calculateDaysUntil(exp.payDate);
-                    return `
-                    <div class="loan-card" onclick="window.app.navigate('expenseDetail', '${exp.id}')">
-                        <div class="loan-info">
-                            <div class="debtor-icon expense-icon">${categories[exp.category]?.icon || '💰'}</div>
-                            <div class="loan-details">
-                                <h3>${exp.name}</h3>
-                                <p>${categories[exp.category]?.title || 'Otros'}</p>
-                            </div>
-                            <div class="loan-amount">
-                                <span class="current">${formatCurrency(exp.amount)}</span>
-                            </div>
-                        </div>
-                        <div class="progress-labels" style="margin-top: 8px;">
-                            <span class="${daysLeft <= 3 ? 'text-warning' : ''}">Faltan ${daysLeft} días pago</span>
-                            <span class="status positive">Activo</span>
-                        </div>
-                    </div>
-                `}).join('')}
-            </div>
-        </main>
-
-        <button class="fab" onclick="window.app.navigate('expenseRegister')">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        </button>
-    `;
-}
 
 function renderExpenseRegister() {
     return `
@@ -1422,6 +1343,8 @@ function renderDebts() {
     `;
 }
 
+
+
 function renderDebtEdit() {
     const debt = state.debts.find(d => d.id === state.selectedLoanId);
     if (!debt) return navigate('debts');
@@ -1472,60 +1395,6 @@ function renderDebtEdit() {
                 <button type="button" class="btn-secondary" onclick="window.app.navigate('debtDetail', '${debt.id}')">Cancelar</button>
             </div>
         </form>
-    `;
-}
-
-        </header>
-
-        <section class="summary-card gold-gradient">
-            <div class="summary-split" style="display: flex; gap: 15px;">
-                <div class="card-content" style="flex: 1;">
-                    <span class="label">Recaudación Intereses</span>
-                    <h2 class="amount" style="font-size: 1.1rem;">${formatCurrency(totalMonthlyInterest)}</h2>
-                </div>
-                <div class="card-content" style="flex: 1;">
-                    <span class="label">Capital Deudores</span>
-                    <h2 class="amount" style="font-size: 1.1rem;">${formatCurrency(totalManualCapital)}</h2>
-                </div>
-            </div>
-        </section>
-
-        <main class="ledger-section">
-            ${upcoming.length > 0 ? `
-                <div class="alert-box warning" style="margin: 0 15px 20px 15px;">
-                    <div class="alert-content">
-                        <strong>⏳ Recordatorio:</strong> ${upcoming.map(u => u.person).join(', ')} tienen cobros por liquidar pronto.
-                    </div>
-                </div>
-            ` : ''}
-
-            <div class="loan-list">
-                ${protocolEntries.length > 0 ? `
-                    <div class="section-header" style="margin-top: 10px;">
-                        <h2 class="section-title">Intereses de Préstamos (Protocolo)</h2>
-                    </div>
-                    ${protocolEntries.map(debt => renderDebtCard(debt, upcoming)).join('')}
-                ` : ''}
-
-                ${manualEntries.length > 0 ? `
-                    <div class="section-header" style="margin-top: 25px;">
-                        <h2 class="section-title">Cartera de Deudores (Personal)</h2>
-                    </div>
-                    ${manualEntries.map(debt => renderDebtCard(debt, upcoming)).join('')}
-                ` : ''}
-
-                ${combinedDebts.length === 0 ? `
-                    <div class="empty-state">
-                        <p>No hay cobros pendientes.</p>
-                        <button class="btn-primary" onclick="window.app.navigate('debtRegister')">Nueva Deuda</button>
-                    </div>
-                ` : ''}
-            </div>
-        </main>
-
-        <button class="fab" onclick="window.app.navigate('debtRegister')">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        </button>
     `;
 }
 
