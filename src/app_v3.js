@@ -85,7 +85,7 @@ async function loadState() {
             id: l.id,
             debtor: l.debtor,
             amount: l.amount,
-            interest: l.interest_rate,
+            interest: l.interest,
             start_date: l.start_date,
             end_date: l.end_date,
             collateral: l.collateral,
@@ -270,15 +270,6 @@ function navigate(view, id = null) {
 function renderDashboard() {
     const totalAssets = state.loans.reduce((acc, loan) => acc + parseFloat(loan.amount || 0), 0);
     const activeContracts = state.loans.length;
-    const avgInterest = state.loans.length > 0 ? (state.loans.reduce((acc, l) => acc + parseFloat(l.interest || 0), 0) / state.loans.length).toFixed(1) : 0;
-    
-    const totalInterestEarned = state.loans.reduce((acc, loan) => {
-        const paidInterest = (loan.installments || [])
-            .filter(inst => inst.paid)
-            .reduce((sum, inst) => sum + parseFloat(inst.amount), 0);
-        return acc + paidInterest;
-    }, 0);
-
     const protocolInterests = extractProtocolInterests();
     const totalRecaudacionProyectada = [...state.debts, ...protocolInterests].reduce((acc, d) => {
         if (d.isProtocol) return acc + parseFloat(d.amount);
@@ -287,52 +278,58 @@ function renderDashboard() {
     }, 0);
 
     return `
-        <div class="sv-nexus-elite flex flex-col space-y-8 pb-40">
-            <header class="flex justify-between items-center py-4">
-                <div>
-                    <p class="label-tiny text-emerald-500">Sovereign Protocol Active</p>
-                    <h1 class="text-4xl text-white">Escritorio</h1>
+        <div class="sv-nexus-elite animate-reveal">
+            <header class="nav-elite">
+                <h1 class="brand-title">Protocol</h1>
+                <div class="flex gap-4">
+                    <button class="w-8 h-8 rounded bg-obsidian border border-dim flex items-center justify-center hover:border-neon-blue transition-all" onclick="window.app.toggleTheme()">
+                        <i data-lucide="${state.isDarkMode ? 'sun' : 'moon'}" class="w-3 h-3 text-white"></i>
+                    </button>
                 </div>
-                <button class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10" onclick="window.app.toggleTheme()">
-                    <i data-lucide="${state.isDarkMode ? 'sun' : 'moon'}" class="w-4 h-4 text-gray-400"></i>
-                </button>
             </header>
 
-            <section class="card-highlight relative overflow-hidden">
-                <div class="relative z-10">
-                    <p class="label-tiny">Capital Total Protocolo</p>
-                    <h2 class="text-6xl my-2">${formatCurrency(totalAssets)}</h2>
-                    <div class="flex gap-6 mt-6">
-                        <div>
-                            <p class="label-tiny">Recaudación Mes</p>
-                            <p class="text-lg font-black text-blue-600">${formatCurrency(totalRecaudacionProyectada)}</p>
-                        </div>
-                        <div class="border-l border-black/10 pl-6">
-                            <p class="label-tiny">Contratos</p>
-                            <p class="text-lg font-black">${activeContracts}</p>
-                        </div>
+            <main class="flex-1 overflow-y-auto custom-scroll p-8 pb-32">
+                <!-- KPI HEADER COMPACT -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+                    <div class="kpi-card">
+                        <p class="kpi-label">Capital Protocolo</p>
+                        <h2 class="kpi-value mono">${formatCurrency(totalAssets)}</h2>
+                    </div>
+                    <div class="kpi-card">
+                        <p class="kpi-label">Recaudación</p>
+                        <h2 class="kpi-value mono">${formatCurrency(totalRecaudacionProyectada)}</h2>
+                    </div>
+                    <div class="kpi-card">
+                        <p class="kpi-label">Contratos</p>
+                        <h2 class="kpi-value mono">${activeContracts}</h2>
+                    </div>
+                    <div class="kpi-card">
+                        <p class="kpi-label">Interés Promedio</p>
+                        <h2 class="kpi-value mono">12.5%</h2>
                     </div>
                 </div>
-                <i data-lucide="activity" class="absolute -right-10 -bottom-10 w-40 h-40 opacity-5"></i>
-            </section>
 
-            <main class="space-y-6">
-                <div class="flex justify-between items-center px-2">
-                    <h4 class="label-tiny">Monitor de Activos</h4>
-                    <button class="label-tiny text-blue-500" onclick="window.app.navigate('register')">+ Nuevo Contrato</button>
+                <!-- ASSET MONITOR COMPACT -->
+                <div class="mb-4 flex justify-between items-center">
+                    <h2 class="text-xs font-bold uppercase tracking-widest text-white">Monitor de Activos</h2>
+                    <button class="btn-elite" onclick="window.app.navigate('register')">Nuevo Registro</button>
                 </div>
-                <div class="nexus-grid">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                     ${state.loans.map(loan => {
                         const paidInst = (loan.installments || []).filter(i => i.paid).length;
-                        const progress = (loan.installments || []).length > 0 ? Math.round((paidInst / loan.installments.length) * 100) : 0;
+                        const totalInst = (loan.installments || []).length;
+                        const progress = totalInst > 0 ? Math.round((paidInst / totalInst) * 100) : 0;
                         return `
-                        <div class="card-nexus hover:border-blue-500/30 transition-all cursor-pointer" onclick="window.app.navigate('details', '${loan.id}')">
-                            <div class="flex justify-between items-start mb-6">
-                                <div><h3 class="text-2xl text-white truncate max-w-[150px]">${loan.debtor}</h3><p class="label-tiny mt-1">ID: ${loan.id.substring(0,6)}</p></div>
-                                <div class="text-right"><p class="text-xl text-white font-black">${formatCurrency(loan.amount)}</p><p class="label-tiny text-emerald-500">${loan.interest}% Int.</p></div>
+                        <div class="op-row group" onclick="window.app.navigate('details', '${loan.id}')">
+                            <div class="flex flex-col gap-1 overflow-hidden">
+                                <h3 class="text-white font-bold truncate text-[11px]">${loan.debtor}</h3>
+                                <p class="mono opacity-40 text-[9px]">ID:${loan.id.substring(0,4)}</p>
                             </div>
-                            <div class="h-1 bg-white/5 rounded-full overflow-hidden"><div class="h-full bg-blue-500" style="width: ${progress}%;"></div></div>
-                            <div class="flex justify-between mt-3"><span class="label-tiny">${progress}% Pagado</span><span class="label-tiny ${progress === 100 ? 'text-emerald-500' : 'text-amber-500'}">${progress === 100 ? 'Finalizado' : 'Activo'}</span></div>
+                            <div class="text-right">
+                                <p class="text-white font-bold mono text-[11px]">${formatCurrency(loan.amount)}</p>
+                                <p class="mono text-[9px] text-white/40">${loan.interest}%</p>
+                            </div>
                         </div>`;
                     }).join('')}
                 </div>
@@ -347,46 +344,41 @@ function renderStudioSync() {
     const totalPendiente = pendingReceipts.reduce((acc, r) => acc + parseFloat(r.totalAmount || 0), 0);
 
     return `
-        <div class="sv-nexus-elite flex flex-col space-y-8 pb-40">
-            <header class="flex justify-between items-center py-4">
-                <div><p class="label-tiny text-blue-500">Billing Protocol</p><h1 class="text-4xl text-white">Clientes</h1></div>
-                <button class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white" onclick="window.app.navigate('receiptRegister')"><i data-lucide="plus" class="w-6 h-6"></i></button>
+        <div class="sv-nexus-elite animate-reveal">
+            <header class="nav-elite">
+                <h1 class="brand-title">Recibos</h1>
+                <button class="btn-elite" onclick="window.app.navigate('receiptRegister')">+ Emitir</button>
             </header>
 
-            <section class="card-highlight">
-                <p class="label-tiny">Total Facturado Bruto</p>
-                <h2 class="text-6xl my-2 text-blue-600">${formatCurrency(totalFacturado)}</h2>
-                <div class="flex gap-4 mt-4"><span class="label-tiny text-amber-600 bg-amber-500/10 px-3 py-1 rounded-full">Pendiente: ${formatCurrency(totalPendiente)}</span></div>
-            </section>
-
-            <main class="space-y-6">
-                ${pendingReceipts.length > 0 ? `
-                <div class="space-y-4">
-                    <h4 class="label-tiny px-2 text-amber-500">Saldos Pendientes</h4>
-                    <div class="nexus-grid">
-                        ${pendingReceipts.map(r => `
-                        <div class="card-nexus flex justify-between items-center hover:border-amber-500/30 cursor-pointer group transition-all" onclick="window.app.navigate('receiptDetail', '${r.id}')">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-black transition-all"><i data-lucide="clock" class="w-5 h-5"></i></div>
-                                <div><h3 class="text-xl text-white truncate max-w-[140px]">${r.clientName}</h3><p class="label-tiny">ID: ${r.receiptId}</p></div>
-                            </div>
-                            <div class="text-right"><p class="text-xl text-amber-500 font-black">${formatCurrency(r.totalAmount)}</p><p class="label-tiny">Pendiente</p></div>
-                        </div>`).join('')}
+            <main class="flex-1 overflow-y-auto custom-scroll p-8 pb-32">
+                <div class="grid grid-cols-2 md:grid-cols-2 gap-3 mb-8">
+                    <div class="kpi-card">
+                        <p class="kpi-label">Facturación Global</p>
+                        <h2 class="kpi-value mono">${formatCurrency(totalFacturado)}</h2>
                     </div>
-                </div>` : ''}
-
-                <div class="space-y-4">
-                    <h4 class="label-tiny px-2">Historial de Cobros</h4>
-                    <div class="nexus-grid">
-                        ${state.receipts.filter(r => r.status !== 'Pendiente').map(r => `
-                        <div class="card-nexus flex justify-between items-center hover:border-blue-500/30 cursor-pointer group transition-all" onclick="window.app.navigate('receiptDetail', '${r.id}')">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-black transition-all"><i data-lucide="check-circle" class="w-5 h-5"></i></div>
-                                <div><h3 class="text-xl text-white truncate max-w-[140px]">${r.clientName}</h3><p class="label-tiny">${r.brandName || 'Edición Pro'}</p></div>
-                            </div>
-                            <div class="text-right"><p class="text-xl text-white font-black">${formatCurrency(r.totalAmount)}</p><p class="label-tiny">Pagado</p></div>
-                        </div>`).join('')}
+                    <div class="kpi-card" style="border-color: rgba(255,51,51,0.2)">
+                        <p class="kpi-label" style="color: #ff3333">Pendiente Cobro</p>
+                        <h2 class="kpi-value mono" style="color: #ff3333">${formatCurrency(totalPendiente)}</h2>
                     </div>
+                </div>
+
+                <div class="mb-4">
+                    <h2 class="text-xs font-bold uppercase tracking-widest text-white">Monitor de Emisiones</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                    ${state.receipts.map(r => `
+                        <div class="op-row group" onclick="window.app.navigate('receiptDetail', '${r.id}')">
+                            <div class="flex flex-col gap-1 overflow-hidden">
+                                <h3 class="text-white font-bold truncate text-[11px]">${r.clientName}</h3>
+                                <p class="mono opacity-40 text-[9px]">${r.receiptId}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-white font-bold mono text-[11px]">${formatCurrency(r.totalAmount)}</p>
+                                <p class="mono text-[8px] ${r.status === 'Pendiente' ? 'text-red-500' : 'text-neon-blue'}">${r.status.toUpperCase()}</p>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
             </main>
         </div>
@@ -975,61 +967,49 @@ function renderTabBar() {
         { id: 'debts', icon: 'users', label: 'Deudores' },
         { id: 'expenses', icon: 'arrow-down-circle', label: 'Gastos' },
         { id: 'studio-sync', icon: 'file-text', label: 'Recibos' },
-        { id: 'sovereign-nexus', icon: 'activity', label: 'Nexus' }
+        { id: 'sovereign-nexus', icon: 'edit-3', label: 'Editor Pro' }
     ];
 
     return `
-        <nav class="tab-bar-nexus">
-            ${tabs.map(tab => `
-                <button onclick="window.app.navigate('${tab.id}')" 
-                    class="tab-item ${state.currentView === tab.id ? 'active' : ''}">
-                    <i data-lucide="${tab.icon}" class="${state.currentView === tab.id ? 'text-blue-500' : 'text-gray-500'}"></i>
-                    <span>${tab.label}</span>
-                </button>
-            `).join('')}
-        </nav>
+        <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+            <nav class="tab-pill-container">
+                ${tabs.map(tab => `
+                    <button onclick="window.app.navigate('${tab.id}')" 
+                        class="tab-pill ${state.currentView === tab.id ? 'active' : ''}">
+                        <i data-lucide="${tab.icon}" class="w-3 h-3"></i>
+                        <span class="text-[7px] mt-0.5">${tab.label}</span>
+                    </button>
+                `).join('')}
+            </nav>
+        </div>
     `;
 }
 
 function renderExpenses() {
     const totalExpenses = state.expenses.reduce((acc, exp) => acc + parseFloat(exp.amount || 0), 0);
+
     return `
-        <div class="sv-nexus-elite flex flex-col space-y-8 pb-40">
-            <header class="flex justify-between items-center py-4">
-                <div>
-                    <p class="label-tiny text-amber-500">Gestión de Salidas</p>
-                    <h1 class="text-4xl text-white">Gastos</h1>
-                </div>
-                <button class="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center text-black" onclick="window.app.navigate('expenseRegister')">
-                    <i data-lucide="plus" class="w-6 h-6"></i>
-                </button>
+        <div class="sv-nexus-elite animate-reveal">
+            <header class="nav-elite">
+                <h1 class="brand-title">Egresos</h1>
+                <button class="btn-elite" onclick="window.app.navigate('expenseRegister')">+ Registro</button>
             </header>
 
-            <section class="card-highlight">
-                <p class="label-tiny">Total Egresos Mensual</p>
-                <h2 class="text-6xl my-2 text-amber-600">${formatCurrency(totalExpenses)}</h2>
-                <p class="label-tiny mt-4">Sincronización Cloud Protocol</p>
-            </section>
+            <main class="flex-1 overflow-y-auto custom-scroll p-8 pb-32">
+                <div class="kpi-card mb-6 inline-block">
+                    <p class="kpi-label">Gasto Operativo Mensual</p>
+                    <h2 class="kpi-value mono">${formatCurrency(totalExpenses)}</h2>
+                </div>
 
-            <main class="space-y-6">
-                <h4 class="label-tiny px-2">Compromisos Fijos y Variables</h4>
-                <div class="nexus-grid">
-                    ${state.expenses.length === 0 ? `
-                        <div class="col-span-full py-20 text-center opacity-20"><p class="label-tiny">Sin gastos registrados</p></div>
-                    ` : state.expenses.map(exp => `
-                        <div class="card-nexus flex justify-between items-center hover:border-amber-500/30 cursor-pointer group transition-all" onclick="window.app.navigate('expenseDetail', '${exp.id}')">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-black transition-all">
-                                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-xl text-white truncate max-w-[140px]">${exp.debtor}</h3>
-                                    <p class="label-tiny">${exp.category || 'General'} • Día ${new Date(exp.payDate).getDate()}</p>
-                                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                    ${state.expenses.map(exp => `
+                        <div class="op-row group" onclick="window.app.navigate('expenseDetail', '${exp.id}')">
+                            <div class="flex flex-col gap-1 overflow-hidden">
+                                <h3 class="text-white font-bold truncate text-[11px]">${exp.debtor}</h3>
+                                <p class="mono opacity-40 text-[9px]">${exp.category || 'Operación'}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-xl text-white font-black">${formatCurrency(exp.amount)}</p>
-                                <p class="label-tiny text-amber-500">Pendiente</p>
+                                <p class="text-white font-bold mono text-[11px]">${formatCurrency(exp.amount)}</p>
                             </div>
                         </div>
                     `).join('')}
@@ -1038,7 +1018,6 @@ function renderExpenses() {
         </div>
     `;
 }
-
 
 function renderExpenseRegister() {
     return `
@@ -1294,38 +1273,35 @@ function renderDebts() {
     }, 0);
 
     return `
-        <div class="sv-nexus-elite flex flex-col space-y-8 pb-40">
-            <header class="flex justify-between items-center py-4">
-                <div><p class="label-tiny text-blue-500">Credit Protocol</p><h1 class="text-4xl text-white">Deudores</h1></div>
-                <button class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white" onclick="window.app.navigate('debtRegister')"><i data-lucide="plus" class="w-6 h-6"></i></button>
+        <div class="sv-nexus-elite animate-reveal">
+            <header class="nav-elite">
+                <h1 class="brand-title">Deudores</h1>
+                <button class="btn-elite" onclick="window.app.navigate('debtRegister')">+ Nuevo</button>
             </header>
 
-            <section class="card-highlight">
-                <p class="label-tiny">Recaudación Proyectada Mes</p>
-                <h2 class="text-6xl my-2 text-blue-600">${formatCurrency(totalMonthlyInterest)}</h2>
-                <p class="label-tiny mt-4">Protocolo de Cobro Activo</p>
-            </section>
+            <main class="flex-1 overflow-y-auto custom-scroll p-8 pb-32">
+                <div class="kpi-card mb-6 inline-block">
+                    <p class="kpi-label">Recaudación Proyectada</p>
+                    <h2 class="kpi-value mono">${formatCurrency(totalMonthlyInterest)}</h2>
+                </div>
 
-            <main class="space-y-8">
-                <div class="space-y-4">
-                    <h4 class="label-tiny px-2 text-blue-500">Cartera Global</h4>
-                    <div class="nexus-grid">
-                        ${combinedDebts.map(debt => `
-                        <div class="card-nexus flex justify-between items-center hover:border-blue-500/30 cursor-pointer group transition-all" onclick="${debt.isProtocol ? `window.app.navigate('details', '${debt.originalLoanId}')` : `window.app.navigate('debtDetail', '${debt.id}')`}">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white group-hover:bg-blue-500 transition-all"><i data-lucide="${debt.isProtocol ? 'layers' : 'user'}" class="w-5 h-5"></i></div>
-                                <div><h3 class="text-xl text-white truncate max-w-[140px]">${debt.debtor}</h3><p class="label-tiny">${debt.isProtocol ? 'Nexus Contract' : 'Préstamo Directo'}</p></div>
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                    ${combinedDebts.map(debt => `
+                        <div class="op-row group" onclick="${debt.isProtocol ? `window.app.navigate('details', '${debt.originalLoanId}')` : `window.app.navigate('debtDetail', '${debt.id}')`}">
+                            <div class="flex flex-col gap-1 overflow-hidden">
+                                <h3 class="text-white font-bold truncate text-[11px]">${debt.debtor || debt.person}</h3>
+                                <p class="mono opacity-40 text-[9px]">${debt.isProtocol ? 'Nexus' : 'Direct'}</p>
                             </div>
-                            <div class="text-right"><p class="text-xl text-white font-black">${formatCurrency(debt.amount)}</p><p class="label-tiny">${debt.interest || 0}% Int.</p></div>
-                        </div>`).join('')}
-                    </div>
+                            <div class="text-right">
+                                <p class="text-white font-bold mono text-[11px]">${formatCurrency(debt.amount)}</p>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
             </main>
         </div>
     `;
 }
-
-
 
 function renderDebtEdit() {
     const debt = state.debts.find(d => d.id === state.selectedLoanId);
@@ -2410,7 +2386,7 @@ const initApp = async () => {
 initApp();
 
 
-/** --- SOVEREIGN NEXUS: ELITE PRODUCTION SUITE (DNA DEFINITIVO) --- **/
+/** --- EDITOR PRO: ELITE PRODUCTION SUITE (DNA DEFINITIVO) --- **/
 const currencyMap = { 'USD': '$', 'BOB': 'Bs.', 'EUR': '€' };
 
 async function renderSovereignNexus() {
@@ -2455,8 +2431,51 @@ async function renderSovereignNexus() {
         render();
     };
 
+    window.app.highlightNexusText = (color) => {
+        document.execCommand('backColor', false, color);
+    };
+
+    window.app.clearNexusFormat = () => {
+        document.execCommand('backColor', false, 'transparent');
+    };
+
+    window.app.addNexusLink = (projectId, listField) => {
+        const proj = state.nexusProjects.find(p => p.id === projectId);
+        if (!proj) return;
+        if (!proj[listField]) proj[listField] = [];
+        proj[listField].push("");
+        
+        // Renderizado local rápido para evitar parpadeo global
+        const containerId = listField === 'company_links' ? 'company-links-container' : 'reference-links-container';
+        const container = document.getElementById(containerId);
+        if (container) {
+            const idx = proj[listField].length - 1;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'w-full bg-white/2 border border-white/5 p-2 text-[10px] text-' + (listField === 'company_links' ? 'blue-400' : 'purple-400') + ' outline-none animate-reveal';
+            input.placeholder = listField === 'company_links' ? 'URL Redes / Web...' : 'URL Referencia / Inspiración...';
+            input.onblur = (e) => window.app.updateNexusLink(projectId, listField, idx, e.target.value);
+            container.appendChild(input);
+            input.focus();
+        }
+    };
+
+    window.app.updateNexusLink = (projectId, listField, index, value) => {
+        const proj = state.nexusProjects.find(p => p.id === projectId);
+        if (!proj) return;
+        proj[listField][index] = value;
+        window.app.updateProjectField(projectId, listField, proj[listField]);
+    };
+
+    window.app.handleNexusEditorKey = (e) => {
+        if (e.key === ' ') {
+            document.execCommand('backColor', false, 'transparent');
+        }
+    };
+
     window.app.openModal = (id) => {
         document.getElementById(id).style.display = 'flex';
+        if (window.lucide) window.lucide.createIcons();
     };
 
     window.app.closeModals = () => {
@@ -2465,13 +2484,28 @@ async function renderSovereignNexus() {
 
     window.app.createProject = async () => {
         const name = document.getElementById('clientName').value;
-        const desc = document.getElementById('projectDesc').value;
+        const description = document.getElementById('projectDesc').value;
+        const drive_url = document.getElementById('driveUrl').value;
+        const meet_url = document.getElementById('meetUrl').value;
+        const company_url = document.getElementById('companyUrl')?.value || '';
+        const preference_url = document.getElementById('preferenceUrl')?.value || '';
+        const end_date = document.getElementById('endDate').value;
+
         if (!name) return;
 
         try {
             const { data, error } = await sb
                 .from('nexus_projects')
-                .insert([{ name, description: desc, status: 'briefing' }])
+                .insert([{ 
+                    name, 
+                    description, 
+                    drive_url, 
+                    meet_url,
+                    company_url,
+                    preference_url,
+                    end_date,
+                    status: 'briefing' 
+                }])
                 .select()
                 .single();
             
@@ -2488,19 +2522,42 @@ async function renderSovereignNexus() {
         render();
     };
 
-    window.app.updateProjectField = async (field, value) => {
-        if (!activeProject) return;
+    window.app.updateProjectField = async (projectId, field, value) => {
+        const proj = state.nexusProjects.find(p => p.id === projectId);
+        if (!proj) return;
         try {
-            await sb.from('nexus_projects').update({ [field]: value }).eq('id', activeProject.id);
-            activeProject[field] = value;
+            const { error } = await sb.from('nexus_projects').update({ [field]: value }).eq('id', projectId);
+            if (error) throw error;
+            proj[field] = value;
             if (field === 'status') render();
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Update Error:", e); }
     };
 
-    window.app.openBrandingModal = () => {
+    window.app.saveAllNexus = async (btn) => {
         if (!activeProject) return;
-        document.getElementById('branding-json-input').value = JSON.stringify(activeProject.branding_json || {}, null, 2);
-        window.app.openModal('modalBranding');
+        const editor = document.getElementById('nexus-planning-editor');
+        const notes = editor ? editor.innerHTML : activeProject.description;
+        
+        try {
+            const { error } = await sb.from('nexus_projects')
+                .update({ description: notes })
+                .eq('id', activeProject.id);
+            if (error) throw error;
+            activeProject.description = notes;
+            
+            // Efecto visual de éxito
+            if (btn) {
+                const originalText = btn.innerText;
+                btn.innerText = "¡GUARDADO!";
+                btn.style.backgroundColor = "#22c55e";
+                btn.style.color = "white";
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.backgroundColor = "";
+                    btn.style.color = "";
+                }, 2000);
+            }
+        } catch (e) { alert("Error al guardar: " + e.message); }
     };
 
     window.app.saveBranding = async () => {
@@ -2512,33 +2569,83 @@ async function renderSovereignNexus() {
         } catch (e) { alert("JSON Inválido"); }
     };
 
-    window.app.openDeliverableModal = (delId = null) => {
+    window.app.openOperationModal = (delId = null) => {
+        const modalTitle = document.getElementById('del-modal-title');
+        const editor = document.getElementById('del-notes-editor');
+        
+        // Listener para limpiar resaltado tras espacio
+        if (!editor.hasListener) {
+            editor.addEventListener('keydown', (e) => {
+                if (e.key === ' ') {
+                    // Esperar un milisegundo para que el espacio se inserte y luego limpiar
+                    setTimeout(() => {
+                        document.execCommand('backColor', false, 'transparent');
+                    }, 1);
+                }
+            });
+            editor.hasListener = true;
+        }
+
         if (delId) {
             const d = activeProject.nexus_deliverables.find(item => item.id === delId);
             state.editingDeliverableId = delId;
+            modalTitle.innerText = "Editar Operación";
             document.getElementById('del-title').value = d.title || '';
+            document.getElementById('del-type').value = d.type || 'video';
+            document.getElementById('del-qty').value = d.quantity || 1;
             document.getElementById('del-price').value = d.price || '';
             document.getElementById('del-currency').value = d.currency || 'USD';
             document.getElementById('del-status').value = d.status_paid || 'pending';
-            document.getElementById('del-notes').innerHTML = d.notes_html || '';
+            document.getElementById('del-method').value = d.method || '';
+            document.getElementById('del-link-empresa').value = d.link_empresa || '';
+            document.getElementById('del-link-general').value = d.link_general || '';
+            editor.innerHTML = d.notes_html || '';
         } else {
             state.editingDeliverableId = null;
+            modalTitle.innerText = "Nueva Operación";
             document.getElementById('del-title').value = '';
+            document.getElementById('del-type').value = 'video';
+            document.getElementById('del-qty').value = 1;
             document.getElementById('del-price').value = '';
-            document.getElementById('del-notes').innerHTML = '';
+            document.getElementById('del-status').value = 'pending';
+            document.getElementById('del-method').value = '';
+            document.getElementById('del-link-empresa').value = '';
+            document.getElementById('del-link-general').value = '';
+            editor.innerHTML = '';
         }
-        window.app.openModal('modalDeliverable');
+        window.app.openModal('modalOperation');
+    };
+
+    window.app.highlightNexusText = (color) => {
+        document.execCommand('backColor', false, color);
+        document.getElementById('del-notes-editor').focus();
+    };
+
+    window.app.clearNexusFormat = () => {
+        document.execCommand('removeFormat', false, null);
+        document.execCommand('backColor', false, 'transparent');
+        document.getElementById('del-notes-editor').focus();
     };
 
     window.app.saveDeliverable = async () => {
         if (!activeProject) return;
+        const btn = document.getElementById('btn-save-op');
+        btn.innerText = "GUARDANDO...";
+        btn.style.opacity = "0.7";
+        btn.disabled = true;
+
         const payload = {
             project_id: activeProject.id,
             title: document.getElementById('del-title').value,
+            type: document.getElementById('del-type').value,
+            quantity: Number(document.getElementById('del-qty').value),
             price: Number(document.getElementById('del-price').value),
             currency: document.getElementById('del-currency').value,
-            status_paid: document.getElementById('del-status').value, // Alineado con technical_architecture
-            notes_html: document.getElementById('del-notes').innerHTML,
+            status_paid: document.getElementById('del-status').value,
+            method: document.getElementById('del-method').value,
+            link_empresa: document.getElementById('del-link-empresa').value,
+            link_general: document.getElementById('del-link-general').value,
+            notes_html: document.getElementById('del-notes-editor').innerHTML,
             version: (activeProject.nexus_deliverables.find(d => d.id === state.editingDeliverableId)?.version || 0) + 1
         };
 
@@ -2559,9 +2666,20 @@ async function renderSovereignNexus() {
                 activeProject.nexus_deliverables.push(res.data);
             }
 
-            window.app.closeModals();
-            render();
-        } catch (e) { console.error("Deliverable Sync Error:", e); }
+            btn.innerText = "GUARDADO ✓";
+            btn.style.opacity = "1";
+            setTimeout(() => {
+                window.app.closeModals();
+                render();
+            }, 500);
+        } catch (e) { 
+            console.error("Sync Error:", e);
+            btn.innerText = "REINTENTAR";
+            btn.disabled = false;
+            btn.style.opacity = "1";
+            btn.style.background = "#ef4444";
+            btn.style.color = "white";
+        }
     };
 
     window.app.formatNexus = (cmd) => document.execCommand(cmd, false, null);
@@ -2571,228 +2689,429 @@ async function renderSovereignNexus() {
         document.execCommand('insertHTML', false, tag);
     };
 
-    // --- HTML RENDER DNA ---
+    // --- HTML RENDER DNA (EDITOR PRO V3) ---
     return `
-    <div class="sv-nexus-elite flex flex-col h-screen w-full bg-black">
-        <nav class="flex items-center justify-between p-6 border-b border-white/5">
+    <div class="sv-nexus-elite animate-reveal editor-pro-view">
+        <!-- TOP NAVIGATION -->
+        <nav class="nav-elite">
             <div class="flex items-center gap-8">
-                <h1 class="text-2xl text-white">Nexus Suite</h1>
-                <div class="flex gap-1 bg-white/5 p-1 rounded-full">
-                    <button onclick="window.app.switchNexusTab('dashboard')" class="px-4 py-2 rounded-full text-[10px] font-black uppercase transition-all ${activeTab === 'dashboard' ? 'bg-white text-black' : 'text-gray-500'}">Escritorio</button>
-                    <button onclick="window.app.switchNexusTab('nexus')" class="px-4 py-2 rounded-full text-[10px] font-black uppercase transition-all ${activeTab === 'nexus' ? 'bg-white text-black' : 'text-gray-500'}">Proyectos</button>
-                    <button onclick="window.app.switchNexusTab('cloud')" class="px-4 py-2 rounded-full text-[10px] font-black uppercase transition-all ${activeTab === 'cloud' ? 'bg-white text-black' : 'text-gray-500'}">Cloud</button>
+                <div class="brand-title">Editor Pro</div>
+                <div class="tab-pill-container">
+                    <button onclick="window.app.switchNexusTab('dashboard')" class="tab-pill ${activeTab === 'dashboard' ? 'active' : ''}">Escritorio</button>
+                    <button onclick="window.app.switchNexusTab('nexus')" class="tab-pill ${activeTab === 'nexus' ? 'active' : ''}">Clientes</button>
+                    <button onclick="window.app.switchNexusTab('cloud')" class="tab-pill ${activeTab === 'cloud' ? 'active' : ''}">Almacén</button>
+                    <button onclick="window.app.switchNexusTab('finance')" class="tab-pill ${activeTab === 'finance' ? 'active' : ''}">Finanzas</button>
                 </div>
             </div>
             <div class="text-right">
-                <p class="label-tiny">Total Portfolio</p>
-                <p class="text-xl text-emerald-500">${formatCurrency(totalPaid + totalPending, '$')}</p>
+                <p class="kpi-label uppercase">Editor Pro Studio</p>
             </div>
         </nav>
 
-        <main class="flex-1 overflow-y-auto p-6 custom-scroll pb-40">
-            <div class="max-w-7xl mx-auto space-y-8">
-                
-                <section id="view-dashboard" class="view-section ${activeTab === 'dashboard' ? 'active' : ''} space-y-8">
-                    <div class="card-highlight text-center">
-                        <p class="label-tiny">Capital Realizado</p>
-                        <h2 class="text-7xl my-2 text-emerald-600">${formatCurrency(totalPaid, '$')}</h2>
-                    </div>
-                    <div class="nexus-grid">
-                        <div class="card-nexus">
-                            <p class="label-tiny text-amber-500">Pagos en Espera</p>
-                            <h3 class="text-4xl text-white my-2">${formatCurrency(totalPending, '$')}</h3>
+        <main class="flex-1 overflow-y-auto custom-scroll bg-[#050505]">
+            ${(() => {
+                if (activeTab === 'dashboard') {
+                    return `
+                    <!-- 1. ESCRITORIO: RADAR LINEAL -->
+                    <div class="animate-reveal p-8 max-w-6xl mx-auto">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="h-[1px] flex-1 bg-white/10"></div>
+                            <h2 class="text-[9px] font-bold uppercase text-gray-500 tracking-[8px]">Radar de Control</h2>
+                            <div class="h-[1px] flex-1 bg-white/10"></div>
                         </div>
-                        <div class="card-nexus">
-                            <p class="label-tiny">Producción Activa</p>
-                            <div class="h-2 bg-white/5 rounded-full mt-4 overflow-hidden flex">
-                                <div class="h-full bg-blue-600" style="width: ${(stages.briefing / (state.nexusProjects.length || 1)) * 100}%"></div>
-                                <div class="h-full bg-blue-400" style="width: ${(stages.production / (state.nexusProjects.length || 1)) * 100}%"></div>
-                                <div class="h-full bg-amber-500" style="width: ${(stages.feedback / (state.nexusProjects.length || 1)) * 100}%"></div>
-                                <div class="h-full bg-emerald-500" style="width: ${(stages.finished / (state.nexusProjects.length || 1)) * 100}%"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-1 border border-white/5 bg-white/5">
+                            <div class="bg-[#080808] p-6">
+                                <p class="text-[8px] font-black text-purple-500 uppercase mb-4 tracking-widest">Entregas</p>
+                                <div class="space-y-1">
+                                    ${state.nexusProjects.filter(p => Math.ceil((new Date(p.end_date) - new Date()) / 86400000) < 7).map(p => `
+                                        <div class="flex justify-between items-center py-2 border-b border-white/5">
+                                            <p class="text-white text-[10px] font-medium uppercase">${p.name}</p>
+                                            <span class="text-[8px] text-purple-400 mono">Prox.</span>
+                                        </div>
+                                    `).join('') || '<p class="opacity-20 text-[8px] uppercase">Despejado</p>'}
+                                </div>
                             </div>
-                            <div class="flex justify-between mt-2 label-tiny"><span>Brief</span><span>Final</span></div>
+                            <div class="bg-[#080808] p-6">
+                                <p class="text-[8px] font-black text-blue-500 uppercase mb-4 tracking-widest">Infraestructura</p>
+                                <div class="space-y-1">
+                                    ${state.nexusProjects.filter(p => !p.drive_url).map(p => `
+                                        <div class="flex justify-between items-center py-2 border-b border-white/5">
+                                            <p class="text-white text-[10px] font-medium uppercase">${p.name}</p>
+                                            <span class="text-[8px] text-blue-400">Drive?</span>
+                                        </div>
+                                    `).join('') || '<p class="opacity-20 text-[8px] uppercase">Sincronizado</p>'}
+                                </div>
+                            </div>
+                            <div class="bg-[#080808] p-6">
+                                <p class="text-[8px] font-black text-emerald-500 uppercase mb-4 tracking-widest">Liquidez</p>
+                                <div class="space-y-1">
+                                    ${state.nexusProjects.filter(p => (p.nexus_deliverables || []).some(d => d.status_paid !== 'paid')).map(p => `
+                                        <div class="flex justify-between items-center py-2 border-b border-white/5">
+                                            <p class="text-white text-[10px] font-medium uppercase">${p.name}</p>
+                                            <span class="text-[8px] text-emerald-400 mono">Deuda</span>
+                                        </div>
+                                    `).join('') || '<p class="opacity-20 text-[8px] uppercase">Al día</p>'}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </div>`;
+                }
 
-                <section id="view-nexus" class="view-section ${activeTab === 'nexus' ? 'active' : ''}">
-                    <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
-                        <div class="md:col-span-3 space-y-4">
-                            <button onclick="window.app.openModal('modalProject')" class="w-full card-highlight py-4 text-[10px] font-black uppercase">+ Operación</button>
-                            <div class="space-y-2">
+                if (activeTab === 'nexus') {
+                    const activeProject = state.nexusProjects.find(p => p.id === state.activeNexusProjectId);
+                    return `
+                    <!-- 2. CLIENTES: CONSOLA DE PLANIFICACIÓN ESTRATÉGICA -->
+                    <div class="zen-layout animate-reveal h-full flex">
+                        <aside class="w-64 border-r border-white/5 bg-[#080808] flex flex-col h-full">
+                            <div class="p-6 border-b border-white/5">
+                                <button onclick="window.app.openModal('modalProject')" class="w-full py-2 bg-white text-black text-[9px] font-black uppercase tracking-widest hover:bg-purple-500 hover:text-white transition-all">+ Nuevo Cliente</button>
+                            </div>
+                            <div class="flex-1 overflow-y-auto p-2 space-y-1 custom-scroll">
                                 ${state.nexusProjects.map(p => `
-                                    <div onclick="window.app.selectProject('${p.id}')" class="p-4 rounded-2xl border ${state.activeNexusProjectId === p.id ? 'border-emerald-500 bg-emerald-500/5' : 'border-white/5'} cursor-pointer transition-all">
-                                        <p class="text-xs text-white font-black truncate">${p.name}</p>
-                                        <p class="label-tiny mt-1 text-emerald-500/50">${p.status || 'briefing'}</p>
+                                    <div onclick="window.app.selectProject('${p.id}')" class="sidebar-item-elite ${state.activeNexusProjectId === p.id ? 'active' : ''} group">
+                                        <p class="text-[10px] font-bold uppercase ${state.activeNexusProjectId === p.id ? 'text-amber-500' : 'text-gray-500 group-hover:text-gray-300'}">${p.name}</p>
                                     </div>
                                 `).join('')}
                             </div>
-                        </div>
-                        <div class="md:col-span-9" id="nexus-workspace">
-                            ${!activeProject ? `
-                                <div class="card-nexus py-40 text-center opacity-10">
-                                    <i data-lucide="layers" class="w-16 h-16 mx-auto mb-4"></i>
-                                    <h4 class="font-black uppercase tracking-widest">Selecciona un proyecto</h4>
-                                </div>
-                            ` : `
-                                <div class="animate-in space-y-10">
-                                    <div class="flex flex-col gap-8 pb-10 border-b border-white/5">
-                                        <div class="flex justify-between items-start">
-                                            <div class="flex-1">
-                                                <h3 class="text-6xl font-black text-white uppercase tracking-tighter mb-4">${activeProject.name}</h3>
-                                                <div class="flex items-center gap-4">
-                                                    <select onchange="window.app.updateProjectField('status', this.value)" class="bg-[#111] border border-white/10 rounded-lg px-4 py-2 text-[10px] font-black text-emerald-400 uppercase outline-none">
-                                                        <option value="briefing" ${activeProject.status === 'briefing' ? 'selected' : ''}>Briefing</option>
-                                                        <option value="production" ${activeProject.status === 'production' ? 'selected' : ''}>En Edición</option>
-                                                        <option value="feedback" ${activeProject.status === 'feedback' ? 'selected' : ''}>Revisiones</option>
-                                                        <option value="finished" ${activeProject.status === 'finished' ? 'selected' : ''}>Finalizado</option>
-                                                    </select>
-                                                    <div class="flex gap-2">
-                                                        ${Object.keys(activeProject.branding_json || {}).map(k => `<span class="branding-chip">${k}</span>`).join('')}
+                        </aside>
+
+                        <main class="flex-1 overflow-y-auto custom-scroll bg-[#050505]">
+                            ${!activeProject ? `<div class="h-full flex items-center justify-center text-[9px] text-gray-700 uppercase tracking-[15px]">Atelier Nexus Protocol...</div>` : `
+                                <div class="max-w-[1400px] mx-auto p-12 space-y-12 animate-reveal">
+                                    <!-- ATELIER HEADER -->
+                                    <div class="flex justify-between items-center border-b border-white/[0.03] pb-10">
+                                        <div>
+                                            <p class="atelier-label">Client Strategic Portfolio</p>
+                                            <h1 class="text-4xl font-black text-white uppercase tracking-tight">${activeProject.name}</h1>
+                                        </div>
+                                        <button onclick="window.app.saveAllNexus(this)" class="btn-signature">Confirm & Synchronize</button>
+                                    </div>
+
+                                    <div class="grid grid-cols-12 gap-16">
+                                        <!-- EL CANVAS (CUADERNO) -->
+                                        <div class="col-span-12 lg:col-span-8">
+                                            <div class="atelier-canvas">
+                                                <div class="px-8 py-4 border-b border-white/[0.03] flex justify-between items-center">
+                                                    <span class="atelier-label mb-0 flex items-center gap-2"><i data-lucide="edit-3" class="w-3 h-3 text-white"></i> Operational Strategy Notebook</span>
+                                                    <div class="flex items-center gap-4">
+                                                        <div class="flex gap-2 border-r border-white/10 pr-4">
+                                                            <button onclick="window.app.formatNexus('bold')" class="text-[9px] font-black text-gray-500 hover:text-white transition-all">B</button>
+                                                            <button onclick="window.app.formatNexus('italic')" class="text-[9px] italic text-gray-500 hover:text-white transition-all">I</button>
+                                                        </div>
+                                                        <div class="flex gap-2 border-r border-white/10 pr-4">
+                                                            <button onclick="window.app.highlightNexusText('#ef4444')" class="w-2.5 h-2.5 rounded-full bg-red-500/60 hover:scale-125 transition-all" title="Resaltador Rojo"></button>
+                                                            <button onclick="window.app.highlightNexusText('#3b82f6')" class="w-2.5 h-2.5 rounded-full bg-blue-500/60 hover:scale-125 transition-all" title="Resaltador Azul"></button>
+                                                            <button onclick="window.app.highlightNexusText('#eab308')" class="w-2.5 h-2.5 rounded-full bg-yellow-500/60 hover:scale-125 transition-all" title="Resaltador Amarillo"></button>
+                                                            <button onclick="window.app.highlightNexusText('#10b981')" class="w-2.5 h-2.5 rounded-full bg-emerald-500/60 hover:scale-125 transition-all" title="Resaltador Verde"></button>
+                                                        </div>
+                                                        <button onclick="window.app.clearNexusFormat()" class="text-gray-500 hover:text-white transition-all" title="Borrar Formato">
+                                                            <i data-lucide="eraser" class="w-3.5 h-3.5"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div id="nexus-planning-editor" contenteditable="true" onkeyup="window.app.handleNexusEditorKey(event)" onblur="window.app.saveNexusNotes(this.innerHTML)" class="p-12 min-h-[700px] text-white text-sm leading-relaxed font-serif outline-none selection:bg-white/10">
+                                                    ${activeProject.description || ''}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- EL INSPECTOR (DERECHA) -->
+                                        <div class="col-span-12 lg:col-span-4 space-y-10">
+                                            <!-- FICHA TÉCNICA -->
+                                            <div class="space-y-8">
+                                                <div class="grid grid-cols-2 gap-10">
+                                                    <div>
+                                                        <label class="atelier-label flex items-center gap-2"><i data-lucide="dollar-sign" class="w-2.5 h-2.5 text-white"></i> Investment</label>
+                                                        <div class="flex items-center gap-2">
+                                                            <input type="number" value="${activeProject.price || 0}" onblur="window.app.updateProjectField('${activeProject.id}', 'price', this.value)" class="atelier-input text-lg font-black">
+                                                            <span class="text-[9px] font-black text-gray-600">${activeProject.currency}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label class="atelier-label flex items-center gap-2"><i data-lucide="clapperboard" class="w-2.5 h-2.5 text-white"></i> Production</label>
+                                                        <div class="flex items-center gap-2">
+                                                            <input type="number" value="${activeProject.video_quantity || 0}" onblur="window.app.updateProjectField('${activeProject.id}', 'video_quantity', this.value)" class="atelier-input text-lg font-black" placeholder="0">
+                                                            <span class="text-[9px] font-black text-gray-600">VIDEOS</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="grid grid-cols-2 gap-10">
+                                                    <div>
+                                                        <label class="atelier-label flex items-center gap-2"><i data-lucide="calendar-range" class="w-2.5 h-2.5 text-white"></i> Meeting Date</label>
+                                                        <input type="date" value="${activeProject.meeting_date || ''}" onchange="window.app.updateProjectField('${activeProject.id}', 'meeting_date', this.value)" class="atelier-input">
+                                                    </div>
+                                                    <div>
+                                                        <label class="atelier-label flex items-center gap-2"><i data-lucide="flag" class="w-2.5 h-2.5 text-white"></i> Delivery Goal</label>
+                                                        <input type="date" value="${activeProject.delivery_date || ''}" onchange="window.app.updateProjectField('${activeProject.id}', 'delivery_date', this.value)" class="atelier-input text-amber-500">
+                                                    </div>
+                                                </div>
+
+                                                <div class="atelier-divider"></div>
+
+                                                <!-- INFRAESTRUCTURA -->
+                                                <div class="space-y-6">
+                                                    <div>
+                                                        <label class="atelier-label flex items-center gap-2"><i data-lucide="folder-git-2" class="w-2.5 h-2.5 text-white"></i> Cloud Infrastructure</label>
+                                                        <input type="text" value="${activeProject.drive_url || ''}" onblur="window.app.updateProjectField('${activeProject.id}', 'drive_url', this.value)" class="atelier-input" placeholder="Drive Directory...">
+                                                    </div>
+                                                    <div>
+                                                        <label class="atelier-label flex items-center gap-2"><i data-lucide="globe" class="w-2.5 h-2.5 text-white"></i> Digital Presence</label>
+                                                        <input type="text" value="${activeProject.meet_url || ''}" onblur="window.app.updateProjectField('${activeProject.id}', 'meet_url', this.value)" class="atelier-input" placeholder="Meeting Session...">
+                                                    </div>
+                                                </div>
+
+                                                <div class="atelier-divider"></div>
+
+                                                <!-- LINKS DINÁMICOS -->
+                                                <div class="space-y-8">
+                                                    <div>
+                                                        <div class="flex justify-between items-center mb-4">
+                                                            <label class="atelier-label mb-0 flex items-center gap-2"><i data-lucide="link" class="w-2.5 h-2.5 text-white"></i> Company Directory</label>
+                                                            <button onclick="window.app.addNexusLink('${activeProject.id}', 'company_links')" class="text-[11px] text-gray-500 hover:text-white transition-all">+</button>
+                                                        </div>
+                                                        <div id="company-links-container" class="space-y-1">
+                                                            ${(activeProject.company_links || [""]).map((link, idx) => `
+                                                                <input type="text" value="${link}" onblur="window.app.updateNexusLink('${activeProject.id}', 'company_links', ${idx}, this.value)" class="atelier-input text-blue-400/80 border-none !border-b !border-white/5" placeholder="Source URL...">
+                                                            `).join('')}
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <div class="flex justify-between items-center mb-4">
+                                                            <label class="atelier-label mb-0 flex items-center gap-2"><i data-lucide="bookmark" class="w-2.5 h-2.5 text-white"></i> Creative References</label>
+                                                            <button onclick="window.app.addNexusLink('${activeProject.id}', 'reference_links')" class="text-[11px] text-gray-500 hover:text-white transition-all">+</button>
+                                                        </div>
+                                                        <div id="reference-links-container" class="space-y-1">
+                                                            ${(activeProject.reference_links || [""]).map((link, idx) => `
+                                                                <input type="text" value="${link}" onblur="window.app.updateNexusLink('${activeProject.id}', 'reference_links', ${idx}, this.value)" class="atelier-input text-purple-400/80 border-none !border-b !border-white/5" placeholder="Ref URL...">
+                                                            `).join('')}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button onclick="window.app.openBrandingModal()" class="btn-pro ghost py-2 text-[10px] bg-white/5 text-gray-400 border border-white/10 hover:text-white transition-all"><i data-lucide="palette" class="w-3 h-3"></i> Identidad</button>
-                                        </div>
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div class="bg-white/[0.02] border border-white/5 border-dashed p-4 rounded-2xl flex items-center gap-4">
-                                                <i data-lucide="folder" class="text-blue-400 w-5 h-5"></i>
-                                                <input type="text" onchange="window.app.updateProjectField('drive_url', this.value)" value="${activeProject.drive_url || ''}" class="bg-transparent border-none text-[11px] text-blue-400 font-bold focus:ring-0 p-0 w-full" placeholder="Drive Link">
-                                                <button onclick="window.open('${activeProject.drive_url}', '_blank')" class="text-blue-400"><i data-lucide="external-link" class="w-4 h-4"></i></button>
-                                            </div>
-                                            <div class="bg-white/[0.02] border border-white/5 border-dashed p-4 rounded-2xl flex items-center gap-4">
-                                                <i data-lucide="video" class="text-amber-500 w-5 h-5"></i>
-                                                <input type="text" onchange="window.app.updateProjectField('meeting_url', this.value)" value="${activeProject.meeting_url || ''}" class="bg-transparent border-none text-[11px] text-amber-500 font-bold focus:ring-0 p-0 w-full" placeholder="Meet Link">
-                                                <button onclick="window.open('${activeProject.meeting_url}', '_blank')" class="text-amber-500"><i data-lucide="video" class="w-4 h-4"></i></button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="space-y-6">
-                                        <div class="flex justify-between items-center bg-white/[0.01] p-4 rounded-2xl border border-white/5">
-                                            <h4 class="text-xs font-black text-emerald-500 uppercase tracking-widest ml-2">Desglose de Producción</h4>
-                                            <button onclick="window.app.openDeliverableModal()" class="btn-pro py-2 text-[10px]">+ Añadir Ítem</button>
-                                        </div>
-                                        <div class="space-y-6">
-                                            ${(activeProject.nexus_deliverables || []).map(d => `
-                                                <div onclick="window.app.openDeliverableModal('${d.id}')" class="card-nexus p-8 border-l-4 ${d.status === 'paid' ? 'border-l-emerald-500' : 'border-l-amber-500'} flex justify-between items-center cursor-pointer hover:bg-white/[0.02] transition-all">
-                                                    <div><h5 class="text-2xl font-black text-white uppercase">${d.title}</h5><p class="text-xs text-gray-500 uppercase">v${d.version || 1}</p></div>
-                                                    <p class="text-3xl font-black text-white">${formatCurrency(d.price, currencyMap[d.currency] || '$')}</p>
-                                                </div>
-                                            `).join('') || `<p class="p-20 text-center text-gray-600 text-xs uppercase font-black">Sin ítems operativos</p>`}
                                         </div>
                                     </div>
                                 </div>
                             `}
-                        </div>
-                    </div>
-                </section>
+                        </main>
+                    </div>`;
+                }
 
-                <!-- CLOUD -->
-                <section id="view-cloud" class="view-section ${activeTab === 'cloud' ? 'active' : ''}">
-                    <div class="card-nexus p-0 overflow-hidden max-w-5xl mx-auto border-white/5">
-                        <div class="p-8 border-b border-white/5 bg-white/[0.01]"><h5 class="text-xs font-black uppercase tracking-widest text-gray-500">Recursos en Nube</h5></div>
-                        <div class="divide-y divide-white/5">
-                            ${state.nexusProjects.filter(p => p.drive_url).map(p => `
-                                <div class="p-8 flex items-center justify-between hover:bg-white/[0.01] transition-all">
+                if (activeTab === 'cloud') {
+                    return `
+                    <!-- 3. ALMACÉN: LINEAL -->
+                    <div class="p-12 max-w-4xl mx-auto animate-reveal">
+                        <div class="mb-12">
+                            <h2 class="text-2xl font-black text-white uppercase tracking-tighter mb-2">Almacenamiento Cloud</h2>
+                            <p class="text-[9px] text-gray-500 uppercase tracking-widest">Sincronización de activos por cliente</p>
+                        </div>
+                        <div class="grid grid-cols-1 gap-2">
+                            ${state.nexusProjects.map(p => `
+                                <div class="flex items-center justify-between p-4 border border-white/5 bg-[#080808] hover:border-blue-500 transition-all">
                                     <div class="flex items-center gap-6">
-                                        <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
-                                            <i data-lucide="folder-git-2" class="w-6 h-6"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-lg font-black text-white uppercase">${p.name}</p>
-                                            <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Sincronizado</p>
-                                        </div>
+                                        <div class="w-2 h-2 rounded-full ${p.drive_url ? 'bg-blue-500' : 'bg-gray-800'}"></div>
+                                        <p class="text-[10px] font-black text-white uppercase tracking-tight">${p.name}</p>
                                     </div>
-                                    <button onclick="window.open('${p.drive_url}', '_blank')" class="btn-pro py-2 px-6 text-[10px] bg-white/5 text-gray-400 border border-white/10 hover:text-white transition-all">Abrir Drive</button>
-                                </div>
-                            `).join('') || '<p class="p-20 text-center text-gray-600 font-black uppercase tracking-widest">Sin recursos activos</p>'}
-                        </div>
-                    </div>
-                </section>
-
-                <!-- FINANZAS -->
-                <section id="view-finance" class="view-section ${activeTab === 'finance' ? 'active' : ''}">
-                    <div class="card-nexus p-16 text-center border-white/5 mb-10">
-                        <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-4">Balance General Realizado</p>
-                        <h2 class="mega-kpi-main text-white">${formatCurrency(totalPaid, '$')}</h2>
-                    </div>
-                    <div class="divide-y divide-white/5 card-nexus p-0 overflow-hidden max-w-5xl mx-auto border-white/5">
-                        ${state.nexusProjects.flatMap(p => (p.nexus_deliverables || []).map(d => ({...d, projectName: p.name})))
-                            .sort((a,b) => new Date(b.created_at) - new Date(a.created_at))
-                            .map(d => `
-                                <div class="p-6 flex items-center justify-between hover:bg-white/[0.02] border-l-2 ${d.status === 'paid' ? 'border-emerald-500' : 'border-amber-500'} transition-all">
-                                    <div>
-                                        <p class="text-sm font-black text-white uppercase">${d.title}</p>
-                                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${d.projectName}</p>
+                                    <div class="flex gap-1">
+                                        <button onclick="window.open('${p.drive_url}', '_blank')" class="px-4 py-1 border border-white/10 text-[8px] font-black uppercase text-gray-400 hover:bg-white hover:text-black transition-all">Drive</button>
+                                        <button onclick="window.open('${p.meet_url}', '_blank')" class="px-4 py-1 border border-white/10 text-[8px] font-black uppercase text-gray-400 hover:bg-white hover:text-black transition-all">Meet</button>
                                     </div>
-                                    <p class="text-xl font-black text-white">${formatCurrency(d.price, currencyMap[d.currency] || '$')}</p>
                                 </div>
-                            `).join('') || '<p class="p-20 text-center text-gray-600 font-black uppercase tracking-widest">Sin transacciones</p>'}
-                    </div>
-                </section>
-
-            </div>
-        </main>
-
-        <!-- MODALES -->
-        <div id="modalProject" class="modal-overlay">
-            <div class="card-nexus w-full max-w-md relative">
-                <button onclick="window.app.closeModals()" class="absolute top-8 right-8 text-gray-500 hover:text-white"><i data-lucide="x"></i></button>
-                <h3 class="text-2xl font-black mb-10 text-white uppercase text-center">Nueva Marca</h3>
-                <div class="space-y-6">
-                    <input id="clientName" type="text" class="input-pro" placeholder="Nombre de la Marca">
-                    <textarea id="projectDesc" class="input-pro h-32" placeholder="Estrategia del proyecto..."></textarea>
-                    <button onclick="window.app.createProject()" class="w-full btn-pro emerald py-5">Vincular Proyecto</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="modalBranding" class="modal-overlay">
-            <div class="card-nexus w-full max-w-2xl relative">
-                <button onclick="window.app.closeModals()" class="absolute top-8 right-8 text-gray-500 hover:text-white"><i data-lucide="x"></i></button>
-                <h3 class="text-xl font-black mb-6 uppercase text-white">Branding Vault</h3>
-                <div class="space-y-4">
-                    <textarea id="branding-json-input" class="input-pro h-96 font-mono text-emerald-500" placeholder='{"primaryColor": "#10b981"}'></textarea>
-                    <button onclick="window.app.saveBranding()" class="w-full btn-pro emerald">Actualizar Identidad</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="modalDeliverable" class="modal-overlay">
-            <div class="card-nexus w-full max-w-4xl relative overflow-hidden">
-                <button onclick="window.app.closeModals()" class="absolute top-8 right-8 text-gray-500 hover:text-white"><i data-lucide="x"></i></button>
-                <div class="grid grid-cols-12 gap-8">
-                    <div class="col-span-8 space-y-6">
-                        <input id="del-title" type="text" onblur="window.app.saveDeliverable()" class="bg-transparent border-none text-4xl font-black text-white uppercase tracking-tighter w-full focus:ring-0 p-0" placeholder="NOMBRE DEL ÍTEM">
-                        
-                        <div class="flex items-center gap-4 border-b border-white/5 pb-4">
-                            <button onclick="window.app.formatNexus('bold')" class="p-2 hover:bg-white/5 rounded text-gray-400"><i data-lucide="bold" class="w-4 h-4"></i></button>
-                            <button onclick="window.app.formatNexus('italic')" class="p-2 hover:bg-white/5 rounded text-gray-400"><i data-lucide="italic" class="w-4 h-4"></i></button>
-                            <button onclick="window.app.insertNexusTimestamp()" class="text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded">Timestamp</button>
+                            `).join('') || '<p class="text-center py-20 opacity-20 text-[9px] font-black uppercase tracking-[10px]">No Assets Found</p>'}
                         </div>
+                    </div>`;
+                }
 
-                        <div id="del-notes" contenteditable="true" class="intel-editor custom-scroll" onblur="window.app.saveDeliverable()"></div>
-                    </div>
-                    <div class="col-span-4 bg-white/[0.02] p-8 rounded-2xl space-y-6 border border-white/5">
-                        <div class="space-y-2">
-                            <label class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Presupuesto</label>
-                            <div class="flex gap-2">
-                                <input id="del-price" type="number" onblur="window.app.saveDeliverable()" class="input-pro" placeholder="0.00">
-                                <select id="del-currency" onchange="window.app.saveDeliverable()" class="input-pro w-24">
-                                    <option value="USD">USD</option>
-                                    <option value="BOB">BOB</option>
-                                </select>
+                if (activeTab === 'finance') {
+                    return `
+                    <!-- 4. FINANZAS: LIBRO CONTABLE EXCLUSIVO -->
+                    <div class="p-12 max-w-5xl mx-auto animate-reveal">
+                        <div class="flex justify-between items-end mb-12 pb-6 border-b border-white/10">
+                            <div>
+                                <h2 class="text-4xl font-black text-white uppercase tracking-tighter mb-2">Libro de Cobros</h2>
+                                <p class="text-[9px] text-emerald-400 font-black uppercase tracking-[5px]">Gestión de Liquidez</p>
                             </div>
                         </div>
-                        <div class="space-y-2">
-                            <label class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Estado</label>
-                            <select id="del-status" onchange="window.app.saveDeliverable()" class="input-pro">
-                                <option value="pending">PENDIENTE</option>
-                                <option value="paid">COBRADO</option>
-                            </select>
+                        
+                        <div class="grid grid-cols-12 gap-8 mb-12">
+                            <div class="col-span-6 bento-card border-l-4 border-emerald-500">
+                                <p class="text-[8px] text-gray-500 uppercase mb-2">Total Recaudado</p>
+                                <p class="text-4xl font-black text-white mono">${formatCurrency(totalPaid, '$')}</p>
+                            </div>
+                            <div class="col-span-6 bento-card border-l-4 border-purple-500">
+                                <p class="text-[8px] text-gray-500 uppercase mb-2">Total Pendiente</p>
+                                <p class="text-4xl font-black text-purple-400 mono">${formatCurrency(totalPending, '$')}</p>
+                            </div>
                         </div>
-                        <button onclick="window.app.saveDeliverable()" class="w-full btn-pro emerald mt-8">Sincronizar Ítem</button>
+
+                        <div class="space-y-1">
+                            ${state.nexusProjects.map(p => {
+                                const pDeliverables = p.nexus_deliverables || [];
+                                if (pDeliverables.length === 0) return '';
+                                return `
+                                    <div class="mb-8">
+                                        <p class="text-[8px] text-gray-600 uppercase mb-2 ml-2 tracking-[4px]">${p.name}</p>
+                                        <div class="space-y-1 border-t border-white/5 pt-2">
+                                            ${pDeliverables.map(d => `
+                                                <div class="flex justify-between items-center p-3 hover:bg-white/5 transition-all group cursor-pointer" onclick="window.app.openOperationModal('${d.id}')">
+                                                    <div class="flex items-center gap-4">
+                                                        <div class="w-1.5 h-1.5 rounded-full ${d.status_paid === 'paid' ? 'bg-emerald-500' : 'bg-purple-500 animate-pulse'}"></div>
+                                                        <p class="text-[10px] font-bold text-white uppercase tracking-tight">${d.title}</p>
+                                                    </div>
+                                                    <div class="flex gap-10 items-center">
+                                                        <span class="text-[8px] text-gray-600 uppercase font-black tracking-widest">${d.status_paid === 'paid' ? 'Liquidado' : 'Pendiente'}</span>
+                                                        <p class="mono text-xs font-bold text-white">${formatCurrency(d.price, '$')}</p>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('') || '<p class="text-center py-20 opacity-20 text-[9px] font-black uppercase tracking-[10px]">No Financial Records</p>'}
+                        </div>
+                    </div>`;
+                }
+            })()}
+        </main>
+
+        <!-- MODAL: NUEVA MARCA (CON CAMPOS TÉCNICOS) -->
+        <div id="modalProject" class="modal-overlay" style="display: none;">
+            <div class="modal-content-elite max-w-lg">
+                <h3 class="text-2xl font-black uppercase tracking-tighter mb-6">Configurar Nuevo Cliente</h3>
+                <div class="space-y-3">
+                    <div class="input-elite-group">
+                        <label class="input-elite-label">Nombre del Cliente / Empresa</label>
+                        <input id="clientName" type="text" class="input-elite" placeholder="Ej: Sport Fit Center">
                     </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="input-elite-group">
+                            <label class="input-elite-label">URL Drive (Activos)</label>
+                            <input id="driveUrl" type="text" class="input-elite" placeholder="https://drive.google...">
+                        </div>
+                        <div class="input-elite-group">
+                            <label class="input-elite-label">URL Meet (Reuniones)</label>
+                            <input id="meetUrl" type="text" class="input-elite" placeholder="https://meet.google...">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="input-elite-group">
+                            <label class="input-elite-label">URL Empresa (Web/RRSS)</label>
+                            <input id="companyUrl" type="text" class="input-elite" placeholder="https://...">
+                        </div>
+                        <div class="input-elite-group">
+                            <label class="input-elite-label">URL Preferencia</label>
+                            <input id="preferenceUrl" type="text" class="input-elite" placeholder="https://...">
+                        </div>
+                    </div>
+                    <div class="input-elite-group">
+                        <label class="input-elite-label">Fecha de Entrega / Deadline</label>
+                        <input id="endDate" type="date" class="input-elite">
+                    </div>
+                    <div class="input-elite-group">
+                        <label class="input-elite-label">Notas de Producción</label>
+                        <textarea id="projectDesc" class="input-elite h-20 resize-none" placeholder="Definir estilo de edición..."></textarea>
+                    </div>
+                    <div class="flex gap-2 mt-6">
+                        <button onclick="window.app.closeModals()" class="btn-elite flex-1">Descartar</button>
+                        <button onclick="window.app.createProject()" class="btn-elite primary flex-1">Vincular Marca</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="modalBranding" class="modal-overlay" style="display: none;">
+            <div class="modal-content-elite">
+                <h3 class="text-xl font-bold uppercase mb-6">Branding Config</h3>
+                <div class="space-y-4">
+                    <textarea id="branding-json-input" class="editor-elite mono text-emerald-500 h-96" placeholder='{ "primary": "#ffffff" }'></textarea>
+                    <div class="flex gap-3 mt-4">
+                        <button onclick="window.app.closeModals()" class="btn-elite secondary flex-1">Cerrar</button>
+                        <button onclick="window.app.saveBranding()" class="btn-elite primary flex-1">Guardar Config</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="modalOperation" class="modal-overlay" style="display: none;">
+            <div class="modal-content-elite max-w-6xl w-full h-[90vh] flex flex-col overflow-hidden">
+                <div class="flex justify-between items-center p-8 border-b border-white/5">
+                    <div>
+                        <h2 id="del-modal-title" class="text-3xl font-black uppercase tracking-tighter text-white">Consola de Planificación Estratégica</h2>
+                        <p class="text-[9px] text-purple-400 font-black uppercase tracking-[5px] mt-2">Nueva Operación / Item de Producción</p>
+                    </div>
+                    <button onclick="window.app.closeModals()" class="text-gray-500 hover:text-white transition-all"><i data-lucide="x" class="w-8 h-8"></i></button>
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scroll p-8">
+                    <div class="grid grid-cols-12 gap-10">
+                        <!-- Panel Izquierdo: Datos y Links -->
+                        <div class="col-span-12 lg:col-span-5 space-y-6">
+                            <div class="input-elite-group">
+                                <label class="input-elite-label">Título del Item / Operación</label>
+                                <input id="del-title" type="text" class="input-elite" placeholder="Ej: Video de Venta v1">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="input-elite-group">
+                                    <label class="input-elite-label">Precio / Valor</label>
+                                    <input id="del-price" type="number" class="input-elite mono" placeholder="0.00">
+                                </div>
+                                <div class="input-elite-group">
+                                    <label class="input-elite-label">Moneda</label>
+                                    <select id="del-currency" class="input-elite outline-none">
+                                        <option value="BOB">Bs. (BOB)</option>
+                                        <option value="USD">$ (USD)</option>
+                                        <option value="EUR">€ (EUR)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="input-elite-group">
+                                    <label class="input-elite-label">Estado</label>
+                                    <select id="del-status" class="input-elite outline-none">
+                                        <option value="pending">Pendiente</option>
+                                        <option value="paid">Pagado</option>
+                                    </select>
+                                </div>
+                                <div class="input-elite-group">
+                                    <label class="input-elite-label">Método</label>
+                                    <input id="del-method" type="text" class="input-elite" placeholder="...">
+                                </div>
+                            </div>
+                            <div class="space-y-4 pt-4 border-t border-white/5">
+                                <div class="input-elite-group">
+                                    <label class="input-elite-label">URL de Empresa (Sustituciones)</label>
+                                    <input id="del-link-empresa" type="text" class="input-elite text-[10px]" placeholder="https://...">
+                                </div>
+                                <div class="input-elite-group">
+                                    <label class="input-elite-label">URL General / Referencias</label>
+                                    <input id="del-link-general" type="text" class="input-elite text-[10px]" placeholder="https://...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel Derecho: Editor Estratégico -->
+                        <div class="col-span-12 lg:col-span-7 flex flex-col h-full min-h-[400px]">
+                            <div class="flex justify-between items-center mb-4">
+                                <p class="kpi-label">Notas de Feedback y Estrategia</p>
+                                <div class="flex gap-2">
+                                    <button onclick="window.app.highlightNexusText('rgba(239, 68, 68, 0.4)')" class="w-6 h-6 rounded bg-red-500/20 border border-red-500/40"></button>
+                                    <button onclick="window.app.highlightNexusText('rgba(59, 130, 246, 0.4)')" class="w-6 h-6 rounded bg-blue-500/20 border border-blue-500/40"></button>
+                                    <button onclick="window.app.highlightNexusText('rgba(234, 179, 8, 0.4)')" class="w-6 h-6 rounded bg-yellow-500/20 border border-yellow-500/40"></button>
+                                    <button onclick="window.app.highlightNexusText('rgba(16, 185, 129, 0.4)')" class="w-6 h-6 rounded bg-accent-green/20 border border-accent-green/40"></button>
+                                    <button onclick="window.app.clearNexusFormat()" class="w-6 h-6 rounded bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20">
+                                        <i data-lucide="eraser" class="w-3 h-3 text-white"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="del-notes-editor" contenteditable="true" class="bg-[#080808] border border-white/5 p-6 flex-1 overflow-y-auto custom-scroll text-gray-400 text-sm leading-relaxed outline-none focus:border-purple-500/30 transition-all" placeholder="Escribe aquí las observaciones del cliente..."></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="p-8 border-t border-white/5 flex gap-4">
+                    <button onclick="window.app.closeModals()" class="btn-elite secondary flex-1">Cerrar</button>
+                    <button id="btn-save-op" onclick="window.app.saveDeliverable()" class="btn-elite primary flex-1">GUARDAR CAMBIOS</button>
                 </div>
             </div>
         </div>

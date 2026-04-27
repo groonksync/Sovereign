@@ -1,5 +1,5 @@
--- ACTUALIZACIÓN DE ESQUEMA: SOVEREIGN NEXUS ELITE
--- Ejecutar en el SQL Editor de Supabase
+-- ACTUALIZACIÓN DE ESQUEMA: SOVEREIGN NEXUS ELITE V3 (DNA DEFINITIVO)
+-- Ejecutar en el SQL Editor de Supabase para habilitar las nuevas funciones de Operación.
 
 -- 1. Tabla de Proyectos (Nexus)
 CREATE TABLE IF NOT EXISTS nexus_projects (
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS nexus_projects (
     drive_url TEXT,
     meeting_url TEXT,
     status TEXT DEFAULT 'briefing',
-    branding_json JSONB DEFAULT '{}', -- Para el Branding Vault
+    branding_json JSONB DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -18,12 +18,18 @@ CREATE TABLE IF NOT EXISTS nexus_deliverables (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     project_id UUID REFERENCES nexus_projects(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
+    type TEXT DEFAULT 'video',
+    quantity INTEGER DEFAULT 1,
     price NUMERIC DEFAULT 0.00,
     currency TEXT DEFAULT 'USD',
+    method TEXT DEFAULT '',
+    link_empresa TEXT DEFAULT '',
+    link_general TEXT DEFAULT '',
+    status_paid TEXT DEFAULT 'pending',
+    notes_html TEXT,
+    feedback_color TEXT DEFAULT 'green',
     version INTEGER DEFAULT 1,
-    status TEXT DEFAULT 'pending', -- 'paid' o 'pending'
-    notes_html TEXT, -- Para el Intelligent Editor
-    assets_json JSONB DEFAULT '[]', -- Para el control de archivos
+    assets_json JSONB DEFAULT '[]',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
