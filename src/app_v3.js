@@ -5,7 +5,7 @@
 
 // --- CLOUD CONFIGURATION (SUPABASE) ---
 const SUPABASE_URL = 'https://wcewgxkizvsnffhbqqet.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_W3JOdptOwRr5zyxFY2nApA_rf_FrNTO';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjZXdneGtpenZzbmZmaGJxcWV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NTUwNDIsImV4cCI6MjA5MjMzMTA0Mn0.CeQqKNJKevS8RmQf-VMwOlJzvMpJWp1HUdswZRnufFo';
 
 // Inicializar namespace global
 window.app = window.app || {};
@@ -18,12 +18,24 @@ try {
 }
 
 // --- INITIAL STATE & DATA MANAGEMENT ---
+// PRUEBA DE CONEXIÓN INICIAL
+(async () => {
+    try {
+        if (!supabase) throw new Error("La librería de Supabase no se cargó. Revisa tu conexión a internet.");
+        const { error } = await sb.from('nexus_projects').select('count', { count: 'exact', head: true });
+        if (error) throw error;
+        console.log("Conexión con Supabase: ESTABLE");
+    } catch (e) {
+        alert("⚠️ FALLO DE CONEXIÓN: " + e.message + "\n\nSugerencia: Si abres el archivo desde el buscador de archivos, intenta usar un servidor local (localhost) o revisa tu internet.");
+    }
+})();
+
 let state = {
     loans: [],
     debts: [], 
     expenses: [], // Mis Pagos
     receipts: [], // Studio Sync Pro
-    nexusProjects: [], // Nexus Elite DNA
+    nexusProjects: null, // Nexus Elite DNA
     currentView: 'dashboard',
     isDarkMode: localStorage.getItem('sovereign-theme') === 'dark'
 };
@@ -2392,19 +2404,20 @@ const currencyMap = { 'USD': '$', 'BOB': 'Bs.', 'EUR': '€' };
 async function renderSovereignNexus() {
     const activeTab = state.nexusTab || 'dashboard';
     
-    // Carga inicial de datos
-    if (!state.nexusProjects) {
+    // Carga inicial de datos (Protocolo de Sincronización DNA)
+    if (state.nexusProjects === null) {
         try {
             const { data: projs, error } = await sb
                 .from('nexus_projects')
                 .select('*, nexus_deliverables(*)')
-                .order('created_at', { ascending: false });
+                .order('name', { ascending: true }); // Ordenar por nombre para mayor estabilidad
             
             if (error) throw error;
             state.nexusProjects = projs || [];
             setTimeout(() => render(), 10);
         } catch (e) {
             console.error("Error loading Nexus DNA:", e);
+            alert("Error crítico de carga: " + e.message);
             state.nexusProjects = [];
         }
         return `<div class="sv-nexus-elite flex items-center justify-center h-screen"><div class="animate-pulse text-emerald-500 font-black tracking-[0.5em] text-xs">SYNCING NEXUS DNA...</div></div>`;
@@ -2497,26 +2510,38 @@ async function renderSovereignNexus() {
             const { data, error } = await sb
                 .from('nexus_projects')
                 .insert([{ 
-                    name, 
-                    description, 
-                    drive_url, 
-                    meet_url,
-                    company_url,
-                    preference_url,
+                    name: name, 
+                    description: description || '', 
+                    drive_url: drive_url || '', 
+                    meet_url: meet_url || '',
+                    company_url: company_url || '',
+                    preference_url: preference_url || '',
                     delivery_date: end_date || null,
                     meeting_date: null,
                     video_quantity: 0,
+                    price: 0,
+                    currency: 'BOB',
+                    company_links: [""],
+                    reference_links: [""],
                     status: 'briefing' 
                 }])
                 .select()
                 .single();
             
-            if (error) throw error;
+            if (error) {
+                console.error("Supabase Insert Error:", error);
+                throw error;
+            }
+            
+            if (!state.nexusProjects) state.nexusProjects = [];
             state.nexusProjects.unshift({ ...data, nexus_deliverables: [] });
             state.activeNexusProjectId = data.id;
             window.app.closeModals();
             render();
-        } catch (e) { alert("Error: " + e.message); }
+        } catch (e) { 
+            alert("ERROR AL GUARDAR EN LA NUBE: " + e.message); 
+            console.error(e);
+        }
     };
 
     window.app.selectProject = (id) => {
@@ -2543,30 +2568,65 @@ async function renderSovereignNexus() {
     };
 
     window.app.saveAllNexus = async (btn) => {
+        const activeProject = state.nexusProjects.find(p => p.id === state.activeNexusProjectId);
         if (!activeProject) return;
+
         const editor = document.getElementById('nexus-planning-editor');
         const notes = editor ? editor.innerHTML : activeProject.description;
         
+        // Capturar todos los valores actuales de la interfaz para el guardado maestro
+        const priceInput = document.querySelector('input[onblur*="price"]');
+        const videoInput = document.querySelector('input[onblur*="video_quantity"]');
+        const meetingInput = document.querySelector('input[onchange*="meeting_date"]');
+        const deliveryInput = document.querySelector('input[onchange*="delivery_date"]');
+        const driveInput = document.querySelector('input[onblur*="drive_url"]');
+        const meetInput = document.querySelector('input[onblur*="meet_url"]');
+
+        // Procesar fechas (vacío -> null)
+        const meetingDate = (meetingInput && meetingInput.value !== '') ? meetingInput.value : null;
+        const deliveryDate = (deliveryInput && deliveryInput.value !== '') ? deliveryInput.value : null;
+
+        const updatedData = {
+            description: notes,
+            price: priceInput ? parseFloat(priceInput.value) : activeProject.price,
+            video_quantity: videoInput ? parseInt(videoInput.value) : activeProject.video_quantity,
+            meeting_date: meetingDate,
+            delivery_date: deliveryDate,
+            drive_url: driveInput ? driveInput.value : activeProject.drive_url,
+            meet_url: meetInput ? meetInput.value : activeProject.meet_url,
+            company_links: activeProject.company_links,
+            reference_links: activeProject.reference_links
+        };
+
         try {
             const { error } = await sb.from('nexus_projects')
-                .update({ description: notes })
+                .update(updatedData)
                 .eq('id', activeProject.id);
+            
             if (error) throw error;
-            activeProject.description = notes;
+
+            // Actualizar estado local y redibujar
+            Object.assign(activeProject, updatedData);
+            render();
             
             // Efecto visual de éxito
             if (btn) {
                 const originalText = btn.innerText;
-                btn.innerText = "¡GUARDADO!";
+                btn.innerText = "¡SINCRONIZADO!";
                 btn.style.backgroundColor = "#22c55e";
                 btn.style.color = "white";
+                btn.style.borderColor = "#22c55e";
                 setTimeout(() => {
                     btn.innerText = originalText;
                     btn.style.backgroundColor = "";
                     btn.style.color = "";
+                    btn.style.borderColor = "";
                 }, 2000);
             }
-        } catch (e) { alert("Error al guardar: " + e.message); }
+        } catch (e) { 
+            console.error("Save Error:", e);
+            alert("Error al guardar: " + e.message + "\n\n¿Ejecutaste el código SQL en Supabase?"); 
+        }
     };
 
     window.app.saveBranding = async () => {
