@@ -2402,17 +2402,10 @@ const currencyMap = { 'USD': '$', 'BOB': 'Bs.', 'EUR': '€' };
 async function renderSovereignNexus() {
     const activeTab = state.nexusTab || 'dashboard';
     
-    // 1. HANDLERS GLOBALES (Inyectados antes del renderizado para asegurar funcionamiento)
+    // Handlers de Navegación Nexus
     window.app.switchNexusTab = (tab) => { state.nexusTab = tab; render(); };
     window.app.selectProject = (id) => { state.activeNexusProjectId = id; state.nexusTab = 'nexus'; render(); };
-    window.app.openModal = (id) => { 
-        const m = document.getElementById(id);
-        if(m) m.style.display = 'flex'; 
-        if (window.lucide) window.lucide.createIcons();
-    };
-    window.app.closeModals = () => { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); };
-
-    // Carga de datos si es nulo
+    
     if (state.nexusProjects === null) {
         try {
             const { data: projs, error } = await sb.from('nexus_projects').select('*, nexus_deliverables(*)').order('name', { ascending: true });
@@ -2425,7 +2418,6 @@ async function renderSovereignNexus() {
 
     const activeProject = state.nexusProjects.find(p => p.id === state.activeNexusProjectId);
 
-    // Cálculos de KPI
     let totalPaid = 0; let totalPending = 0;
     state.nexusProjects.forEach(p => {
         (p.nexus_deliverables || []).forEach(d => {
@@ -2433,53 +2425,6 @@ async function renderSovereignNexus() {
             else totalPending += Number(d.price || 0);
         });
     });
-
-    // Handlers de Operación
-    window.app.openOperationModal = (delId = null) => {
-        const modalTitle = document.getElementById('del-modal-title');
-        const editor = document.getElementById('del-notes-editor');
-        if (!activeProject) return;
-
-        if (delId) {
-            const d = activeProject.nexus_deliverables.find(item => item.id === delId);
-            state.editingDeliverableId = delId;
-            modalTitle.innerText = "Editar Operación";
-            document.getElementById('del-title').value = d.title || '';
-            document.getElementById('del-price').value = d.price || '';
-            document.getElementById('del-status').value = d.status_paid || 'pending';
-            document.getElementById('del-link-empresa').value = d.link_empresa || '';
-            editor.innerHTML = d.notes_html || '';
-        } else {
-            state.editingDeliverableId = null;
-            modalTitle.innerText = "Nueva Operación";
-            document.getElementById('del-title').value = '';
-            document.getElementById('del-price').value = '';
-            document.getElementById('del-status').value = 'pending';
-            document.getElementById('del-link-empresa').value = '';
-            editor.innerHTML = '';
-        }
-        window.app.openModal('modalOperation');
-    };
-
-    window.app.saveDeliverable = async () => {
-        if (!activeProject) return;
-        const btn = document.getElementById('btn-save-op');
-        const payload = {
-            project_id: activeProject.id,
-            title: document.getElementById('del-title').value,
-            price: Number(document.getElementById('del-price').value),
-            status_paid: document.getElementById('del-status').value,
-            link_empresa: document.getElementById('del-link-empresa').value,
-            notes_html: document.getElementById('del-notes-editor').innerHTML
-        };
-        try {
-            if (state.editingDeliverableId) await sb.from('nexus_deliverables').update(payload).eq('id', state.editingDeliverableId);
-            else await sb.from('nexus_deliverables').insert([payload]);
-            state.nexusProjects = null; // Marcar para recargar
-            window.app.closeModals();
-            render();
-        } catch (e) { alert("Error: " + e.message); }
-    };
 
     return `
         <div class="animate-reveal space-y-8">
@@ -2652,3 +2597,37 @@ async function handleSync() {
         setTimeout(() => { btn.innerHTML = originalContent; }, 2000);
     }
 }
+
+// --- GLOBAL NEXUS COMMANDS ---
+window.app.openModal = (id) => { 
+    const m = document.getElementById(id);
+    if(m) m.style.display = 'flex'; 
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.app.closeModals = () => { 
+    document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); 
+};
+
+window.app.createProject = async () => {
+    const name = document.getElementById('clientName').value;
+    const desc = document.getElementById('projectDesc').value;
+    const drive = document.getElementById('driveUrl').value;
+    const meet = document.getElementById('meetUrl').value;
+    const date = document.getElementById('endDate').value;
+    if (!name) { alert("Por favor ingresa un nombre."); return; }
+
+    try {
+        const { data, error } = await sb.from('nexus_projects').insert([{ 
+            name: name, description: desc || '', drive_url: drive || '', 
+            meet_url: meet || '', delivery_date: date || null, currency: 'BOB', price: 0
+        }]).select().single();
+        if (error) throw error;
+        
+        state.nexusProjects = null; // Forzar recarga
+        window.app.closeModals();
+        state.activeNexusProjectId = data.id;
+        state.nexusTab = 'nexus';
+        loadState(); // Usar loadState en lugar de init
+    } catch (e) { alert("Error en el comando: " + e.message); }
+};
