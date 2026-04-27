@@ -1,13 +1,13 @@
 :root {
-    --bg-main: #1C1C1E; /* Gris Carbón Profesional */
-    --bg-card: #252529; /* Gris Elevado */
+    --bg-main: #1A1A1E; /* Gris Oscuro Complementario */
+    --bg-card: #252529;
     --bg-input: #2C2C31;
     --border: #3A3A3F;
     --text-main: #E1E1E6;
     --text-dim: #A1A1A6;
     --accent: #F59E0B;
     --accent-dim: rgba(245, 158, 11, 0.15);
-    --radius: 10px;
+    --radius: 12px;
 }
 
 * {
@@ -21,6 +21,19 @@ body {
     background-color: var(--bg-main);
     color: var(--text-main);
     -webkit-font-smoothing: antialiased;
+}
+
+/* --- FIX: Evitar textos cortados --- */
+.exec-card, .nav-link, td, th {
+    word-break: break-word; /* Romper palabras largas si es necesario */
+    overflow-wrap: break-word;
+}
+
+.kpi-value {
+    font-size: clamp(1.4rem, 4vw, 1.8rem); /* Tamaño fluido para que no se corte en móviles */
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
 }
 
 .app-container {
@@ -51,7 +64,7 @@ body {
     width: 32px;
     height: 32px;
     background: #fff;
-    border-radius: 6px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -99,45 +112,37 @@ body {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    padding: 1.75rem; /* Aumentado para mejor respiro */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
 .kpi-label {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
     color: var(--text-dim);
-    letter-spacing: 0.05em;
-    margin-bottom: 8px;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
     display: block;
-}
-
-.kpi-value {
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: #fff;
 }
 
 .exec-input {
     width: 100%;
     background: var(--bg-input);
     border: 1px solid var(--border);
-    padding: 0.85rem 1rem;
-    border-radius: 8px;
+    padding: 1rem;
+    border-radius: 10px;
     color: #fff;
     font-size: 14px;
     outline: none;
 }
 
-.exec-input:focus { border-color: var(--accent); }
-
 .exec-btn-primary {
     background: var(--accent);
     color: #000;
     font-weight: 700;
-    padding: 0.85rem 1.5rem;
-    border-radius: 8px;
+    padding: 0.9rem 1.75rem;
+    border-radius: 10px;
     border: none;
     cursor: pointer;
     font-size: 13px;
@@ -160,7 +165,6 @@ body {
     color: var(--text-dim);
     text-transform: uppercase;
     border-bottom: 1px solid var(--border);
-    background: rgba(0,0,0,0.1);
 }
 
 .pro-table td {
@@ -170,8 +174,8 @@ body {
 }
 
 .status-pill {
-    padding: 4px 10px;
-    border-radius: 6px;
+    padding: 4px 12px;
+    border-radius: 8px;
     font-size: 10px;
     font-weight: 800;
 }
@@ -183,8 +187,8 @@ body {
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(5px);
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -195,7 +199,7 @@ body {
 @media (max-width: 1024px) {
     .sidebar { width: 80px; }
     .sidebar span { display: none; }
-    .main-content { margin-left: 80px; width: calc(100% - 80px); }
+    .main-content { margin-left: 80px; width: calc(100% - 80px); padding: 2rem; }
 }
 
 @media (max-width: 640px) {
@@ -203,5 +207,7 @@ body {
     .sidebar { position: fixed; bottom: 0; top: auto; width: 100%; height: 70px; flex-direction: row; border-right: none; border-top: 1px solid var(--border); }
     .sidebar-logo { display: none; }
     .nav-group { display: flex; justify-content: space-around; padding: 0; }
-    .main-content { margin-left: 0; width: 100%; padding: 1.5rem; margin-bottom: 70px; }
+    .main-content { margin-left: 0; width: 100%; padding: 1.5rem; margin-bottom: 80px; }
+    .exec-card { padding: 1.25rem; }
+    .kpi-value { font-size: 1.5rem; }
 }
