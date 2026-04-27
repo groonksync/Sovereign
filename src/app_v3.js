@@ -2402,25 +2402,31 @@ const currencyMap = { 'USD': '$', 'BOB': 'Bs.', 'EUR': '€' };
 async function renderSovereignNexus() {
     const activeTab = state.nexusTab || 'dashboard';
     
+    // 1. HANDLERS GLOBALES (Inyectados antes del renderizado para asegurar funcionamiento)
+    window.app.switchNexusTab = (tab) => { state.nexusTab = tab; render(); };
+    window.app.selectProject = (id) => { state.activeNexusProjectId = id; state.nexusTab = 'nexus'; render(); };
+    window.app.openModal = (id) => { 
+        const m = document.getElementById(id);
+        if(m) m.style.display = 'flex'; 
+        if (window.lucide) window.lucide.createIcons();
+    };
+    window.app.closeModals = () => { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); };
+
+    // Carga de datos si es nulo
     if (state.nexusProjects === null) {
         try {
-            const { data: projs, error } = await sb
-                .from('nexus_projects')
-                .select('*, nexus_deliverables(*)')
-                .order('name', { ascending: true });
-            
+            const { data: projs, error } = await sb.from('nexus_projects').select('*, nexus_deliverables(*)').order('name', { ascending: true });
             if (error) throw error;
             state.nexusProjects = projs || [];
             setTimeout(() => render(), 10);
-        } catch (e) {
-            console.error("Error loading Nexus:", e);
-            state.nexusProjects = [];
-        }
-        return `<div class="flex items-center justify-center h-64"><div class="animate-pulse text-gray-500 font-bold tracking-[0.3em] text-[10px]">CARGANDO NEXUS SUITE...</div></div>`;
+        } catch (e) { state.nexusProjects = []; }
+        return `<div class="flex items-center justify-center h-64"><div class="animate-pulse text-gray-500 font-bold tracking-widest text-[10px]">INICIALIZANDO NEXUS...</div></div>`;
     }
 
-    let totalPaid = 0;
-    let totalPending = 0;
+    const activeProject = state.nexusProjects.find(p => p.id === state.activeNexusProjectId);
+
+    // Cálculos de KPI
+    let totalPaid = 0; let totalPending = 0;
     state.nexusProjects.forEach(p => {
         (p.nexus_deliverables || []).forEach(d => {
             if (d.status_paid === 'paid') totalPaid += Number(d.price || 0);
@@ -2428,137 +2434,149 @@ async function renderSovereignNexus() {
         });
     });
 
-    const activeProject = state.nexusProjects.find(p => p.id === state.activeNexusProjectId);
+    // Handlers de Operación
+    window.app.openOperationModal = (delId = null) => {
+        const modalTitle = document.getElementById('del-modal-title');
+        const editor = document.getElementById('del-notes-editor');
+        if (!activeProject) return;
+
+        if (delId) {
+            const d = activeProject.nexus_deliverables.find(item => item.id === delId);
+            state.editingDeliverableId = delId;
+            modalTitle.innerText = "Editar Operación";
+            document.getElementById('del-title').value = d.title || '';
+            document.getElementById('del-price').value = d.price || '';
+            document.getElementById('del-status').value = d.status_paid || 'pending';
+            document.getElementById('del-link-empresa').value = d.link_empresa || '';
+            editor.innerHTML = d.notes_html || '';
+        } else {
+            state.editingDeliverableId = null;
+            modalTitle.innerText = "Nueva Operación";
+            document.getElementById('del-title').value = '';
+            document.getElementById('del-price').value = '';
+            document.getElementById('del-status').value = 'pending';
+            document.getElementById('del-link-empresa').value = '';
+            editor.innerHTML = '';
+        }
+        window.app.openModal('modalOperation');
+    };
+
+    window.app.saveDeliverable = async () => {
+        if (!activeProject) return;
+        const btn = document.getElementById('btn-save-op');
+        const payload = {
+            project_id: activeProject.id,
+            title: document.getElementById('del-title').value,
+            price: Number(document.getElementById('del-price').value),
+            status_paid: document.getElementById('del-status').value,
+            link_empresa: document.getElementById('del-link-empresa').value,
+            notes_html: document.getElementById('del-notes-editor').innerHTML
+        };
+        try {
+            if (state.editingDeliverableId) await sb.from('nexus_deliverables').update(payload).eq('id', state.editingDeliverableId);
+            else await sb.from('nexus_deliverables').insert([payload]);
+            state.nexusProjects = null; // Marcar para recargar
+            window.app.closeModals();
+            render();
+        } catch (e) { alert("Error: " + e.message); }
+    };
 
     return `
         <div class="animate-reveal space-y-8">
             <header class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight">Editor Pro <span class="text-gray-600">Nexus</span></h1>
-                    <p class="text-gray-500 text-sm mt-1">Gestión avanzada de producción y entregables.</p>
+                    <h1 class="text-3xl font-bold tracking-tight text-white">Editor Pro <span class="text-gray-500">Nexus Suite</span></h1>
+                    <p class="text-gray-500 text-sm mt-1">Control de producción y activos de video.</p>
                 </div>
-                <div class="flex gap-2 bg-[#1C1C1F] p-1 rounded-xl border border-white/5">
-                    <button onclick="window.app.switchNexusTab('dashboard')" class="px-4 py-2 text-[10px] font-bold uppercase rounded-lg transition-all ${activeTab === 'dashboard' ? 'bg-white/10 text-white shadow-xl' : 'text-gray-600 hover:text-gray-400'}">Escritorio</button>
-                    <button onclick="window.app.switchNexusTab('nexus')" class="px-4 py-2 text-[10px] font-bold uppercase rounded-lg transition-all ${activeTab === 'nexus' ? 'bg-white/10 text-white shadow-xl' : 'text-gray-600 hover:text-gray-400'}">Proyectos</button>
+                <div class="flex gap-2 bg-black/20 p-1 rounded-xl border border-white/5">
+                    <button onclick="window.app.switchNexusTab('dashboard')" class="px-4 py-2 text-[10px] font-bold uppercase rounded-lg transition-all ${activeTab === 'dashboard' ? 'bg-white/10 text-white shadow-xl' : 'text-gray-500 hover:text-white'}">Panel Control</button>
+                    <button onclick="window.app.switchNexusTab('nexus')" class="px-4 py-2 text-[10px] font-bold uppercase rounded-lg transition-all ${activeTab === 'nexus' ? 'bg-white/10 text-white shadow-xl' : 'text-gray-500 hover:text-white'}">Protocolos</button>
                 </div>
             </header>
 
             <main>
-                ${(() => {
-                    if (activeTab === 'dashboard') {
-                        return `
-                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                            <div class="exec-card">
-                                <span class="kpi-label">Cobrado Nexus</span>
-                                <h2 class="kpi-value text-emerald-500">${formatCurrency(totalPaid)}</h2>
+                ${activeTab === 'dashboard' ? `
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="exec-card">
+                            <span class="kpi-label">Recaudación Nexus</span>
+                            <h2 class="kpi-value text-emerald-500">${formatCurrency(totalPaid)}</h2>
+                        </div>
+                        <div class="exec-card">
+                            <span class="kpi-label">Capital en Tránsito</span>
+                            <h2 class="kpi-value text-amber-500">${formatCurrency(totalPending)}</h2>
+                        </div>
+                        <div class="exec-card col-span-2 flex items-center justify-between">
+                            <div>
+                                <span class="kpi-label">Proyectos Activos</span>
+                                <h2 class="kpi-value">${state.nexusProjects.length}</h2>
                             </div>
-                            <div class="exec-card">
-                                <span class="kpi-label">Por Cobrar</span>
-                                <h2 class="kpi-value text-amber-500">${formatCurrency(totalPending)}</h2>
-                            </div>
-                            <div class="exec-card col-span-2 flex items-center justify-between">
-                                <div>
-                                    <span class="kpi-label">Proyectos Activos</span>
-                                    <h2 class="kpi-value">${state.nexusProjects.length}</h2>
-                                </div>
-                                <button class="exec-btn-primary" onclick="window.app.openModal('modalProject')">
-                                    <i data-lucide="plus" class="w-4 h-4"></i>
-                                    <span>Nuevo Proyecto</span>
-                                </button>
+                            <button class="exec-btn-primary" onclick="window.app.openModal('modalProject')">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>Nuevo Protocolo</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
+                        <div class="exec-card !p-0 overflow-hidden">
+                            <div class="p-6 border-b border-white/5 bg-white/[0.01]"><h3 class="text-sm font-bold">Listado de Operaciones</h3></div>
+                            <div class="divide-y divide-white/5">
+                                ${state.nexusProjects.map(p => `
+                                    <div class="p-5 flex justify-between items-center hover:bg-white/[0.03] cursor-pointer" onclick="window.app.selectProject('${p.id}')">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+                                            <span class="text-xs font-bold uppercase">${p.name}</span>
+                                        </div>
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-700"></i>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
-
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
-                            <div class="exec-card !p-0 overflow-hidden">
-                                <div class="p-6 border-b border-white/5 bg-white/[0.01]">
-                                    <h3 class="text-sm font-bold">Proyectos de Producción</h3>
-                                </div>
-                                <div class="divide-y divide-white/5">
-                                    ${state.nexusProjects.map(p => `
-                                        <div class="p-5 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer" onclick="window.app.selectProject('${p.id}'); window.app.switchNexusTab('nexus');">
-                                            <div class="flex items-center gap-4">
-                                                <div class="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"></div>
-                                                <span class="text-xs font-bold uppercase">${p.name}</span>
-                                            </div>
-                                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-700"></i>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                            <div class="exec-card flex flex-col items-center justify-center min-h-[300px]">
-                                <i data-lucide="monitor" class="w-12 h-12 text-gray-800 mb-4"></i>
-                                <p class="text-xs text-gray-600 font-bold uppercase tracking-widest">Atelier Visual Studio</p>
-                            </div>
-                        </div>`;
-                    }
-
-                    if (activeTab === 'nexus') {
-                        return `
-                        <div class="grid grid-cols-12 gap-8">
-                            <aside class="col-span-12 lg:col-span-3 space-y-4">
-                                <div class="exec-card !p-2">
-                                    ${state.nexusProjects.map(p => `
-                                        <div onclick="window.app.selectProject('${p.id}')" 
-                                            class="p-4 rounded-xl cursor-pointer border ${state.activeNexusProjectId === p.id ? 'bg-white/5 border-white/10' : 'border-transparent hover:bg-white/[0.02]'} transition-all flex items-center justify-between">
-                                            <span class="text-[11px] font-bold uppercase ${state.activeNexusProjectId === p.id ? 'text-white' : 'text-gray-600'}">${p.name}</span>
-                                            ${state.activeNexusProjectId === p.id ? '<div class="w-1.5 h-1.5 rounded-full bg-amber-500"></div>' : ''}
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </aside>
-
-                            <section class="col-span-12 lg:col-span-9 space-y-8">
-                                ${!activeProject ? `<div class="h-64 flex flex-col items-center justify-center exec-card border-dashed"><i data-lucide="mouse-pointer-2" class="w-8 h-8 text-gray-800 mb-4"></i><p class="text-[10px] text-gray-700 uppercase tracking-widest">Seleccione protocolo para auditar</p></div>` : `
-                                    <div class="exec-card !bg-[#121214] flex justify-between items-center">
-                                        <div>
-                                            <p class="kpi-label text-amber-500">Protocolo Seleccionado</p>
-                                            <h2 class="text-4xl font-black text-white uppercase tracking-tighter">${activeProject.name}</h2>
-                                        </div>
-                                        <div class="flex gap-4">
-                                            <button onclick="window.app.openOperationModal()" class="exec-btn-primary">
-                                                <i data-lucide="plus" class="w-4 h-4"></i>
-                                                <span>Añadir Operación</span>
-                                            </button>
-                                        </div>
+                        <div class="exec-card flex flex-col items-center justify-center min-h-[300px]">
+                            <i data-lucide="monitor" class="w-12 h-12 text-gray-800 mb-4"></i>
+                            <p class="text-[10px] text-gray-600 font-bold uppercase tracking-[0.3em]">Ready for Render</p>
+                        </div>
+                    </div>
+                ` : `
+                    <div class="grid grid-cols-12 gap-8">
+                        <aside class="col-span-3 space-y-4">
+                            <div class="exec-card !p-2">
+                                ${state.nexusProjects.map(p => `
+                                    <div onclick="window.app.selectProject('${p.id}')" 
+                                        class="p-4 rounded-lg cursor-pointer transition-all flex items-center justify-between ${state.activeNexusProjectId === p.id ? 'bg-white/5 text-white' : 'text-gray-500 hover:bg-white/[0.02]'}">
+                                        <span class="text-[11px] font-bold uppercase">${p.name}</span>
+                                        ${state.activeNexusProjectId === p.id ? '<i data-lucide="check" class="w-3 h-3 text-amber-500"></i>' : ''}
                                     </div>
-
-                                    <div class="exec-card !p-0 overflow-hidden">
-                                        <table class="pro-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Descripción</th>
-                                                    <th>Monto</th>
-                                                    <th>Estado Pago</th>
-                                                    <th>Acciones</th>
+                                `).join('')}
+                            </div>
+                        </aside>
+                        <section class="col-span-9 space-y-8">
+                            ${!activeProject ? `<div class="h-64 flex flex-col items-center justify-center exec-card border-dashed"><p class="text-[10px] text-gray-700 uppercase tracking-widest">Seleccione Protocolo...</p></div>` : `
+                                <div class="exec-card flex justify-between items-center">
+                                    <div>
+                                        <p class="kpi-label text-amber-500">Gestión de Producción</p>
+                                        <h2 class="text-3xl font-black text-white uppercase">${activeProject.name}</h2>
+                                    </div>
+                                    <button onclick="window.app.openOperationModal()" class="exec-btn-primary"><i data-lucide="plus" class="w-4 h-4"></i><span>Añadir Item</span></button>
+                                </div>
+                                <div class="exec-card !p-0 overflow-hidden">
+                                    <table class="pro-table">
+                                        <thead><tr><th>Item</th><th>Monto</th><th>Estado</th><th>Acción</th></tr></thead>
+                                        <tbody>
+                                            ${(activeProject.nexus_deliverables || []).map(d => `
+                                                <tr class="hover:bg-white/[0.02]" onclick="window.app.openOperationModal('${d.id}')">
+                                                    <td class="font-bold text-xs uppercase">${d.title}</td>
+                                                    <td class="font-bold">${formatCurrency(d.price)}</td>
+                                                    <td><span class="status-pill ${d.status_paid === 'paid' ? 'status-paid' : 'status-pending'}">${d.status_paid === 'paid' ? 'Listo' : 'Pendiente'}</span></td>
+                                                    <td><i data-lucide="edit-3" class="w-4 h-4 text-gray-700"></i></td>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${(activeProject.nexus_deliverables || []).map(d => `
-                                                    <tr class="hover:bg-white/[0.02] cursor-pointer" onclick="window.app.openOperationModal('${d.id}')">
-                                                        <td class="font-bold uppercase text-xs">${d.title}</td>
-                                                        <td class="font-bold text-white">${formatCurrency(d.price)}</td>
-                                                        <td>
-                                                            <span class="status-pill ${d.status_paid === 'paid' ? 'status-paid' : 'status-pending'}">
-                                                                ${d.status_paid === 'paid' ? 'Liquidado' : 'Pendiente'}
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <div class="flex gap-3">
-                                                                ${d.link_empresa ? `<a href="${d.link_empresa}" target="_blank" class="text-gray-600 hover:text-white" onclick="event.stopPropagation()"><i data-lucide="external-link" class="w-4 h-4"></i></a>` : ''}
-                                                                <i data-lucide="edit-3" class="w-4 h-4 text-gray-600"></i>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                `).join('')}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                `}
-                            </section>
-                        </div>`;
-                    }
-                    return '';
-                })()}
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            `}
+                        </section>
+                    </div>
+                `}
             </main>
         </div>
     `;
