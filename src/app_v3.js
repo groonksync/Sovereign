@@ -265,65 +265,159 @@ function navigate(view, id = null) {
     render();
 }
 
+// --- ELYSIAN HELPERS ---
+function renderTopNav() {
+    const tabs = [
+        { id: 'dashboard', icon: 'layout', label: 'Escritorio' },
+        { id: 'debts', icon: 'users', label: 'Clientes' },
+        { id: 'expenses', icon: 'database', label: 'Almacén' },
+        { id: 'studio-sync', icon: 'file-text', label: 'Finanzas' }
+    ];
+
+    return `
+        <nav class="elysian-top-nav">
+            <div class="flex items-center gap-3 mr-8">
+                <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="black" stroke-width="3" fill="none"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[11px] font-black tracking-tighter leading-none">ELYSIAN</span>
+                    <span class="text-[7px] font-bold text-gray-500 tracking-[0.2em] leading-none mt-1">STUDIO OS</span>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                ${tabs.map(tab => `
+                    <div class="nav-item ${state.currentView === tab.id ? 'active' : ''}" onclick="window.app.navigate('${tab.id}')">
+                        <i data-lucide="${tab.icon}" class="w-4 h-4"></i>
+                        <span>${tab.label}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="ml-auto flex items-center gap-6">
+                <i data-lucide="search" class="w-4 h-4 text-gray-500 cursor-pointer"></i>
+                <div class="relative">
+                    <i data-lucide="bell" class="w-4 h-4 text-gray-500 cursor-pointer"></i>
+                    <div class="absolute -top-1 -right-1 w-1.5 h-1.5 bg-white rounded-full"></div>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-[#1a1a1a] border border-white/5 flex items-center justify-center cursor-pointer">
+                    <i data-lucide="user" class="w-4 h-4 text-gray-500"></i>
+                </div>
+            </div>
+        </nav>
+    `;
+}
+
+function renderSessionHeader() {
+    const today = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    return `
+        <header class="elysian-session-header">
+            <div class="flex gap-16">
+                <div class="session-info-group">
+                    <span class="info-label">Identificador de Sesión</span>
+                    <div class="flex items-center gap-3">
+                        <span class="info-value">SOVEREIGN <span class="text-gray-500 font-light">01</span></span>
+                        <div class="status-indicator">
+                            <div class="dot"></div>
+                            <span>En Línea</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="session-info-group">
+                    <span class="info-label">Fecha Límite</span>
+                    <span class="info-value">${today}</span>
+                </div>
+                <div class="session-info-group">
+                    <span class="info-label">Latencia de Red</span>
+                    <span class="info-value">14ms <span class="text-gray-500 text-xs font-bold ml-1">/ ESTABLE</span></span>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button class="elysian-btn-primary" onclick="window.app.handleSync()">
+                    <i data-lucide="share-2" class="w-4 h-4"></i>
+                    <span>Ejecutar Sync</span>
+                </button>
+                <button class="w-11 h-11 rounded-xl bg-[#1a1a1a] border border-white/5 flex items-center justify-center text-white hover:bg-[#222] transition-all" onclick="window.app.navigate('register')">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+    `;
+}
+
 // --- RENDERERS ---
 
 function renderDashboard() {
     const totalAssets = state.loans.reduce((acc, loan) => acc + parseFloat(loan.amount || 0), 0);
-    const activeContracts = state.loans.length;
-    const protocolInterests = extractProtocolInterests();
-    const totalRecaudacionProyectada = [...state.debts, ...protocolInterests].reduce((acc, d) => {
-        if (d.isProtocol) return acc + parseFloat(d.amount);
-        const rate = parseFloat(d.interest || 0) / 100;
-        return acc + (parseFloat(d.amount || 0) * rate);
-    }, 0);
+    const paidCount = state.loans.filter(l => l.status === 'Pagado').length;
+    const pendingCount = state.loans.filter(l => l.status === 'Pendiente').length;
 
     return `
-        <div class="animate-reveal p-6">
-            <header class="flex justify-between items-center mb-10">
-                <div>
-                    <h1 class="view-title">Sovereign Dashboard</h1>
-                    <p class="view-subtitle">Monitor de Activos y Protocolos</p>
-                </div>
-                <button class="onyx-button" onclick="window.app.navigate('register')">Nuevo Registro</button>
-            </header>
-
-            <main>
-                <!-- KPI GRID -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-                    <div class="onyx-card">
-                        <p class="text-[9px] uppercase tracking-[0.2em] text-gray-500 mb-2">Capital Protocolo</p>
-                        <h2 class="text-xl font-bold">${formatCurrency(totalAssets)}</h2>
-                    </div>
-                    <div class="onyx-card">
-                        <p class="text-[9px] uppercase tracking-[0.2em] text-gray-500 mb-2">Recaudación</p>
-                        <h2 class="text-xl font-bold text-amber-500">${formatCurrency(totalRecaudacionProyectada)}</h2>
-                    </div>
-                    <div class="onyx-card">
-                        <p class="text-[9px] uppercase tracking-[0.2em] text-gray-500 mb-2">Contratos</p>
-                        <h2 class="text-xl font-bold">${activeContracts}</h2>
-                    </div>
-                    <div class="onyx-card">
-                        <p class="text-[9px] uppercase tracking-[0.2em] text-gray-500 mb-2">Interés Promedio</p>
-                        <h2 class="text-xl font-bold">12.5%</h2>
-                    </div>
-                </div>
-
-                <h2 class="text-[10px] uppercase tracking-[0.3em] text-gray-400 mb-4 px-2">Monitor de Activos</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                    ${state.loans.map(loan => `
-                        <div class="onyx-card !p-5 flex justify-between items-center cursor-pointer" onclick="window.app.navigate('details', '${loan.id}')">
-                            <div class="flex flex-col gap-1">
-                                <h3 class="font-bold text-[13px]">${loan.debtor}</h3>
-                                <p class="text-[9px] text-gray-600">ID:${loan.id.substring(0,4)}</p>
+        <div class="animate-reveal space-y-8">
+            <div class="grid grid-cols-3 gap-6">
+                <div class="col-span-2 elysian-card">
+                    <div class="flex justify-between items-start mb-12">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
+                                <i data-lucide="terminal" class="w-5 h-5 text-gray-400"></i>
                             </div>
-                            <div class="text-right">
-                                <p class="font-bold text-[13px]">${formatCurrency(loan.amount)}</p>
-                                <p class="text-[10px] text-amber-500 font-bold">${loan.interest}%</p>
+                            <span class="info-label">Datos Estratégicos del Núcleo</span>
+                        </div>
+                        <div class="flex gap-4">
+                            <i data-lucide="maximize-2" class="w-4 h-4 text-gray-600 cursor-pointer"></i>
+                            <i data-lucide="more-horizontal" class="w-4 h-4 text-gray-600 cursor-pointer"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="h-64 rounded-2xl border border-white/5 border-dashed flex flex-col items-center justify-center bg-black/20">
+                        <div class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-6">
+                            <i data-lucide="play" class="w-6 h-6 text-white ml-1"></i>
+                        </div>
+                        <p class="text-sm font-black mb-2 uppercase tracking-tight">Secuencia Lista para Procesar</p>
+                        <p class="text-[9px] text-gray-600 text-center max-w-xs leading-relaxed uppercase font-bold tracking-widest">
+                            Los algoritmos de pre-visualización están activos. Por favor, arrastre sus archivos de origen aquí.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="elysian-card">
+                        <span class="info-label">Capital Asignado</span>
+                        <div class="flex items-end gap-2 mt-4">
+                            <h2 class="mega-value text-white">${formatCurrency(totalAssets)}</h2>
+                        </div>
+                        <div class="mt-6 p-4 rounded-xl bg-white/5 border border-white/5">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="info" class="w-3 h-3 text-gray-500"></i>
+                                <span class="text-[8px] font-bold text-gray-500 uppercase tracking-widest leading-normal">
+                                    Presupuesto optimizado para renderizado
+                                </span>
                             </div>
                         </div>
-                    `).join('')}
+                    </div>
+
+                    <div class="elysian-card">
+                        <div class="flex items-center gap-3 mb-6">
+                            <i data-lucide="cpu" class="w-4 h-4 text-gray-400"></i>
+                            <span class="info-label">Nodos del Sistema</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="p-4 rounded-xl bg-black/40 border border-white/5 flex justify-between items-center">
+                                <div>
+                                    <p class="text-xs font-black mb-1">Drive_Sync_Main</p>
+                                    <p class="text-[8px] text-gray-600 font-bold uppercase tracking-widest">Almacenamiento Cloud</p>
+                                </div>
+                                <div class="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_white]"></div>
+                            </div>
+                            <div class="p-4 rounded-xl bg-black/40 border border-white/5 flex justify-between items-center opacity-50">
+                                <div>
+                                    <p class="text-xs font-black mb-1">Session_Relay_04</p>
+                                    <p class="text-[8px] text-gray-600 font-bold uppercase tracking-widest">Inactivo</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </main>
+            </div>
         </div>
     `;
 }
@@ -334,107 +428,124 @@ function renderStudioSync() {
     const totalPendiente = pendingReceipts.reduce((acc, r) => acc + parseFloat(r.totalAmount || 0), 0);
 
     return `
-        <div class="animate-reveal p-6">
-            <header class="flex justify-between items-center mb-10">
+        <div class="animate-reveal space-y-8">
+            <div class="view-header-pro">
                 <div>
-                    <h1 class="view-title">Gestión de Recibos</h1>
+                    <h1 class="view-title">Control de Finanzas</h1>
                     <p class="view-subtitle">Sovereign Studio Sync Pro</p>
                 </div>
-                <button class="onyx-button" onclick="window.app.navigate('receiptRegister')">+ Emitir</button>
-            </header>
+                <button class="elysian-btn-primary" onclick="window.app.navigate('receiptRegister')">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Emitir Recibo</span>
+                </button>
+            </div>
 
-            <main>
-                <div class="grid grid-cols-2 gap-4 mb-10">
-                    <div class="onyx-card">
-                        <p class="text-[9px] uppercase tracking-[0.2em] text-gray-500 mb-2">Facturación Global</p>
-                        <h2 class="text-xl font-bold">${formatCurrency(totalFacturado)}</h2>
-                    </div>
-                    <div class="onyx-card border-red-500/20">
-                        <p class="text-[9px] uppercase tracking-[0.2em] text-red-500 mb-2">Pendiente Cobro</p>
-                        <h2 class="text-xl font-bold text-red-500">${formatCurrency(totalPendiente)}</h2>
-                    </div>
+            <div class="grid grid-cols-2 gap-6">
+                <div class="elysian-card">
+                    <span class="info-label">Facturación Global Acumulada</span>
+                    <h2 class="mega-value text-white mt-4">${formatCurrency(totalFacturado)}</h2>
                 </div>
+                <div class="elysian-card">
+                    <span class="info-label">Cuentas por Cobrar</span>
+                    <h2 class="mega-value text-amber-500 mt-4">${formatCurrency(totalPendiente)}</h2>
+                </div>
+            </div>
 
-                <h2 class="text-[10px] uppercase tracking-[0.3em] text-gray-400 mb-4 px-2">Monitor de Emisiones</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                    ${state.receipts.map(r => `
-                        <div class="onyx-card !p-5 flex justify-between items-center cursor-pointer" onclick="window.app.navigate('receiptDetail', '${r.id}')">
-                            <div class="flex flex-col gap-1 overflow-hidden">
-                                <h3 class="font-bold text-[13px] truncate">${r.clientName}</h3>
-                                <p class="text-[9px] text-gray-600">${r.receiptId}</p>
+            <div class="grid grid-cols-1 gap-3">
+                ${state.receipts.map(r => `
+                    <div class="elysian-card !p-5 flex justify-between items-center cursor-pointer hover:border-white/20 transition-all" onclick="window.app.navigate('receiptDetail', '${r.id}')">
+                        <div class="flex items-center gap-6">
+                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
+                                <i data-lucide="file-text" class="w-5 h-5 text-gray-500"></i>
                             </div>
-                            <div class="text-right">
-                                <p class="font-bold text-[13px]">${formatCurrency(r.totalAmount)}</p>
-                                <span class="${r.status === 'Pendiente' ? 'badge-crimson' : 'badge-emerald'}">${r.status.toUpperCase()}</span>
+                            <div>
+                                <h3 class="text-sm font-black text-white uppercase mb-0.5">${r.clientName}</h3>
+                                <p class="text-[9px] text-gray-600 font-bold uppercase tracking-widest">${r.receiptId} • ${formatDate(r.date)}</p>
                             </div>
                         </div>
-                    `).join('')}
-                </div>
-            </main>
+                        <div class="flex items-center gap-8">
+                            <div class="text-right">
+                                <p class="text-xs font-black text-white mb-0.5">${formatCurrency(r.totalAmount)}</p>
+                                <span class="text-[8px] font-bold ${r.status === 'Pagado' ? 'text-emerald-500' : 'text-amber-500'} uppercase tracking-widest">${r.status}</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-700"></i>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
         </div>
     `;
 }
 
 function renderReceiptRegister() {
     return `
-        <div class="animate-reveal p-6 pb-32 max-w-3xl mx-auto">
-            <header class="flex justify-between items-center mb-12">
+        <div class="animate-reveal max-w-4xl mx-auto">
+            <div class="view-header-pro">
                 <div>
                     <h1 class="view-title">Emitir Recibo</h1>
                     <p class="view-subtitle">Protocolo de Facturación Digital</p>
                 </div>
-                <button class="text-gray-600 hover:text-white" onclick="window.app.navigate('studioSync')"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </header>
+                <button class="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center hover:bg-white/5" onclick="window.app.navigate('studioSync')">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
 
             <form id="receipt-form" class="space-y-8" onsubmit="window.app.handleSaveReceipt(event)">
-                <div class="onyx-card space-y-6">
-                    <div class="space-y-2">
-                        <label class="text-[9px] uppercase font-bold tracking-widest text-gray-500 ml-1">Información del Cliente</label>
-                        <input type="text" name="clientName" class="onyx-input" placeholder="Nombre del Cliente" required>
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="col-span-2 elysian-card space-y-6">
+                        <div class="elysian-input-group">
+                            <i data-lucide="user" class="elysian-input-icon w-4 h-4"></i>
+                            <input type="text" name="clientName" class="elysian-input" placeholder="Nombre del Cliente" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="elysian-input-group">
+                                <i data-lucide="folder" class="elysian-input-icon w-4 h-4"></i>
+                                <input type="text" name="projectName" class="elysian-input" placeholder="Nombre del Proyecto">
+                            </div>
+                            <div class="elysian-input-group">
+                                <i data-lucide="credit-card" class="elysian-input-icon w-4 h-4"></i>
+                                <select name="paymentMethod" class="elysian-input">
+                                    <option value="Transferencia">Transferencia</option>
+                                    <option value="QR / Banco">QR / Banco</option>
+                                    <option value="Efectivo">Efectivo</option>
+                                    <option value="USDT / Binance">USDT / Binance</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-[9px] uppercase font-bold tracking-widest text-gray-500 ml-1">Proyecto</label>
-                            <input type="text" name="projectName" class="onyx-input" placeholder="Ej: Producción Marzo">
+
+                    <div class="elysian-card">
+                        <span class="info-label mb-4 block">Estatus de Cobro</span>
+                        <div class="status-picker">
+                            <div class="status-option paid active" onclick="window.app.updateStatus(this, 'Pagado')">
+                                <i data-lucide="check-circle"></i>
+                                <span>Pagado</span>
+                            </div>
+                            <div class="status-option pending" onclick="window.app.updateStatus(this, 'Pendiente')">
+                                <i data-lucide="clock"></i>
+                                <span>Pendiente</span>
+                            </div>
                         </div>
-                        <div class="space-y-2">
-                            <label class="text-[9px] uppercase font-bold tracking-widest text-gray-500 ml-1">Método</label>
-                            <select name="paymentMethod" class="onyx-input">
-                                <option value="Transferencia">Transferencia</option>
-                                <option value="QR / Banco">QR / Banco</option>
-                                <option value="Efectivo">Efectivo</option>
-                                <option value="USDT / Binance">USDT / Binance</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                         <div class="space-y-2">
-                            <label class="text-[9px] uppercase font-bold tracking-widest text-gray-500 ml-1">Estado</label>
-                            <select name="status" class="onyx-input">
-                                <option value="Pagado">Liquidado (Pagado)</option>
-                                <option value="Pendiente">Pendiente de Cobro</option>
-                            </select>
-                        </div>
-                        <div class="space-y-2 text-center flex flex-col justify-center">
-                            <label class="text-[9px] uppercase font-bold tracking-widest text-gray-500 mb-2">Marca de Agua</label>
-                            <input type="checkbox" name="watermarkEnabled" checked class="accent-amber-500 scale-125">
+                        <input type="hidden" name="status" value="Pagado">
+                        
+                        <div class="mt-8 pt-6 border-t border-white/5 flex justify-between items-center">
+                            <span class="info-label">Marca de Agua</span>
+                            <input type="checkbox" name="watermarkEnabled" checked class="accent-white scale-125">
                         </div>
                     </div>
                 </div>
 
                 <div class="space-y-4">
                     <div class="flex justify-between items-center px-2">
-                        <h2 class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Conceptos de Servicio</h2>
-                        <button type="button" class="text-[9px] font-black text-amber-500 uppercase tracking-widest hover:text-white transition-all" onclick="window.app.addReceiptItem()">+ Añadir Item</button>
+                        <h2 class="info-label">Conceptos de Servicio</h2>
+                        <button type="button" class="text-[9px] font-black text-white/50 uppercase tracking-widest hover:text-white transition-all" onclick="window.app.addReceiptItem()">+ Añadir Concepto</button>
                     </div>
                     <div id="items-container" class="space-y-3">
                         <!-- Items dinámicos -->
                     </div>
                 </div>
 
-                <div class="pt-8">
-                    <button type="submit" class="onyx-button w-full !py-5 text-sm">Confirmar Emisión y Generar Recibo</button>
-                </div>
+                <button type="submit" class="elysian-btn-primary w-full !py-6 text-sm">Generar y Confirmar Recibo</button>
             </form>
         </div>
     `;
@@ -678,144 +789,166 @@ function renderReceiptEdit() {
 
 function renderRegister() {
     return `
-        <div class="animate-reveal p-6 pb-32 max-w-2xl mx-auto">
-            <header class="flex justify-between items-center mb-12">
+        <div class="animate-reveal max-w-4xl mx-auto">
+            <div class="view-header-pro">
                 <div>
-                    <h1 class="view-title">Nuevo Activo</h1>
-                    <p class="view-subtitle">Protocolo de Registro de Capital</p>
+                    <h1 class="view-title">Alta de Cliente</h1>
+                    <p class="view-subtitle">Protocolo de Registro de Activos</p>
                 </div>
-                <button class="text-gray-600 hover:text-white" onclick="window.app.navigate('dashboard')"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </header>
+                <button class="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center hover:bg-white/5" onclick="window.app.navigate('dashboard')">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
 
-            <form id="loan-form" class="space-y-6" onsubmit="window.app.handleSave(event)">
-                <div class="onyx-card space-y-5">
-                    <div class="space-y-2">
-                        <label class="text-[9px] uppercase font-bold tracking-widest text-gray-500 ml-1">Deudor Principal</label>
-                        <input type="text" name="debtor" class="onyx-input" placeholder="Nombre completo del deudor" required>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-[9px] uppercase font-bold tracking-widest text-gray-500 ml-1">Capital (Bs.)</label>
-                            <input type="number" name="amount" class="onyx-input" placeholder="0.00" required>
+            <form id="loan-form" class="space-y-8" onsubmit="window.app.handleSave(event)">
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="col-span-2 elysian-card space-y-6">
+                        <div class="elysian-input-group">
+                            <i data-lucide="user" class="elysian-input-icon w-4 h-4"></i>
+                            <input type="text" name="debtor" class="elysian-input" placeholder="Nombre Completo del Cliente" required>
                         </div>
-                        <div class="space-y-2">
-                            <label class="text-[9px] uppercase font-bold tracking-widest text-gray-500 ml-1">Rendimiento (%)</label>
-                            <input type="number" step="0.1" name="interest" class="onyx-input" placeholder="0.0" required>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="elysian-input-group">
+                                <i data-lucide="dollar-sign" class="elysian-input-icon w-4 h-4"></i>
+                                <input type="number" name="amount" class="elysian-input" placeholder="Importe Principal" required>
+                            </div>
+                            <div class="elysian-input-group">
+                                <i data-lucide="calendar" class="elysian-input-icon w-4 h-4"></i>
+                                <input type="date" name="startDate" class="elysian-input" required>
+                            </div>
                         </div>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[9px] uppercase font-bold tracking-widest text-gray-500 ml-1">Referencia / Teléfono</label>
-                        <input type="text" name="ref" class="onyx-input" placeholder="+591 ...">
-                    </div>
-                </div>
-
-                <div class="onyx-card space-y-5">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-[9px] uppercase font-bold tracking-widest text-gray-500 ml-1">Inicio</label>
-                            <input type="date" name="startDate" class="onyx-input" required>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[9px] uppercase font-bold tracking-widest text-gray-500 ml-1">Vencimiento</label>
-                            <input type="date" name="endDate" class="onyx-input" required>
+                        <div class="elysian-input-group">
+                            <i data-lucide="message-square" class="elysian-input-icon w-4 h-4"></i>
+                            <input type="text" name="reason" class="elysian-input" placeholder="Descripción del Activo / Servicio">
                         </div>
                     </div>
+
+                    <div class="space-y-6">
+                        <div class="elysian-card">
+                            <span class="info-label mb-4 block">Estatus Inicial</span>
+                            <div class="status-picker">
+                                <div class="status-option paid active" onclick="window.app.updateStatus(this, 'Pagado')">
+                                    <i data-lucide="check-circle"></i>
+                                    <span>Liquidado</span>
+                                </div>
+                                <div class="status-option pending" onclick="window.app.updateStatus(this, 'Pendiente')">
+                                    <i data-lucide="clock"></i>
+                                    <span>Pendiente</span>
+                                </div>
+                            </div>
+                            <input type="hidden" name="status" value="Pagado">
+                        </div>
+
+                        <div class="elysian-card">
+                            <span class="info-label mb-4 block">Evidencia Digital</span>
+                            <div class="photo-uploader" onclick="document.getElementById('photo-input').click()">
+                                <i data-lucide="camera"></i>
+                                <span>Cargar Captura</span>
+                            </div>
+                            <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="window.app.handlePhotoUpload(event)">
+                            <div id="photo-preview" class="mt-4 grid grid-cols-3 gap-2"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="onyx-card space-y-5">
-                    <div class="space-y-2">
-                        <label class="text-[9px] uppercase font-bold tracking-widest text-gray-500 ml-1">Garante / Aval</label>
-                        <input type="text" name="guarantor" class="onyx-input" placeholder="Nombre del garante">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[9px] uppercase font-bold tracking-widest text-gray-500 ml-1">Descripción de Garantía</label>
-                        <textarea name="collateral" class="onyx-input h-24 resize-none" placeholder="Detalles de movilidad, propiedad o activos fijos..."></textarea>
-                    </div>
-                </div>
-
-                <div class="flex gap-4 pt-6">
-                    <button type="button" class="flex-1 py-4 text-[10px] font-bold uppercase text-gray-600 hover:text-white transition-all" onclick="window.app.navigate('dashboard')">Cancelar</button>
-                    <button type="submit" class="onyx-button flex-1 !py-4">Registrar Activo</button>
-                </div>
+                <button type="submit" class="elysian-btn-primary w-full !py-6 text-sm">Registrar en Protocolo</button>
             </form>
         </div>
     `;
 }
 
+
+
 function renderDetails() {
     const loan = state.loans.find(l => l.id === state.selectedLoanId);
     if (!loan) return navigate('dashboard');
 
+    const installments = loan.installments || [];
+    const paidAmount = installments.filter(i => i.paid).reduce((acc, i) => acc + parseFloat(i.amount), 0);
+    const totalToPay = installments.reduce((acc, i) => acc + parseFloat(i.amount), 0);
+
     return `
-        <div class="animate-reveal p-6 pb-32">
-            <header class="flex justify-between items-center mb-10">
-                <button class="text-gray-500 hover:text-white transition-all flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest" onclick="window.app.navigate('dashboard')">
-                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver
-                </button>
-                <div class="flex gap-3">
-                    <button class="onyx-button !bg-red-500/10 !text-red-500 !border-red-500/20" onclick="window.app.handleDelete('${loan.id}')">Eliminar</button>
-                    <button class="onyx-button" onclick="window.app.exportToPDF('${loan.id}')">Exportar PDF</button>
-                </div>
-            </header>
-
-            <section class="onyx-card !p-12 mb-10 text-center border-amber-500/10 bg-gradient-to-b from-amber-500/[0.02] to-transparent">
-                <p class="text-[9px] font-black text-amber-500 uppercase tracking-[0.4em] mb-4">Balance de Protocolo</p>
-                <h2 class="text-5xl font-black text-white tracking-tighter mb-8">${formatCurrency(loan.amount)}</h2>
-                
-                <div class="flex justify-center gap-12 pt-8 border-t border-white/[0.03]">
-                    <div class="text-center">
-                        <p class="text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-1">Rendimiento</p>
-                        <p class="text-xl font-bold text-white">${loan.interest || 0}%</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-1">Liquidación</p>
-                        <p class="text-xl font-bold text-white">${formatDate(loan.end_date)}</p>
+        <div class="animate-reveal space-y-10">
+            <div class="view-header-pro">
+                <div class="flex items-center gap-6">
+                    <button class="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center hover:bg-white/5" onclick="window.app.navigate('dashboard')">
+                        <i data-lucide="arrow-left" class="w-5 h-5 text-gray-500"></i>
+                    </button>
+                    <div>
+                        <h1 class="view-title">${loan.debtor}</h1>
+                        <p class="view-subtitle">Perfil Detallado de Activo</p>
                     </div>
                 </div>
-            </section>
+                <div class="flex gap-4">
+                    <button class="elysian-btn-primary !bg-white/5 !text-white border border-white/10" onclick="window.app.exportToPDF('${loan.id}')">
+                        <i data-lucide="file-text" class="w-4 h-4 text-gray-400"></i>
+                        <span>Exportar PDF</span>
+                    </button>
+                    <button class="elysian-btn-primary" onclick="window.app.handleExtendLoan('${loan.id}')">
+                        <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                        <span>Ampliar Plazo</span>
+                    </button>
+                </div>
+            </div>
 
-            <main class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <div class="lg:col-span-4 space-y-8">
-                    <section class="onyx-card">
-                        <h2 class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-6">Perfil del Deudor</h2>
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-black text-sm border border-amber-500/20">${loan.debtor.substring(0,2).toUpperCase()}</div>
-                            <div>
-                                <h3 class="text-sm font-bold text-white uppercase">${loan.debtor}</h3>
-                                <p class="text-[9px] text-gray-600 uppercase tracking-wider">${loan.ref || 'Sin Referencia'}</p>
+            <div class="grid grid-cols-3 gap-6">
+                <div class="elysian-card">
+                    <span class="info-label">Inversión Principal</span>
+                    <h2 class="mega-value text-white mt-4">${formatCurrency(loan.amount)}</h2>
+                    <div class="mt-6 flex items-center gap-2">
+                        <span class="status-indicator">
+                            <div class="dot"></div>
+                            <span>Protección AES-256</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="elysian-card">
+                    <span class="info-label">Retorno Proyectado</span>
+                    <h2 class="mega-value text-amber-500 mt-4">${formatCurrency(totalToPay)}</h2>
+                    <p class="text-[8px] font-bold text-gray-600 uppercase mt-2 tracking-widest">Calculado al ${loan.interest}% Mensual</p>
+                </div>
+
+                <div class="elysian-card">
+                    <span class="info-label">Estatus de Liquidación</span>
+                    <h2 class="mega-value text-white mt-4">${((paidAmount/totalToPay)*100 || 0).toFixed(1)}%</h2>
+                    <div class="mt-8 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div class="h-full bg-white shadow-[0_0_10px_white]" style="width: ${(paidAmount/totalToPay)*100 || 0}%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="elysian-card">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="info-label">Cronograma de Amortización</h2>
+                    <span class="text-[8px] font-bold text-gray-600 uppercase tracking-widest">Total: ${installments.length} Cuotas</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    ${installments.map(inst => `
+                        <div class="p-4 rounded-xl bg-black/40 border border-white/5 flex justify-between items-center ${inst.paid ? 'opacity-30' : ''}">
+                            <div class="flex items-center gap-4">
+                                <div class="w-1.5 h-1.5 rounded-full ${inst.paid ? 'bg-white' : 'bg-amber-500 animate-pulse'}"></div>
+                                <div>
+                                    <p class="text-xs font-black">MES ${inst.month}</p>
+                                    <p class="text-[8px] text-gray-600 font-bold uppercase tracking-widest">${formatDate(inst.dueDate)}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-6">
+                                <p class="text-xs font-black">${formatCurrency(inst.amount)}</p>
+                                <button onclick="window.app.handleToggleInstallment('${loan.id}', '${inst.id}')" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10">
+                                    <i data-lucide="${inst.paid ? 'check' : 'circle'}" class="w-4 h-4 ${inst.paid ? 'text-white' : 'text-gray-600'}"></i>
+                                </button>
                             </div>
                         </div>
-                    </section>
-                    
-                    <section class="onyx-card">
-                        <h2 class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-6">Garantías</h2>
-                        <p class="text-xs text-gray-400 leading-relaxed">${loan.collateral || 'No se registraron activos colaterales.'}</p>
-                    </section>
+                    `).join('')}
                 </div>
+            </div>
 
-                <div class="lg:col-span-8 space-y-4">
-                    <div class="flex justify-between items-center px-2">
-                        <h2 class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Cronograma de Liquidación</h2>
-                        <button class="text-[9px] font-black text-amber-500 uppercase tracking-widest hover:text-white transition-all" onclick="window.app.handleExtendLoan('${loan.id}')">+ Ampliar Plazo</button>
-                    </div>
-                    <div class="grid gap-2">
-                        ${(loan.installments || []).map(inst => `
-                            <div class="onyx-card !p-5 flex justify-between items-center ${inst.paid ? 'opacity-30' : 'border-l-2 border-amber-500/50'}">
-                                <div class="flex items-center gap-6">
-                                    <p class="text-xs font-bold text-white uppercase">Cuota ${inst.month}</p>
-                                    <p class="text-[9px] text-gray-600 uppercase tracking-widest">${formatDate(inst.dueDate)}</p>
-                                </div>
-                                <div class="flex items-center gap-8">
-                                    <span class="text-sm font-black ${inst.paid ? 'text-emerald-500' : 'text-white'}">${formatCurrency(inst.amount)}</span>
-                                    <button onclick="window.app.toggleInstallment('${loan.id}', ${inst.month})" class="w-8 h-8 rounded-full flex items-center justify-center border ${inst.paid ? 'bg-emerald-500 border-emerald-500 text-black' : 'border-white/10 text-gray-700 hover:border-white/30'}">
-                                        <i data-lucide="${inst.paid ? 'check' : 'circle'}" class="w-4 h-4"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            </main>
+            <div class="flex justify-center pt-10">
+                <button class="text-[9px] font-black text-red-500/50 uppercase tracking-[0.3em] hover:text-red-500 transition-all" onclick="window.app.handleDelete('${loan.id}')">
+                    Dar de baja este activo del protocolo
+                </button>
+            </div>
         </div>
     `;
 }
@@ -849,13 +982,21 @@ async function render() {
         }
     } catch (e) {
         console.error("Render Error:", e);
-        content = `<div class="empty-state"><p>Error al cargar la vista. Intente de nuevo.</p></div>`;
+        content = `<div class="p-20 text-center"><p class="text-red-500 font-bold">Error en la secuencia de renderizado.</p></div>`;
     }
 
-    app.classList.toggle('full-width-mode', state.currentView === 'nexus');
-    app.innerHTML = (content || '') + renderTabBar();
+    app.innerHTML = `
+        <div class="min-h-screen bg-[#0c0c0c] text-white selection:bg-white selection:text-black">
+            ${renderTopNav()}
+            <div class="max-w-[1400px] mx-auto">
+                ${renderSessionHeader()}
+                <main class="px-8 pb-32">
+                    ${content}
+                </main>
+            </div>
+        </div>
+    `;
     
-    // Ocultar cargador inicial si existe
     const loader = document.querySelector('.loader');
     if (loader) loader.style.display = 'none';
 
@@ -863,64 +1004,55 @@ async function render() {
     window.scrollTo(0, 0);
 }
 
-function renderTabBar() {
-    const tabs = [
-        { id: 'dashboard', icon: 'layout', label: 'Escritorio' },
-        { id: 'debts', icon: 'users', label: 'Deudores' },
-        { id: 'expenses', icon: 'arrow-down-circle', label: 'Gastos' },
-        { id: 'studio-sync', icon: 'file-text', label: 'Recibos' },
-        { id: 'sovereign-nexus', icon: 'star', label: 'Editor Pro' }
-    ];
-
-    return `
-        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-            <nav class="tab-pill-container shadow-2xl">
-                ${tabs.map(tab => `
-                    <button onclick="window.app.navigate('${tab.id}')" 
-                        class="tab-pill ${state.currentView === tab.id ? 'active' : ''}">
-                        <i data-lucide="${tab.icon}" class="w-4 h-4 mb-1"></i>
-                        <span class="text-[8px] font-bold uppercase tracking-wider">${tab.label}</span>
-                    </button>
-                `).join('')}
-            </nav>
-        </div>
-    `;
-}
+function renderTabBar() { return ''; }
 
 function renderExpenses() {
     const totalExpenses = state.expenses.reduce((acc, exp) => acc + parseFloat(exp.amount || 0), 0);
 
     return `
-        <div class="animate-reveal p-6">
-            <header class="flex justify-between items-center mb-10">
+        <div class="animate-reveal space-y-8">
+            <div class="view-header-pro">
                 <div>
-                    <h1 class="view-title">Egresos</h1>
-                    <p class="view-subtitle">Monitor de Gasto Operativo</p>
+                    <h1 class="view-title">Almacén de Egresos</h1>
+                    <p class="view-subtitle">Monitor de Compromisos Operativos</p>
                 </div>
-                <button class="onyx-button" onclick="window.app.navigate('expenseRegister')">+ Registro</button>
-            </header>
+                <button class="elysian-btn-primary" onclick="window.app.navigate('expenseRegister')">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Nuevo Registro</span>
+                </button>
+            </div>
 
-            <main>
-                <div class="onyx-card mb-10 inline-block">
-                    <p class="text-[9px] uppercase tracking-[0.2em] text-gray-500 mb-2">Gasto Operativo Mensual</p>
-                    <h2 class="text-2xl font-bold text-amber-500">${formatCurrency(totalExpenses)}</h2>
+            <div class="grid grid-cols-4 gap-6">
+                <div class="elysian-card">
+                    <span class="info-label">Gasto Total Operativo</span>
+                    <h2 class="mega-value text-white mt-4">${formatCurrency(totalExpenses)}</h2>
                 </div>
+                <div class="col-span-3 elysian-card flex items-center justify-between">
+                    <div>
+                        <span class="info-label">Siguiente Compromiso</span>
+                        <p class="text-sm font-black mt-2">Mantenimiento de Servidores</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[8px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Vence en</span>
+                        <p class="text-xs font-black text-amber-500">48 HORAS</p>
+                    </div>
+                </div>
+            </div>
 
-                <h2 class="text-[10px] uppercase tracking-[0.3em] text-gray-400 mb-4 px-2">Detalle de Operaciones</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    ${state.expenses.map(exp => `
-                        <div class="onyx-card !p-5 flex justify-between items-center cursor-pointer" onclick="window.app.navigate('expenseDetail', '${exp.id}')">
-                            <div class="flex flex-col gap-1 overflow-hidden">
-                                <h3 class="font-bold text-[13px] truncate">${exp.debtor}</h3>
-                                <p class="text-[9px] text-gray-600 uppercase tracking-wider">${exp.category || 'Operación'}</p>
+            <div class="grid grid-cols-3 gap-4">
+                ${state.expenses.map(exp => `
+                    <div class="elysian-card !p-6 cursor-pointer hover:border-white/20 transition-all group" onclick="window.app.navigate('expenseDetail', '${exp.id}')">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-all">
+                                <i data-lucide="database" class="w-5 h-5 text-gray-400"></i>
                             </div>
-                            <div class="text-right">
-                                <p class="font-bold text-[13px]">${formatCurrency(exp.amount)}</p>
-                            </div>
+                            <span class="text-[9px] font-bold text-gray-600 uppercase tracking-[0.2em]">${exp.category || 'Operación'}</span>
                         </div>
-                    `).join('')}
-                </div>
-            </main>
+                        <h3 class="text-sm font-black text-white mb-1 uppercase">${exp.debtor}</h3>
+                        <p class="mega-value !text-lg text-white">${formatCurrency(exp.amount)}</p>
+                    </div>
+                `).join('')}
+            </div>
         </div>
     `;
 }
@@ -1138,45 +1270,61 @@ function renderDebtDetail() {
 }
 
 function renderDebts() {
-    const combinedDebts = [...(state.debts || []), ...(extractProtocolInterests() || [])];
-    const totalMonthlyInterest = combinedDebts.reduce((acc, d) => {
-        if (d.isProtocol) return acc + parseFloat(d.amount || 0);
-        const rate = parseFloat(d.interest || 0) / 100;
-        return acc + (parseFloat(d.amount || 0) * rate);
-    }, 0);
+    const totalPrincipal = state.loans.reduce((acc, l) => acc + parseFloat(l.amount), 0);
 
     return `
-        <div class="animate-reveal p-6">
-            <header class="flex justify-between items-center mb-10">
+        <div class="animate-reveal space-y-8">
+            <div class="view-header-pro">
                 <div>
-                    <h1 class="view-title">Deudores</h1>
-                    <p class="view-subtitle">Gestión de Cobranzas y Créditos</p>
+                    <h1 class="view-title">Cartera de Clientes</h1>
+                    <p class="view-subtitle">Protocolo de Gestión de Activos</p>
                 </div>
-                <button class="onyx-button" onclick="window.app.navigate('debtRegister')">+ Nuevo</button>
-            </header>
-
-            <main>
-                <div class="onyx-card mb-10 inline-block">
-                    <p class="text-[9px] uppercase tracking-[0.2em] text-gray-500 mb-2">Recaudación Proyectada</p>
-                    <h2 class="text-2xl font-bold text-amber-500">${formatCurrency(totalMonthlyInterest)}</h2>
+                <div class="flex gap-4">
+                    <div class="elysian-input-group !w-64">
+                        <i data-lucide="search" class="elysian-input-icon w-4 h-4"></i>
+                        <input type="text" class="elysian-input !p-2 !pl-10" placeholder="Buscar ID o Nombre...">
+                    </div>
+                    <button class="elysian-btn-primary" onclick="window.app.navigate('register')">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>Nuevo Cliente</span>
+                    </button>
                 </div>
+            </div>
 
-                <h2 class="text-[10px] uppercase tracking-[0.3em] text-gray-400 mb-4 px-2">Cuentas por Cobrar</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                    ${combinedDebts.map(debt => `
-                        <div class="onyx-card !p-5 flex justify-between items-center cursor-pointer" onclick="${debt.isProtocol ? `window.app.navigate('details', '${debt.originalLoanId}')` : `window.app.navigate('debtDetail', '${debt.id}')`}">
-                            <div class="flex flex-col gap-1 overflow-hidden">
-                                <h3 class="font-bold text-[13px] truncate">${debt.debtor || debt.person}</h3>
-                                <p class="text-[9px] text-gray-600 uppercase tracking-wider">${debt.isProtocol ? 'Protocolo' : 'Directo'}</p>
+            <div class="grid grid-cols-4 gap-6 mb-12">
+                <div class="elysian-card col-span-2">
+                    <span class="info-label">Capital Total en Protocolo</span>
+                    <h2 class="mega-value text-white mt-4">${formatCurrency(totalPrincipal)}</h2>
+                </div>
+                <div class="elysian-card">
+                    <span class="info-label">Contratos Activos</span>
+                    <h2 class="mega-value text-white mt-4">${state.loans.length}</h2>
+                </div>
+                <div class="elysian-card">
+                    <span class="info-label">Eficiencia Operativa</span>
+                    <h2 class="mega-value text-emerald-500 mt-4">99.2%</h2>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                ${state.loans.map(loan => `
+                    <div class="elysian-card !p-6 flex justify-between items-center cursor-pointer hover:border-white/20 transition-all group" onclick="window.app.navigate('details', '${loan.id}')">
+                        <div class="flex items-center gap-6">
+                            <div class="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-white/10 transition-all">
+                                <span class="text-xs font-black text-white">${loan.debtor.substring(0,2).toUpperCase()}</span>
                             </div>
-                            <div class="text-right">
-                                <p class="font-bold text-[13px]">${formatCurrency(debt.amount)}</p>
-                                <span class="badge-gold">ACTIVO</span>
+                            <div>
+                                <h3 class="text-sm font-black text-white uppercase mb-1">${loan.debtor}</h3>
+                                <p class="text-[9px] text-gray-600 font-bold uppercase tracking-widest">Protocol_ID: ${loan.id.substring(0,8)}</p>
                             </div>
                         </div>
-                    `).join('')}
-                </div>
-            </main>
+                        <div class="text-right">
+                            <p class="text-xs font-black text-white mb-1">${formatCurrency(loan.amount)}</p>
+                            <span class="text-[8px] font-bold ${loan.status === 'Pagado' ? 'text-emerald-500' : 'text-amber-500'} uppercase tracking-widest">${loan.status}</span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
         </div>
     `;
 }
@@ -2646,4 +2794,75 @@ async function renderSovereignNexus() {
         </div>
     </div>
     `;
+}
+
+// --- ELYSIAN FUNCTIONAL HELPERS ---
+function updateStatus(element, status) {
+    const parent = element.closest('.status-picker');
+    parent.querySelectorAll('.status-option').forEach(opt => opt.classList.remove('active'));
+    element.classList.add('active');
+    parent.nextElementSibling.value = status;
+}
+
+async function handlePhotoUpload(event) {
+    const files = event.target.files;
+    const preview = document.getElementById('photo-preview');
+    if (!preview) return;
+
+    for (let file of files) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const div = document.createElement('div');
+            div.className = 'relative group';
+            div.innerHTML = `
+                <img src="${e.target.result}" class="w-full h-20 object-cover rounded-lg border border-white/10">
+                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center rounded-lg cursor-pointer" onclick="this.parentElement.remove()">
+                    <i data-lucide="trash-2" class="w-4 h-4 text-white"></i>
+                </div>
+            `;
+            preview.appendChild(div);
+            if (window.lucide) window.lucide.createIcons();
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function addReceiptItem() {
+    const container = document.getElementById('items-container');
+    const div = document.createElement('div');
+    div.className = 'elysian-card !p-4 animate-reveal flex gap-4 items-center';
+    div.innerHTML = `
+        <div class="flex-1 space-y-3">
+            <input type="text" name="itemBrand" class="elysian-input !p-3 !pl-10" placeholder="Servicio / Marca">
+            <input type="text" name="itemDesc" class="elysian-input !p-3 !pl-10" placeholder="Descripción">
+        </div>
+        <div class="w-32 space-y-3">
+            <input type="number" name="itemQty" class="elysian-input !p-3" placeholder="Cant." value="1">
+            <input type="number" name="itemPrice" class="elysian-input !p-3" placeholder="Precio">
+        </div>
+        <button type="button" class="text-gray-600 hover:text-white" onclick="this.parentElement.remove()">
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+        </button>
+    `;
+    container.appendChild(div);
+    if (window.lucide) window.lucide.createIcons();
+}
+
+async function handleSync() {
+    const btn = event.currentTarget;
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i><span>Sincronizando...</span>';
+    if (window.lucide) window.lucide.createIcons();
+    
+    try {
+        await init(); // Recargar datos
+        btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i><span>Sincronizado</span>';
+        setTimeout(() => {
+            btn.innerHTML = originalContent;
+            if (window.lucide) window.lucide.createIcons();
+        }, 2000);
+    } catch (e) {
+        btn.innerHTML = '<span>Error</span>';
+        setTimeout(() => { btn.innerHTML = originalContent; }, 2000);
+    }
 }

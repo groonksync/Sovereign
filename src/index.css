@@ -197,3 +197,215 @@ body {
 }
 
 .onyx-list-item:hover { background: rgba(255, 255, 255, 0.02); }
+
+/* --- ELYSIAN STUDIO OS DESIGN SYSTEM --- */
+:root {
+    --elysian-bg: #0c0c0c;
+    --elysian-card: #151515;
+    --elysian-border: rgba(255, 255, 255, 0.05);
+    --elysian-accent: #ffffff;
+    --elysian-text-muted: #666666;
+    --elysian-status-green: #00ff88;
+}
+
+.elysian-top-nav {
+    height: 64px;
+    background: #000;
+    border-bottom: 1px solid var(--elysian-border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 32px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--elysian-text-muted);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.nav-item.active {
+    background: #1a1a1a;
+    color: #fff;
+}
+
+.elysian-session-header {
+    padding: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 1px solid var(--elysian-border);
+    margin-bottom: 32px;
+}
+
+.session-info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.info-label {
+    font-size: 8px;
+    font-weight: 800;
+    color: var(--elysian-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+}
+
+.info-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+}
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #1a1a1a;
+    border-radius: 6px;
+    font-size: 8px;
+    font-weight: 800;
+    color: var(--elysian-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+.elysian-card {
+    background: var(--elysian-card);
+    border: 1px solid var(--elysian-border);
+    border-radius: 20px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.elysian-btn-primary {
+    background: #fff;
+    color: #000;
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.elysian-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255,255,255,0.1); }
+.elysian-btn-primary:active { transform: translateY(0); }
+
+/* --- TOOLS RESTORATION --- */
+.status-picker {
+    display: flex;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.status-option {
+    flex: 1;
+    padding: 16px;
+    border-radius: 12px;
+    background: #1a1a1a;
+    border: 1px solid var(--elysian-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.status-option i { width: 20px; height: 20px; color: var(--elysian-text-muted); }
+.status-option span { font-size: 8px; font-weight: 800; color: var(--elysian-text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
+
+.status-option.active.paid { border-color: var(--elysian-status-green); background: rgba(0, 255, 136, 0.05); }
+.status-option.active.paid i, .status-option.active.paid span { color: var(--elysian-status-green); }
+
+.status-option.active.pending { border-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
+.status-option.active.pending i, .status-option.active.pending span { color: #f59e0b; }
+
+.elysian-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.elysian-input-icon {
+    position: absolute;
+    left: 20px;
+    color: var(--elysian-text-muted);
+}
+
+.elysian-input {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid var(--elysian-border);
+    border-radius: 14px;
+    padding: 18px 20px 18px 56px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.elysian-input:focus { border-color: rgba(255,255,255,0.2); background: #222; }
+
+.photo-uploader {
+    background: #1a1a1a;
+    border: 1px dashed var(--elysian-border);
+    border-radius: 16px;
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.photo-uploader:hover { border-color: rgba(255,255,255,0.2); background: #222; }
+.photo-uploader i { width: 32px; height: 32px; color: var(--elysian-text-muted); }
+.photo-uploader span { font-size: 8px; font-weight: 800; color: var(--elysian-text-muted); text-transform: uppercase; }
+
+.mega-value {
+    font-size: 56px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+}
+
+.view-header-pro {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
