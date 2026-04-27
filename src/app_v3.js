@@ -2653,7 +2653,7 @@ async function renderSovereignNexus() {
         try {
             await sb.from('nexus_projects').update({ [field]: value }).eq('id', activeProject.id);
             activeProject[field] = value;
-            if (field === 'pipeline') render();
+            if (field === 'status') render();
         } catch (e) { console.error(e); }
     };
 
