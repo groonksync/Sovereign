@@ -2527,6 +2527,7 @@ window.app = {
 // Start App
 const initApp = async () => {
     try {
+        console.log("Iniciando Protocolo Sovereign...");
         // Timeout de seguridad: si en 5 segundos no carga, forzamos el render
         const timeout = setTimeout(() => {
             console.warn("LoadState timeout - forcing render");
@@ -2535,9 +2536,10 @@ const initApp = async () => {
 
         await loadState();
         clearTimeout(timeout);
+        await render(); // Llamada obligatoria al terminar de cargar
     } catch (e) {
         console.error("Critical Init Error:", e);
-        render(); // Intentar renderizar aunque falle la carga
+        await render(); 
     }
     
     // Recuperar token si aún es válido
