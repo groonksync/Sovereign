@@ -754,66 +754,80 @@ function renderReceiptEdit() {
 
 function renderRegister() {
     return `
-        <div class="animate-reveal max-w-2xl mx-auto space-y-10">
+        <div class="animate-reveal max-w-4xl mx-auto space-y-10">
             <header class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight">Alta de Cliente</h1>
-                    <p class="text-gray-500 text-sm mt-1">Registro de nuevo protocolo de activo financiero.</p>
+                    <h1 class="text-3xl font-bold tracking-tight text-white">Alta de Cliente</h1>
+                    <p class="text-gray-500 text-sm mt-1">Soberanía de Activos Financieros</p>
                 </div>
-                <button class="text-gray-500 hover:text-white" onclick="window.app.navigate('dashboard')">
-                    <i data-lucide="x" class="w-6 h-6"></i>
+                <button class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center" onclick="window.app.navigate('dashboard')">
+                    <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
                 </button>
             </header>
 
-            <form id="loan-form" class="space-y-6" onsubmit="window.app.handleSaveLoan(event)">
-                <div class="exec-card space-y-5">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Identificación del Deudor</label>
-                        <input type="text" name="debtor" class="exec-input" placeholder="Nombre completo o razón social" required>
+            <form id="loan-form" class="grid grid-cols-12 gap-8" onsubmit="window.app.handleSaveLoan(event)">
+                <div class="col-span-12 lg:col-span-8 space-y-8">
+                    <div class="exec-card space-y-6">
+                        <div class="space-y-1">
+                            <label class="kpi-label">Nombre del Deudor / Marca</label>
+                            <input type="text" name="debtor" class="exec-input" placeholder="Identificación oficial" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="space-y-1">
+                                <label class="kpi-label">Capital Principal (Bs.)</label>
+                                <input type="number" name="amount" class="exec-input" placeholder="0.00" required>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="kpi-label">Interés Mensual (%)</label>
+                                <input type="number" name="interest" class="exec-input" value="10" required>
+                            </div>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Capital Principal (Bs.)</label>
-                            <input type="number" name="amount" class="exec-input" placeholder="0.00" required>
+
+                    <div class="exec-card space-y-6">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="space-y-1">
+                                <label class="kpi-label">Fecha de Apertura</label>
+                                <input type="date" name="start_date" class="exec-input" required>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="kpi-label">Fecha de Vencimiento</label>
+                                <input type="date" name="end_date" class="exec-input" required>
+                            </div>
                         </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Rendimiento Mensual (%)</label>
-                            <input type="number" name="interest" class="exec-input" placeholder="%" required>
-                        </div>
+                    </div>
+
+                    <div class="exec-card space-y-4">
+                        <label class="kpi-label">Garantía / Colateral</label>
+                        <textarea name="collateral" class="exec-input h-28 resize-none" placeholder="Descripción detallada de activos en garantía..."></textarea>
                     </div>
                 </div>
 
-                <div class="exec-card space-y-5">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Fecha de Inicio</label>
-                            <input type="date" name="start_date" class="exec-input" required>
+                <div class="col-span-12 lg:col-span-4 space-y-8">
+                    <div class="exec-card space-y-6">
+                        <label class="kpi-label">Estado de Protocolo (Resaltador)</label>
+                        <div class="grid grid-cols-1 gap-2 status-picker">
+                            <div class="p-3 rounded-lg border border-white/5 bg-white/5 cursor-pointer text-center text-[10px] font-bold uppercase tracking-widest hover:border-emerald-500/50 transition-all status-option active" onclick="window.app.updateStatus(this, 'Vigente')">Vigente</div>
+                            <div class="p-3 rounded-lg border border-white/5 bg-white/5 cursor-pointer text-center text-[10px] font-bold uppercase tracking-widest hover:border-amber-500/50 transition-all status-option" onclick="window.app.updateStatus(this, 'Mora')">Mora</div>
+                            <div class="p-3 rounded-lg border border-white/5 bg-white/5 cursor-pointer text-center text-[10px] font-bold uppercase tracking-widest hover:border-blue-500/50 transition-all status-option" onclick="window.app.updateStatus(this, 'Pagado')">Pagado</div>
                         </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Fecha de Liquidación</label>
-                            <input type="date" name="end_date" class="exec-input" required>
-                        </div>
+                        <input type="hidden" name="status" value="Vigente">
                     </div>
-                </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="exec-card space-y-4">
-                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Garantías y Avales</span>
-                        <input type="text" name="guarantor" class="exec-input" placeholder="Nombre del Garante">
-                        <textarea name="collateral" class="exec-input h-24" placeholder="Descripción de activos colaterales..."></textarea>
-                    </div>
-                    <div class="exec-card space-y-4">
-                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Evidencia Digital</span>
-                        <div class="border-2 border-dashed border-white/5 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-white/10 transition-all" onclick="document.getElementById('photo-input').click()">
-                            <i data-lucide="camera" class="w-8 h-8 text-gray-700 mb-2"></i>
-                            <span class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Subir Captura</span>
+                    <div class="exec-card space-y-6">
+                        <label class="kpi-label">Evidencia Digital</label>
+                        <div class="border-2 border-dashed border-white/10 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-amber-500/30 transition-all" onclick="document.getElementById('photo-input').click()">
+                            <i data-lucide="camera" class="w-8 h-8 text-gray-600 mb-2"></i>
+                            <span class="text-[9px] text-gray-600 font-bold uppercase">Cargar Captura</span>
                         </div>
                         <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="window.app.handlePhotoUpload(event)">
-                        <div id="photo-preview" class="grid grid-cols-3 gap-2 mt-2"></div>
+                        <div id="photo-preview" class="grid grid-cols-3 gap-2 mt-4"></div>
                     </div>
-                </div>
 
-                <button type="submit" class="exec-btn-primary w-full !py-5 text-sm uppercase tracking-widest font-black">Registrar Activo</button>
+                    <button type="submit" class="exec-btn-primary w-full !py-5 text-[11px] uppercase tracking-[0.2em] font-black">
+                        Ejecutar Protocolo
+                    </button>
+                </div>
             </form>
         </div>
     `;
@@ -2402,10 +2416,6 @@ const currencyMap = { 'USD': '$', 'BOB': 'Bs.', 'EUR': '€' };
 async function renderSovereignNexus() {
     const activeTab = state.nexusTab || 'dashboard';
     
-    // Handlers de Navegación Nexus
-    window.app.switchNexusTab = (tab) => { state.nexusTab = tab; render(); };
-    window.app.selectProject = (id) => { state.activeNexusProjectId = id; state.nexusTab = 'nexus'; render(); };
-    
     if (state.nexusProjects === null) {
         try {
             const { data: projs, error } = await sb.from('nexus_projects').select('*, nexus_deliverables(*)').order('name', { ascending: true });
@@ -2417,7 +2427,6 @@ async function renderSovereignNexus() {
     }
 
     const activeProject = state.nexusProjects.find(p => p.id === state.activeNexusProjectId);
-
     let totalPaid = 0; let totalPending = 0;
     state.nexusProjects.forEach(p => {
         (p.nexus_deliverables || []).forEach(d => {
@@ -2430,55 +2439,39 @@ async function renderSovereignNexus() {
         <div class="animate-reveal space-y-8">
             <header class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight text-white">Editor Pro <span class="text-gray-500">Nexus Suite</span></h1>
-                    <p class="text-gray-500 text-sm mt-1">Control de producción y activos de video.</p>
+                    <h1 class="text-3xl font-bold tracking-tight text-white">Editor Pro <span class="text-gray-600">Nexus</span></h1>
+                    <p class="text-gray-500 text-sm mt-1">Centro de mando de producción audiovisual.</p>
                 </div>
-                <div class="flex gap-2 bg-black/20 p-1 rounded-xl border border-white/5">
-                    <button onclick="window.app.switchNexusTab('dashboard')" class="px-4 py-2 text-[10px] font-bold uppercase rounded-lg transition-all ${activeTab === 'dashboard' ? 'bg-white/10 text-white shadow-xl' : 'text-gray-500 hover:text-white'}">Panel Control</button>
-                    <button onclick="window.app.switchNexusTab('nexus')" class="px-4 py-2 text-[10px] font-bold uppercase rounded-lg transition-all ${activeTab === 'nexus' ? 'bg-white/10 text-white shadow-xl' : 'text-gray-500 hover:text-white'}">Protocolos</button>
+                <div class="flex gap-2 bg-black/10 p-1 rounded-xl border border-white/5">
+                    <button onclick="window.app.switchNexusTab('dashboard')" class="px-4 py-2 text-[10px] font-bold uppercase rounded-lg transition-all ${activeTab === 'dashboard' ? 'bg-white/10 text-white' : 'text-gray-600'}">Escritorio</button>
+                    <button onclick="window.app.switchNexusTab('nexus')" class="px-4 py-2 text-[10px] font-bold uppercase rounded-lg transition-all ${activeTab === 'nexus' ? 'bg-white/10 text-white' : 'text-gray-600'}">Proyectos</button>
                 </div>
             </header>
 
             <main>
                 ${activeTab === 'dashboard' ? `
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div class="exec-card">
-                            <span class="kpi-label">Recaudación Nexus</span>
-                            <h2 class="kpi-value text-emerald-500">${formatCurrency(totalPaid)}</h2>
-                        </div>
-                        <div class="exec-card">
-                            <span class="kpi-label">Capital en Tránsito</span>
-                            <h2 class="kpi-value text-amber-500">${formatCurrency(totalPending)}</h2>
-                        </div>
+                        <div class="exec-card"><span class="kpi-label">Ingresos Nexus</span><h2 class="kpi-value text-emerald-500">${formatCurrency(totalPaid)}</h2></div>
+                        <div class="exec-card"><span class="kpi-label">Por Recaudar</span><h2 class="kpi-value text-amber-500">${formatCurrency(totalPending)}</h2></div>
                         <div class="exec-card col-span-2 flex items-center justify-between">
-                            <div>
-                                <span class="kpi-label">Proyectos Activos</span>
-                                <h2 class="kpi-value">${state.nexusProjects.length}</h2>
-                            </div>
-                            <button class="exec-btn-primary" onclick="window.app.openModal('modalProject')">
-                                <i data-lucide="plus" class="w-4 h-4"></i>
-                                <span>Nuevo Protocolo</span>
-                            </button>
+                            <div><span class="kpi-label">Protocolos Activos</span><h2 class="kpi-value">${state.nexusProjects.length}</h2></div>
+                            <button class="exec-btn-primary" onclick="window.app.openModal('modalProject')"><i data-lucide="plus" class="w-4 h-4"></i><span>Nuevo Proyecto</span></button>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
                         <div class="exec-card !p-0 overflow-hidden">
-                            <div class="p-6 border-b border-white/5 bg-white/[0.01]"><h3 class="text-sm font-bold">Listado de Operaciones</h3></div>
+                            <div class="p-6 border-b border-white/5 bg-white/[0.01]"><h3 class="text-sm font-bold">Monitor de Proyectos</h3></div>
                             <div class="divide-y divide-white/5">
                                 ${state.nexusProjects.map(p => `
                                     <div class="p-5 flex justify-between items-center hover:bg-white/[0.03] cursor-pointer" onclick="window.app.selectProject('${p.id}')">
-                                        <div class="flex items-center gap-4">
-                                            <div class="w-2 h-2 rounded-full bg-amber-500"></div>
-                                            <span class="text-xs font-bold uppercase">${p.name}</span>
-                                        </div>
+                                        <span class="text-xs font-bold uppercase">${p.name}</span>
                                         <i data-lucide="chevron-right" class="w-4 h-4 text-gray-700"></i>
                                     </div>
                                 `).join('')}
                             </div>
                         </div>
-                        <div class="exec-card flex flex-col items-center justify-center min-h-[300px]">
-                            <i data-lucide="monitor" class="w-12 h-12 text-gray-800 mb-4"></i>
-                            <p class="text-[10px] text-gray-600 font-bold uppercase tracking-[0.3em]">Ready for Render</p>
+                        <div class="exec-card flex items-center justify-center h-full min-h-[300px]">
+                            <p class="text-[9px] text-gray-700 font-bold uppercase tracking-[0.4em]">Ready for Production</p>
                         </div>
                     </div>
                 ` : `
@@ -2486,32 +2479,27 @@ async function renderSovereignNexus() {
                         <aside class="col-span-3 space-y-4">
                             <div class="exec-card !p-2">
                                 ${state.nexusProjects.map(p => `
-                                    <div onclick="window.app.selectProject('${p.id}')" 
-                                        class="p-4 rounded-lg cursor-pointer transition-all flex items-center justify-between ${state.activeNexusProjectId === p.id ? 'bg-white/5 text-white' : 'text-gray-500 hover:bg-white/[0.02]'}">
+                                    <div onclick="window.app.selectProject('${p.id}')" class="p-4 rounded-lg cursor-pointer transition-all ${state.activeNexusProjectId === p.id ? 'bg-white/5 text-white' : 'text-gray-600 hover:bg-white/[0.02]'}">
                                         <span class="text-[11px] font-bold uppercase">${p.name}</span>
-                                        ${state.activeNexusProjectId === p.id ? '<i data-lucide="check" class="w-3 h-3 text-amber-500"></i>' : ''}
                                     </div>
                                 `).join('')}
                             </div>
                         </aside>
                         <section class="col-span-9 space-y-8">
-                            ${!activeProject ? `<div class="h-64 flex flex-col items-center justify-center exec-card border-dashed"><p class="text-[10px] text-gray-700 uppercase tracking-widest">Seleccione Protocolo...</p></div>` : `
+                            ${!activeProject ? `<div class="h-64 flex items-center justify-center exec-card border-dashed"><p class="text-[10px] text-gray-700 font-bold uppercase tracking-widest">Seleccione Protocolo...</p></div>` : `
                                 <div class="exec-card flex justify-between items-center">
-                                    <div>
-                                        <p class="kpi-label text-amber-500">Gestión de Producción</p>
-                                        <h2 class="text-3xl font-black text-white uppercase">${activeProject.name}</h2>
-                                    </div>
+                                    <h2 class="text-3xl font-black text-white uppercase">${activeProject.name}</h2>
                                     <button onclick="window.app.openOperationModal()" class="exec-btn-primary"><i data-lucide="plus" class="w-4 h-4"></i><span>Añadir Item</span></button>
                                 </div>
                                 <div class="exec-card !p-0 overflow-hidden">
                                     <table class="pro-table">
-                                        <thead><tr><th>Item</th><th>Monto</th><th>Estado</th><th>Acción</th></tr></thead>
+                                        <thead><tr><th>Descripción</th><th>Monto</th><th>Estado</th><th>Acción</th></tr></thead>
                                         <tbody>
                                             ${(activeProject.nexus_deliverables || []).map(d => `
                                                 <tr class="hover:bg-white/[0.02]" onclick="window.app.openOperationModal('${d.id}')">
                                                     <td class="font-bold text-xs uppercase">${d.title}</td>
                                                     <td class="font-bold">${formatCurrency(d.price)}</td>
-                                                    <td><span class="status-pill ${d.status_paid === 'paid' ? 'status-paid' : 'status-pending'}">${d.status_paid === 'paid' ? 'Listo' : 'Pendiente'}</span></td>
+                                                    <td><span class="status-pill ${d.status_paid === 'paid' ? 'status-paid' : 'status-pending'}">${d.status_paid === 'paid' ? 'Liquidado' : 'Pendiente'}</span></td>
                                                     <td><i data-lucide="edit-3" class="w-4 h-4 text-gray-700"></i></td>
                                                 </tr>
                                             `).join('')}
@@ -2598,36 +2586,90 @@ async function handleSync() {
     }
 }
 
-// --- GLOBAL NEXUS COMMANDS ---
-window.app.openModal = (id) => { 
-    const m = document.getElementById(id);
-    if(m) m.style.display = 'flex'; 
-    if (window.lucide) window.lucide.createIcons();
+
+// --- RESTORED GLOBAL COMMANDS (v6.0 EXECUTIVE) ---
+window.app.updateStatus = (element, status) => {
+    const parent = element.closest('.status-picker');
+    parent.querySelectorAll('.status-option').forEach(opt => opt.classList.remove('active', 'border-emerald-500', 'border-amber-500', 'border-blue-500'));
+    element.classList.add('active');
+    if(status === 'Vigente') element.classList.add('border-emerald-500');
+    if(status === 'Mora') element.classList.add('border-amber-500');
+    if(status === 'Pagado') element.classList.add('border-blue-500');
+    parent.nextElementSibling.value = status;
 };
 
-window.app.closeModals = () => { 
-    document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); 
+window.app.openOperationModal = (delId = null) => {
+    const modalTitle = document.getElementById('del-modal-title');
+    const editor = document.getElementById('del-notes-editor');
+    const projects = state.nexusProjects || [];
+    const activeProject = projects.find(p => p.id === state.activeNexusProjectId);
+    if (!activeProject) return;
+
+    if (delId) {
+        const d = activeProject.nexus_deliverables.find(item => item.id === delId);
+        state.editingDeliverableId = delId;
+        modalTitle.innerText = "Editar Operación";
+        document.getElementById('del-title').value = d.title || '';
+        document.getElementById('del-price').value = d.price || '';
+        document.getElementById('del-status').value = d.status_paid || 'pending';
+        document.getElementById('del-link-empresa').value = d.link_empresa || '';
+        editor.innerHTML = d.notes_html || '';
+    } else {
+        state.editingDeliverableId = null;
+        modalTitle.innerText = "Nueva Operación";
+        document.getElementById('del-title').value = '';
+        document.getElementById('del-price').value = '';
+        document.getElementById('del-status').value = 'pending';
+        document.getElementById('del-link-empresa').value = '';
+        editor.innerHTML = '';
+    }
+    window.app.openModal('modalOperation');
 };
 
-window.app.createProject = async () => {
-    const name = document.getElementById('clientName').value;
-    const desc = document.getElementById('projectDesc').value;
-    const drive = document.getElementById('driveUrl').value;
-    const meet = document.getElementById('meetUrl').value;
-    const date = document.getElementById('endDate').value;
-    if (!name) { alert("Por favor ingresa un nombre."); return; }
-
+window.app.saveDeliverable = async () => {
+    const projects = state.nexusProjects || [];
+    const activeProject = projects.find(p => p.id === state.activeNexusProjectId);
+    if (!activeProject) return;
+    
+    const payload = {
+        project_id: activeProject.id,
+        title: document.getElementById('del-title').value,
+        price: Number(document.getElementById('del-price').value),
+        status_paid: document.getElementById('del-status').value,
+        link_empresa: document.getElementById('del-link-empresa').value,
+        notes_html: document.getElementById('del-notes-editor').innerHTML
+    };
     try {
-        const { data, error } = await sb.from('nexus_projects').insert([{ 
-            name: name, description: desc || '', drive_url: drive || '', 
-            meet_url: meet || '', delivery_date: date || null, currency: 'BOB', price: 0
-        }]).select().single();
-        if (error) throw error;
-        
-        state.nexusProjects = null; // Forzar recarga
+        if (state.editingDeliverableId) await sb.from('nexus_deliverables').update(payload).eq('id', state.editingDeliverableId);
+        else await sb.from('nexus_deliverables').insert([payload]);
+        state.nexusProjects = null;
         window.app.closeModals();
-        state.activeNexusProjectId = data.id;
-        state.nexusTab = 'nexus';
-        loadState(); // Usar loadState en lugar de init
-    } catch (e) { alert("Error en el comando: " + e.message); }
+        loadState();
+    } catch (e) { alert("Error: " + e.message); }
+};
+
+window.app.handlePhotoUpload = (event) => {
+    const files = event.target.files;
+    const preview = document.getElementById('photo-preview');
+    if (!preview) return;
+    for (let file of files) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const div = document.createElement('div');
+            div.className = 'relative group';
+            div.innerHTML = `<img src="${e.target.result}" class="w-full h-20 object-cover rounded-lg border border-white/10">`;
+            preview.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+window.app.navigate = (view, id = null) => {
+    state.currentView = view;
+    if (id) state.selectedLoanId = id;
+    render();
+};
+
+window.app.handleSync = async () => {
+    await loadState();
 };

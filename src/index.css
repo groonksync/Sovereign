@@ -1,7 +1,7 @@
 :root {
-    --bg-main: #212124; /* Gris Estudio (No negro) */
-    --bg-card: #2B2B30; /* Gris Complementario para cuadros */
-    --bg-input: #323238;
+    --bg-main: #232328; /* Gris Oscuro Complementario */
+    --bg-card: #2D2D33; /* Gris para Bloques */
+    --bg-input: #35353C;
     --border: #3F3F46;
     --text-main: #E1E1E6;
     --text-dim: #A1A1A6;
@@ -28,10 +28,9 @@ body {
     min-height: 100vh;
 }
 
-/* SIDEBAR REFINADA */
 .sidebar {
     width: 260px;
-    background: #252529; /* Gris Sidebar */
+    background: #27272C; /* Gris Sidebar */
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
@@ -77,17 +76,9 @@ body {
     margin-bottom: 6px;
 }
 
-.nav-link:hover {
-    background: rgba(255,255,255,0.05);
-    color: #fff;
-}
+.nav-link:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.nav-link.active { background: var(--accent-dim); color: var(--accent); }
 
-.nav-link.active {
-    background: var(--accent-dim);
-    color: var(--accent);
-}
-
-/* CONTENT AREA */
 .main-content {
     flex: 1;
     margin-left: 260px;
@@ -145,7 +136,6 @@ body {
     gap: 8px;
 }
 
-/* TABLES & LISTS */
 .pro-table {
     width: 100%;
     border-collapse: collapse;
@@ -166,7 +156,31 @@ body {
     border-bottom: 1px solid var(--border);
 }
 
-/* RESPONSIVE */
+.status-pill {
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.status-paid { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+.status-pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+
+.status-picker .status-option.active.border-emerald-500 { border-color: #10b981 !important; color: #10b981; }
+.status-picker .status-option.active.border-amber-500 { border-color: #f59e0b !important; color: #f59e0b; }
+.status-picker .status-option.active.border-blue-500 { border-color: #3b82f6 !important; color: #3b82f6; }
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
 @media (max-width: 1024px) {
     .sidebar { width: 80px; }
     .sidebar span { display: none; }
