@@ -277,96 +277,62 @@ function renderDashboard() {
             .filter(inst => inst.paid)
             .reduce((sum, inst) => sum + parseFloat(inst.amount), 0);
         return acc + paidInterest;
-    }, 0);
-
-    const manualDebts = state.debts;
     const protocolInterests = extractProtocolInterests();
-    const combinedDebts = [...manualDebts, ...protocolInterests];
-    const totalRecaudacionProyectada = combinedDebts.reduce((acc, d) => {
+    const totalRecaudacionProyectada = [...state.debts, ...protocolInterests].reduce((acc, d) => {
         if (d.isProtocol) return acc + parseFloat(d.amount);
         const rate = parseFloat(d.interest || 0) / 100;
         return acc + (parseFloat(d.amount || 0) * rate);
     }, 0);
 
     return `
-        <div class="sv-nexus-elite flex flex-col p-8 space-y-10 pb-32">
-            <header class="flex justify-between items-center">
-                <div class="user-info">
-                    <div class="avatar bg-emerald-500 text-black font-black">AS</div>
-                    <div class="greeting">
-                        <span class="text-[10px] font-black text-emerald-500 tracking-[0.3em] uppercase">Sovereign Protocol Active</span>
-                        <h1 class="text-3xl font-black text-white uppercase tracking-tighter">Arquitecto Soberano</h1>
-                    </div>
+        <div class="sv-nexus-elite flex flex-col space-y-8 pb-40">
+            <header class="flex justify-between items-center py-4">
+                <div>
+                    <p class="label-tiny text-emerald-500">Sovereign Protocol Active</p>
+                    <h1 class="text-4xl text-white">Escritorio</h1>
                 </div>
-                <div class="header-actions">
-                    <button class="btn-pro ghost py-2" onclick="window.app.toggleTheme()">
-                        ${state.isDarkMode ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>'}
-                    </button>
-                </div>
+                <button class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10" onclick="window.app.toggleTheme()">
+                    <i data-lucide="${state.isDarkMode ? 'sun' : 'moon'}" class="w-4 h-4 text-gray-400"></i>
+                </button>
             </header>
 
-            <section class="card-nexus p-16 text-center">
-                <p class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-4">Capital Total en Protocolo</p>
-                <h2 class="mega-kpi-main">${formatCurrency(totalAssets)}</h2>
-                
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 mt-10">
-                    <div class="text-center">
-                        <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Recaudación Mes</p>
-                        <p class="text-xl font-black text-emerald-500">${formatCurrency(totalRecaudacionProyectada)}</p>
-                    </div>
-                    <div class="text-center border-l border-white/10">
-                        <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Interés Acumulado</p>
-                        <p class="text-xl font-black text-white">${formatCurrency(totalInterestEarned)}</p>
-                    </div>
-                    <div class="text-center border-l border-white/10">
-                        <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Contratos</p>
-                        <p class="text-xl font-black text-white">${activeContracts}</p>
-                    </div>
-                    <div class="text-center border-l border-white/10">
-                        <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Tasa Media</p>
-                        <p class="text-xl font-black text-amber-500">${avgInterest}%</p>
+            <section class="card-highlight relative overflow-hidden">
+                <div class="relative z-10">
+                    <p class="label-tiny">Capital Total Protocolo</p>
+                    <h2 class="text-6xl my-2">${formatCurrency(totalAssets)}</h2>
+                    <div class="flex gap-6 mt-6">
+                        <div>
+                            <p class="label-tiny">Recaudación Mes</p>
+                            <p class="text-lg font-black text-blue-600">${formatCurrency(totalRecaudacionProyectada)}</p>
+                        </div>
+                        <div class="border-l border-black/10 pl-6">
+                            <p class="label-tiny">Contratos</p>
+                            <p class="text-lg font-black">${activeContracts}</p>
+                        </div>
                     </div>
                 </div>
+                <i data-lucide="activity" class="absolute -right-10 -bottom-10 w-40 h-40 opacity-5"></i>
             </section>
 
             <main class="space-y-6">
-                <div class="flex justify-between items-center bg-white/[0.01] p-4 rounded-2xl border border-white/5">
-                    <h4 class="text-xs font-black text-emerald-500 uppercase tracking-widest ml-2">Monitor de Activos</h4>
-                    <button class="btn-pro py-2 text-[10px]" onclick="window.app.navigate('register')">+ Nuevo Contrato</button>
+                <div class="flex justify-between items-center px-2">
+                    <h4 class="label-tiny">Monitor de Activos</h4>
+                    <button class="label-tiny text-blue-500" onclick="window.app.navigate('register')">+ Nuevo Contrato</button>
                 </div>
-                
                 <div class="nexus-grid">
                     ${state.loans.map(loan => {
-                        const totalInst = (loan.installments || []).length;
                         const paidInst = (loan.installments || []).filter(i => i.paid).length;
-                        const progress = totalInst > 0 ? Math.round((paidInst / totalInst) * 100) : 0;
-                        
+                        const progress = (loan.installments || []).length > 0 ? Math.round((paidInst / loan.installments.length) * 100) : 0;
                         return `
-                        <div class="card-nexus p-8 hover:bg-white/[0.02] cursor-pointer border-l-4 border-l-emerald-500 transition-all" onclick="window.app.navigate('details', '${loan.id}')">
+                        <div class="card-nexus hover:border-blue-500/30 transition-all cursor-pointer" onclick="window.app.navigate('details', '${loan.id}')">
                             <div class="flex justify-between items-start mb-6">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-white font-black text-lg">
-                                        ${loan.debtor.substring(0, 2).toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <h3 class="text-xl font-black text-white uppercase">${loan.debtor}</h3>
-                                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Contrato Activo • ID: ${loan.id.substring(0,6)}</p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <span class="text-2xl font-black text-white">${formatCurrency(loan.amount)}</span>
-                                    <p class="text-[9px] text-emerald-500 font-black uppercase tracking-widest">${loan.interest}% Tasa</p>
-                                </div>
+                                <div><h3 class="text-2xl text-white truncate max-w-[150px]">${loan.debtor}</h3><p class="label-tiny mt-1">ID: ${loan.id.substring(0,6)}</p></div>
+                                <div class="text-right"><p class="text-xl text-white font-black">${formatCurrency(loan.amount)}</p><p class="label-tiny text-emerald-500">${loan.interest}% Int.</p></div>
                             </div>
-                            <div class="pipeline-bar">
-                                <div class="pipeline-segment bg-emerald-500" style="width: ${progress}%;"></div>
-                            </div>
-                            <div class="flex justify-between mt-3 text-[9px] font-black uppercase">
-                                <span class="text-gray-500">${progress}% Reembolsado</span>
-                                <span class="${progress === 100 ? 'text-emerald-500' : 'text-amber-500'}">${progress === 100 ? 'Completado' : 'En Proceso'}</span>
-                            </div>
-                        </div>
-                    `}).join('')}
+                            <div class="h-1 bg-white/5 rounded-full overflow-hidden"><div class="h-full bg-blue-500" style="width: ${progress}%;"></div></div>
+                            <div class="flex justify-between mt-3"><span class="label-tiny">${progress}% Pagado</span><span class="label-tiny ${progress === 100 ? 'text-emerald-500' : 'text-amber-500'}">${progress === 100 ? 'Finalizado' : 'Activo'}</span></div>
+                        </div>`;
+                    }).join('')}
                 </div>
             </main>
         </div>
@@ -379,87 +345,47 @@ function renderStudioSync() {
     const totalPendiente = pendingReceipts.reduce((acc, r) => acc + parseFloat(r.totalAmount || 0), 0);
 
     return `
-        <div class="sv-nexus-elite flex flex-col p-8 space-y-10 pb-32">
-            <header class="flex justify-between items-center">
-                <div class="greeting">
-                    <span class="text-[10px] font-black text-blue-500 tracking-[0.3em] uppercase">Billing Protocol</span>
-                    <h1 class="text-3xl font-black text-white uppercase tracking-tighter">Clientes de Video</h1>
-                </div>
-                <div class="flex gap-4">
-                    <button id="btn-google-auth" class="btn-pro ghost py-2 relative" onclick="window.app.handleGoogleAuth()" title="Google Drive Sync">
-                        <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png" class="w-4 h-4">
-                        <div id="google-status-dot" class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-black" style="background: ${window.googleAccessToken ? '#4285F4' : '#4a4a4a'}"></div>
-                    </button>
-                    <button class="btn-pro ghost py-2" onclick="window.app.exportDriveBackup()" title="Backup Cloud">
-                        <i data-lucide="save" class="w-4 h-4"></i>
-                    </button>
-                    <button class="btn-pro emerald py-2" onclick="window.app.navigate('receiptRegister')">+ Nuevo Recibo</button>
-                </div>
+        <div class="sv-nexus-elite flex flex-col space-y-8 pb-40">
+            <header class="flex justify-between items-center py-4">
+                <div><p class="label-tiny text-blue-500">Billing Protocol</p><h1 class="text-4xl text-white">Clientes</h1></div>
+                <button class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white" onclick="window.app.navigate('receiptRegister')"><i data-lucide="plus" class="w-6 h-6"></i></button>
             </header>
 
-            <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="card-nexus p-10 text-center border-blue-500/20">
-                    <p class="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-2">Total Facturado Bruto</p>
-                    <h2 class="text-4xl font-black text-white">${formatCurrency(totalFacturado)}</h2>
-                </div>
-                <div class="card-nexus p-10 text-center border-amber-500/20 bg-amber-500/5">
-                    <p class="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-2">Cuentas por Cobrar</p>
-                    <h2 class="text-4xl font-black text-amber-500">${formatCurrency(totalPendiente)}</h2>
-                </div>
+            <section class="card-highlight">
+                <p class="label-tiny">Total Facturado Bruto</p>
+                <h2 class="text-6xl my-2 text-blue-600">${formatCurrency(totalFacturado)}</h2>
+                <div class="flex gap-4 mt-4"><span class="label-tiny text-amber-600 bg-amber-500/10 px-3 py-1 rounded-full">Pendiente: ${formatCurrency(totalPendiente)}</span></div>
             </section>
 
-            <main class="space-y-10">
+            <main class="space-y-6">
                 ${pendingReceipts.length > 0 ? `
-                    <section class="space-y-6">
-                        <h4 class="text-xs font-black text-amber-500 uppercase tracking-widest ml-2 flex items-center gap-2">
-                            <i data-lucide="clock" class="w-3 h-3"></i> Saldos Pendientes de Clientes
-                        </h4>
-                        <div class="nexus-grid">
-                            ${pendingReceipts.map(r => `
-                                <div class="card-nexus p-6 flex justify-between items-center border-l-4 border-l-amber-500 bg-amber-500/5 hover:bg-amber-500/10 cursor-pointer group transition-all" onclick="window.app.navigate('receiptDetail', '${r.id}')">
-                                    <div class="flex items-center gap-5">
-                                        <div class="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500 font-black group-hover:bg-amber-500 group-hover:text-black transition-all">${r.clientName.substring(0, 2).toUpperCase()}</div>
-                                        <div>
-                                            <h3 class="text-lg font-black text-white uppercase">${r.clientName}</h3>
-                                            <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${r.brandName || 'Video Edition'} • Pendiente</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <span class="text-xl font-black text-amber-500">${formatCurrency(r.totalAmount)}</span>
-                                        <p class="text-[9px] font-black uppercase text-gray-600">${r.receiptId}</p>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </section>
-                ` : ''}
-
-                <section class="space-y-6">
-                    <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest ml-2 flex items-center gap-2">
-                        <i data-lucide="check-circle" class="w-3 h-3"></i> Historial de Cobros Finalizados
-                    </h4>
+                <div class="space-y-4">
+                    <h4 class="label-tiny px-2 text-amber-500">Saldos Pendientes</h4>
                     <div class="nexus-grid">
-                        ${state.receipts.filter(r => r.status !== 'Pendiente').length === 0 ? `
-                            <div class="col-span-full py-10 text-center opacity-20"><p class="font-black uppercase tracking-widest text-[10px]">Sin cobros finalizados</p></div>
-                        ` : state.receipts.filter(r => r.status !== 'Pendiente').map(r => `
-                            <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer group transition-all" onclick="window.app.navigate('receiptDetail', '${r.id}')">
-                                <div class="flex items-center gap-5">
-                                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-black transition-all">
-                                        <i data-lucide="file-text"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="text-lg font-black text-white uppercase">${r.clientName}</h3>
-                                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${r.brandName || 'Edición Pro'} • ${formatDate(r.date)}</p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <span class="text-xl font-black text-white">${formatCurrency(r.totalAmount, r.totals?.USD > 0 ? '$' : (r.totals?.EUR > 0 ? '€' : 'Bs.'))}</span>
-                                    <p class="text-[9px] font-black uppercase text-blue-500 tracking-tighter">${r.receiptId}</p>
-                                </div>
+                        ${pendingReceipts.map(r => `
+                        <div class="card-nexus flex justify-between items-center hover:border-amber-500/30 cursor-pointer group transition-all" onclick="window.app.navigate('receiptDetail', '${r.id}')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-black transition-all"><i data-lucide="clock" class="w-5 h-5"></i></div>
+                                <div><h3 class="text-xl text-white truncate max-w-[140px]">${r.clientName}</h3><p class="label-tiny">ID: ${r.receiptId}</p></div>
                             </div>
-                        `).join('')}
+                            <div class="text-right"><p class="text-xl text-amber-500 font-black">${formatCurrency(r.totalAmount)}</p><p class="label-tiny">Pendiente</p></div>
+                        </div>`).join('')}
                     </div>
-                </section>
+                </div>` : ''}
+
+                <div class="space-y-4">
+                    <h4 class="label-tiny px-2">Historial de Cobros</h4>
+                    <div class="nexus-grid">
+                        ${state.receipts.filter(r => r.status !== 'Pendiente').map(r => `
+                        <div class="card-nexus flex justify-between items-center hover:border-blue-500/30 cursor-pointer group transition-all" onclick="window.app.navigate('receiptDetail', '${r.id}')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-black transition-all"><i data-lucide="check-circle" class="w-5 h-5"></i></div>
+                                <div><h3 class="text-xl text-white truncate max-w-[140px]">${r.clientName}</h3><p class="label-tiny">${r.brandName || 'Edición Pro'}</p></div>
+                            </div>
+                            <div class="text-right"><p class="text-xl text-white font-black">${formatCurrency(r.totalAmount)}</p><p class="label-tiny">Pagado</p></div>
+                        </div>`).join('')}
+                    </div>
+                </div>
             </main>
         </div>
     `;
@@ -1051,13 +977,12 @@ function renderTabBar() {
     ];
 
     return `
-        <nav class="fixed bottom-0 left-0 right-0 h-20 bg-black/80 backdrop-blur-3xl border-t border-white/5 px-6 flex items-center justify-around z-50">
+        <nav class="tab-bar-nexus">
             ${tabs.map(tab => `
                 <button onclick="window.app.navigate('${tab.id}')" 
-                    class="flex flex-col items-center gap-1 transition-all duration-300 ${state.currentView === tab.id ? 'text-emerald-500' : 'text-gray-500 hover:text-white'}">
-                    <i data-lucide="${tab.icon}" class="w-5 h-5 ${state.currentView === tab.id ? 'fill-emerald-500/20' : ''}"></i>
-                    <span class="text-[9px] font-black uppercase tracking-widest">${tab.label}</span>
-                    ${state.currentView === tab.id ? '<div class="w-1 h-1 bg-emerald-500 rounded-full mt-1"></div>' : ''}
+                    class="tab-item ${state.currentView === tab.id ? 'active' : ''}">
+                    <i data-lucide="${tab.icon}" class="${state.currentView === tab.id ? 'text-blue-500' : 'text-gray-500'}"></i>
+                    <span>${tab.label}</span>
                 </button>
             `).join('')}
         </nav>
@@ -1067,43 +992,42 @@ function renderTabBar() {
 function renderExpenses() {
     const totalExpenses = state.expenses.reduce((acc, exp) => acc + parseFloat(exp.amount || 0), 0);
     return `
-        <div class="sv-nexus-elite flex flex-col p-8 space-y-10 pb-32">
-            <header class="flex justify-between items-center">
-                <div class="greeting">
-                    <span class="text-[10px] font-black text-amber-500 tracking-[0.3em] uppercase">Gestión de Salidas</span>
-                    <h1 class="text-3xl font-black text-white uppercase tracking-tighter">Mis Gastos</h1>
+        <div class="sv-nexus-elite flex flex-col space-y-8 pb-40">
+            <header class="flex justify-between items-center py-4">
+                <div>
+                    <p class="label-tiny text-amber-500">Gestión de Salidas</p>
+                    <h1 class="text-4xl text-white">Gastos</h1>
                 </div>
-                <button class="btn-pro amber py-2" onclick="window.app.navigate('expenseRegister')">+ Nuevo Compromiso</button>
+                <button class="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center text-black" onclick="window.app.navigate('expenseRegister')">
+                    <i data-lucide="plus" class="w-6 h-6"></i>
+                </button>
             </header>
 
-            <section class="card-nexus p-16 text-center border-amber-500/20">
-                <p class="text-[11px] font-black text-amber-500 uppercase tracking-[0.4em] mb-4">Total Egresos Mensual</p>
-                <h2 class="mega-kpi-main" style="background: linear-gradient(180deg, #fff 30%, #f59e0b 100%); -webkit-background-clip: text;">${formatCurrency(totalExpenses)}</h2>
+            <section class="card-highlight">
+                <p class="label-tiny">Total Egresos Mensual</p>
+                <h2 class="text-6xl my-2 text-amber-600">${formatCurrency(totalExpenses)}</h2>
+                <p class="label-tiny mt-4">Sincronización Cloud Protocol</p>
             </section>
 
             <main class="space-y-6">
-                <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest ml-2 flex items-center gap-2">
-                    <i data-lucide="calendar" class="w-3 h-3"></i> Compromisos Fijos y Variables
-                </h4>
+                <h4 class="label-tiny px-2">Compromisos Fijos y Variables</h4>
                 <div class="nexus-grid">
                     ${state.expenses.length === 0 ? `
-                        <div class="col-span-full py-20 text-center opacity-20"><p class="font-black uppercase tracking-widest text-xs">Sin gastos registrados</p></div>
+                        <div class="col-span-full py-20 text-center opacity-20"><p class="label-tiny">Sin gastos registrados</p></div>
                     ` : state.expenses.map(exp => `
-                        <div class="card-nexus p-8 hover:bg-white/[0.02] cursor-pointer border-l-4 border-l-amber-500 group transition-all" onclick="window.app.navigate('expenseDetail', '${exp.id}')">
-                            <div class="flex justify-between items-start">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-black transition-all">
-                                        <i data-lucide="shopping-cart"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="text-xl font-black text-white uppercase">${exp.debtor}</h3>
-                                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${exp.category || 'General'} • Día ${new Date(exp.payDate).getDate()}</p>
-                                    </div>
+                        <div class="card-nexus flex justify-between items-center hover:border-amber-500/30 cursor-pointer group transition-all" onclick="window.app.navigate('expenseDetail', '${exp.id}')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-black transition-all">
+                                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
                                 </div>
-                                <div class="text-right">
-                                    <span class="text-2xl font-black text-white">${formatCurrency(exp.amount)}</span>
-                                    <p class="text-[9px] font-black uppercase text-amber-500">Pendiente</p>
+                                <div>
+                                    <h3 class="text-xl text-white truncate max-w-[140px]">${exp.debtor}</h3>
+                                    <p class="label-tiny">${exp.category || 'General'} • Día ${new Date(exp.payDate).getDate()}</p>
                                 </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl text-white font-black">${formatCurrency(exp.amount)}</p>
+                                <p class="label-tiny text-amber-500">Pendiente</p>
                             </div>
                         </div>
                     `).join('')}
@@ -1360,129 +1284,43 @@ function renderDebtDetail() {
 }
 
 function renderDebts() {
-    try {
-        const manualDebts = state.debts || [];
-        const protocolInterests = extractProtocolInterests() || [];
-        const combinedDebts = [...manualDebts, ...protocolInterests];
-        
-        // Alertas Proactivas (2 días) - Refined logic
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        
-        const upcoming = combinedDebts.filter(d => {
-            if (!d.start_date) return false;
-            const sDate = new Date(d.start_date);
-            if (isNaN(sDate)) return false;
-            
-            const startDay = sDate.getDate();
-            const collectionDate = new Date(today.getFullYear(), today.getMonth(), startDay);
-            const diffTime = collectionDate - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            return diffDays >= 0 && diffDays <= 2;
-        });
+    const combinedDebts = [...(state.debts || []), ...(extractProtocolInterests() || [])];
+    const totalMonthlyInterest = combinedDebts.reduce((acc, d) => {
+        if (d.isProtocol) return acc + parseFloat(d.amount || 0);
+        const rate = parseFloat(d.interest || 0) / 100;
+        return acc + (parseFloat(d.amount || 0) * rate);
+    }, 0);
 
-        const totalMonthlyInterest = combinedDebts.reduce((acc, d) => {
-            if (d.isProtocol) return acc + parseFloat(d.amount || 0);
-            const rate = parseFloat(d.interest || 0) / 100;
-            return acc + (parseFloat(d.amount || 0) * rate);
-        }, 0);
+    return `
+        <div class="sv-nexus-elite flex flex-col space-y-8 pb-40">
+            <header class="flex justify-between items-center py-4">
+                <div><p class="label-tiny text-blue-500">Credit Protocol</p><h1 class="text-4xl text-white">Deudores</h1></div>
+                <button class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white" onclick="window.app.navigate('debtRegister')"><i data-lucide="plus" class="w-6 h-6"></i></button>
+            </header>
 
-        const totalManualCapital = manualDebts.reduce((acc, d) => acc + parseFloat(d.amount || 0), 0);
+            <section class="card-highlight">
+                <p class="label-tiny">Recaudación Proyectada Mes</p>
+                <h2 class="text-6xl my-2 text-blue-600">${formatCurrency(totalMonthlyInterest)}</h2>
+                <p class="label-tiny mt-4">Protocolo de Cobro Activo</p>
+            </section>
 
-        return `
-            <div class="sv-nexus-elite flex flex-col p-8 space-y-10 pb-32">
-                <header class="flex justify-between items-center">
-                    <div class="greeting">
-                        <span class="text-[10px] font-black text-emerald-500 tracking-[0.3em] uppercase">Collection Protocol</span>
-                        <h1 class="text-3xl font-black text-white uppercase tracking-tighter">Control de Deudores</h1>
+            <main class="space-y-8">
+                <div class="space-y-4">
+                    <h4 class="label-tiny px-2 text-blue-500">Cartera Global</h4>
+                    <div class="nexus-grid">
+                        ${combinedDebts.map(debt => `
+                        <div class="card-nexus flex justify-between items-center hover:border-blue-500/30 cursor-pointer group transition-all" onclick="${debt.isProtocol ? `window.app.navigate('details', '${debt.originalLoanId}')` : `window.app.navigate('debtDetail', '${debt.id}')`}">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white group-hover:bg-blue-500 transition-all"><i data-lucide="${debt.isProtocol ? 'layers' : 'user'}" class="w-5 h-5"></i></div>
+                                <div><h3 class="text-xl text-white truncate max-w-[140px]">${debt.debtor}</h3><p class="label-tiny">${debt.isProtocol ? 'Nexus Contract' : 'Préstamo Directo'}</p></div>
+                            </div>
+                            <div class="text-right"><p class="text-xl text-white font-black">${formatCurrency(debt.amount)}</p><p class="label-tiny">${debt.interest || 0}% Int.</p></div>
+                        </div>`).join('')}
                     </div>
-                    <button class="btn-pro emerald py-2" onclick="window.app.navigate('debtRegister')">+ Nueva Deuda</button>
-                </header>
-
-                <section class="card-nexus p-16 text-center">
-                    <p class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-4">Intereses a Recaudar</p>
-                    <h2 class="mega-kpi-main">${formatCurrency(totalMonthlyInterest)}</h2>
-                    <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mt-4">Capital en Riesgo: ${formatCurrency(totalManualCapital)}</p>
-                </section>
-
-                ${upcoming.length > 0 ? `
-                    <section class="space-y-4">
-                        <h4 class="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] ml-2">⚠️ Alertas de Cobro Inmediato</h4>
-                        <div class="grid grid-cols-1 gap-3">
-                            ${upcoming.map(d => {
-                                const sDate = new Date(d.start_date);
-                                const collectionDate = new Date(today.getFullYear(), today.getMonth(), sDate.getDate());
-                                const dDays = Math.ceil((collectionDate - today) / (1000 * 60 * 60 * 24));
-                                return `
-                                <div class="card-nexus p-4 border-amber-500/30 bg-amber-500/5 flex justify-between items-center animate-pulse">
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-2 h-2 bg-amber-500 rounded-full"></div>
-                                        <p class="text-xs font-black text-white uppercase">${d.debtor || 'Sin Nombre'} <span class="text-gray-500 ml-2">Vence en ${dDays} días</span></p>
-                                    </div>
-                                    <button class="text-[9px] font-black text-amber-500 uppercase tracking-widest border border-amber-500/20 px-3 py-1 rounded-lg" onclick="${d.isProtocol ? `window.app.navigate('details', '${d.originalLoanId}')` : `window.app.navigate('debtDetail', '${d.id}')`}">Gestionar</button>
-                                </div>
-                            `}).join('')}
-                        </div>
-                    </section>
-                ` : ''}
-
-                <main class="space-y-10">
-                    <!-- PROTOCOLO NEXUS -->
-                    <section class="space-y-6">
-                        <h4 class="text-xs font-black text-blue-500 uppercase tracking-widest ml-2 flex items-center gap-2">
-                            <i data-lucide="layers" class="w-3 h-3"></i> Intereses Protocolo Nexus
-                        </h4>
-                        <div class="nexus-grid">
-                            ${combinedDebts.filter(d => d.isProtocol).map(debt => `
-                                <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer border-l-4 border-l-blue-500 group transition-all" 
-                                     onclick="window.app.navigate('details', '${debt.originalLoanId}')">
-                                    <div class="flex items-center gap-5">
-                                        <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 font-black group-hover:bg-blue-500 group-hover:text-black transition-all">${(debt.debtor || '??').substring(0, 2).toUpperCase()}</div>
-                                        <div>
-                                            <h3 class="text-lg font-black text-white uppercase">${debt.debtor || 'Sin Nombre'}</h3>
-                                            <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Contrato Nexus • ${formatDate(debt.start_date)}</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <span class="text-xl font-black text-white">${formatCurrency(debt.amount)}</span>
-                                        <p class="text-[9px] font-black uppercase text-blue-500">Recurrente</p>
-                                    </div>
-                                </div>
-                            `).join('') || '<p class="col-span-full text-center py-10 opacity-20 text-[10px] font-black uppercase tracking-widest">Sin intereses de protocolo</p>'}
-                        </div>
-                    </section>
-
-                    <!-- CARTERA PERSONAL -->
-                    <section class="space-y-6">
-                        <h4 class="text-xs font-black text-emerald-500 uppercase tracking-widest ml-2 flex items-center gap-2">
-                            <i data-lucide="user" class="w-3 h-3"></i> Cartera de Deudores Personal
-                        </h4>
-                        <div class="nexus-grid">
-                            ${combinedDebts.filter(d => !d.isProtocol).map(debt => `
-                                <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer border-l-4 border-l-emerald-500 group transition-all" 
-                                     onclick="window.app.navigate('debtDetail', '${debt.id}')">
-                                    <div class="flex items-center gap-5">
-                                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black group-hover:bg-emerald-500 group-hover:text-black transition-all">${(debt.debtor || '??').substring(0, 2).toUpperCase()}</div>
-                                        <div>
-                                            <h3 class="text-lg font-black text-white uppercase">${debt.debtor || 'Sin Nombre'}</h3>
-                                            <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Préstamo Directo • ${formatDate(debt.start_date)}</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <span class="text-xl font-black text-white">${formatCurrency(debt.amount)}</span>
-                                        <p class="text-[9px] font-black uppercase text-emerald-500">${debt.interest || 0}% Int. Mensual</p>
-                                    </div>
-                                </div>
-                            `).join('') || '<p class="col-span-full text-center py-10 opacity-20 text-[10px] font-black uppercase tracking-widest">Sin deudores personales</p>'}
-                        </div>
-                    </section>
-                </main>
-            </div>
-        `;
-    } catch (err) {
-        console.error("Debts Render Crash:", err);
-        return `<div class="p-20 text-center"><p class="text-amber-500 font-black">Error en el protocolo de deudores. Reiniciando...</p></div>`;
-    }
+                </div>
+            </main>
+        </div>
+    `;
 }
 
 
@@ -2733,74 +2571,62 @@ async function renderSovereignNexus() {
 
     // --- HTML RENDER DNA ---
     return `
-    <div class="sv-nexus-elite flex flex-col overflow-hidden h-screen w-full">
-        <!-- NAVEGACIÓN -->
-        <nav class="top-nav">
-            <div class="flex items-center gap-10">
-                <h1 class="text-xl font-black tracking-tighter text-white">SOVEREIGN</h1>
-                <div class="flex gap-1">
-                    <button onclick="window.app.switchNexusTab('dashboard')" class="nav-link ${activeTab === 'dashboard' ? 'active' : ''}"><i data-lucide="layout"></i> Escritorio</button>
-                    <button onclick="window.app.switchNexusTab('nexus')" class="nav-link ${activeTab === 'nexus' ? 'active' : ''}"><i data-lucide="activity"></i> Proyectos</button>
-                    <button onclick="window.app.switchNexusTab('cloud')" class="nav-link ${activeTab === 'cloud' ? 'active' : ''}"><i data-lucide="hard-drive"></i> Cloud</button>
-                    <button onclick="window.app.switchNexusTab('finance')" class="nav-link ${activeTab === 'finance' ? 'active' : ''}"><i data-lucide="bar-chart-3"></i> Finanzas</button>
+    <div class="sv-nexus-elite flex flex-col h-screen w-full bg-black">
+        <nav class="flex items-center justify-between p-6 border-b border-white/5">
+            <div class="flex items-center gap-8">
+                <h1 class="text-2xl text-white">Nexus Suite</h1>
+                <div class="flex gap-1 bg-white/5 p-1 rounded-full">
+                    <button onclick="window.app.switchNexusTab('dashboard')" class="px-4 py-2 rounded-full text-[10px] font-black uppercase transition-all ${activeTab === 'dashboard' ? 'bg-white text-black' : 'text-gray-500'}">Escritorio</button>
+                    <button onclick="window.app.switchNexusTab('nexus')" class="px-4 py-2 rounded-full text-[10px] font-black uppercase transition-all ${activeTab === 'nexus' ? 'bg-white text-black' : 'text-gray-500'}">Proyectos</button>
+                    <button onclick="window.app.switchNexusTab('cloud')" class="px-4 py-2 rounded-full text-[10px] font-black uppercase transition-all ${activeTab === 'cloud' ? 'bg-white text-black' : 'text-gray-500'}">Cloud</button>
                 </div>
             </div>
-            <div class="flex items-center gap-4 ${activeTab === 'nexus' ? '' : 'hidden'}">
-                <div class="text-right">
-                    <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest leading-none">Cartera Nexus</p>
-                    <span class="text-lg font-black text-emerald-500 leading-none">${formatCurrency(totalPaid + totalPending, '$')}</span>
-                </div>
+            <div class="text-right">
+                <p class="label-tiny">Total Portfolio</p>
+                <p class="text-xl text-emerald-500">${formatCurrency(totalPaid + totalPending, '$')}</p>
             </div>
         </nav>
 
-        <main class="custom-scroll">
-            <div class="max-w-screen-2xl mx-auto w-full">
+        <main class="flex-1 overflow-y-auto p-6 custom-scroll pb-40">
+            <div class="max-w-7xl mx-auto space-y-8">
                 
-                <!-- ESCRITORIO -->
                 <section id="view-dashboard" class="view-section ${activeTab === 'dashboard' ? 'active' : ''} space-y-8">
-                    <div class="card-nexus p-20 text-center bg-gradient-to-b from-white/[0.02] to-transparent">
-                        <p class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-4">Capital Realizado Proyectado</p>
-                        <h2 class="mega-kpi-main">${formatCurrency(totalPaid, '$')}</h2>
+                    <div class="card-highlight text-center">
+                        <p class="label-tiny">Capital Realizado</p>
+                        <h2 class="text-7xl my-2 text-emerald-600">${formatCurrency(totalPaid, '$')}</h2>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="card-nexus p-12 border-l-4 border-l-amber-500/30">
-                            <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Pagos Pendientes</p>
-                            <h3 class="text-5xl font-black text-amber-500">${formatCurrency(totalPending, '$')}</h3>
+                    <div class="nexus-grid">
+                        <div class="card-nexus">
+                            <p class="label-tiny text-amber-500">Pagos en Espera</p>
+                            <h3 class="text-4xl text-white my-2">${formatCurrency(totalPending, '$')}</h3>
                         </div>
-                        <div class="card-nexus p-12 flex flex-col justify-between">
-                            <div>
-                                <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Pipeline de Producción</p>
-                                <div class="pipeline-bar mt-2">
-                                    <div class="pipeline-segment bg-blue-600" style="width: ${(stages.briefing / (state.nexusProjects.length || 1)) * 100}%"></div>
-                                    <div class="pipeline-segment bg-blue-400" style="width: ${(stages.production / (state.nexusProjects.length || 1)) * 100}%"></div>
-                                    <div class="pipeline-segment bg-amber-500" style="width: ${(stages.feedback / (state.nexusProjects.length || 1)) * 100}%"></div>
-                                    <div class="pipeline-segment bg-emerald-500" style="width: ${(stages.finished / (state.nexusProjects.length || 1)) * 100}%"></div>
-                                </div>
-                                <div class="flex justify-between mt-4 text-[9px] font-bold uppercase text-gray-600">
-                                    <span>Brief</span><span>Edit</span><span>Review</span><span>Final</span>
-                                </div>
+                        <div class="card-nexus">
+                            <p class="label-tiny">Producción Activa</p>
+                            <div class="h-2 bg-white/5 rounded-full mt-4 overflow-hidden flex">
+                                <div class="h-full bg-blue-600" style="width: ${(stages.briefing / (state.nexusProjects.length || 1)) * 100}%"></div>
+                                <div class="h-full bg-blue-400" style="width: ${(stages.production / (state.nexusProjects.length || 1)) * 100}%"></div>
+                                <div class="h-full bg-amber-500" style="width: ${(stages.feedback / (state.nexusProjects.length || 1)) * 100}%"></div>
+                                <div class="h-full bg-emerald-500" style="width: ${(stages.finished / (state.nexusProjects.length || 1)) * 100}%"></div>
                             </div>
+                            <div class="flex justify-between mt-2 label-tiny"><span>Brief</span><span>Final</span></div>
                         </div>
                     </div>
                 </section>
 
-                <!-- NEXUS -->
                 <section id="view-nexus" class="view-section ${activeTab === 'nexus' ? 'active' : ''}">
-                    <div class="grid grid-cols-12 gap-10">
-                        <!-- Sidebar -->
-                        <div class="col-span-3 space-y-6">
-                            <button onclick="window.app.openModal('modalProject')" class="btn-pro emerald w-full">Nueva Operación</button>
-                            <div class="space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+                        <div class="md:col-span-3 space-y-4">
+                            <button onclick="window.app.openModal('modalProject')" class="w-full card-highlight py-4 text-[10px] font-black uppercase">+ Operación</button>
+                            <div class="space-y-2">
                                 ${state.nexusProjects.map(p => `
-                                    <div onclick="window.app.selectProject('${p.id}')" class="p-5 rounded-2xl border ${state.activeNexusProjectId === p.id ? 'border-emerald-500 bg-white/[0.03]' : 'border-white/5 bg-black'} cursor-pointer hover:border-white/20 transition-all">
-                                        <p class="text-sm font-black text-white uppercase truncate">${p.name}</p>
-                                        <p class="text-[8px] text-gray-500 uppercase mt-1">${p.status || 'briefing'}</p>
+                                    <div onclick="window.app.selectProject('${p.id}')" class="p-4 rounded-2xl border ${state.activeNexusProjectId === p.id ? 'border-emerald-500 bg-emerald-500/5' : 'border-white/5'} cursor-pointer transition-all">
+                                        <p class="text-xs text-white font-black truncate">${p.name}</p>
+                                        <p class="label-tiny mt-1 text-emerald-500/50">${p.status || 'briefing'}</p>
                                     </div>
                                 `).join('')}
                             </div>
                         </div>
-                        <!-- Workspace -->
-                        <div class="col-span-9" id="nexus-workspace">
+                        <div class="md:col-span-9" id="nexus-workspace">
                             ${!activeProject ? `
                                 <div class="card-nexus py-40 text-center opacity-10">
                                     <i data-lucide="layers" class="w-16 h-16 mx-auto mb-4"></i>
