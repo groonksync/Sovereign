@@ -60,7 +60,7 @@ async function loadState() {
         // Separar Por Categoría basándose en discriminadores
         state.debts = allData.filter(l => l.ref === 'DEUDA_DIARIA').map(d => ({
             id: d.id,
-            person: d.debtor,
+            debtor: d.debtor,
             amount: d.amount,
             reason: d.collateral,
             start_date: d.start_date,
@@ -71,7 +71,7 @@ async function loadState() {
 
         state.expenses = allData.filter(l => l.ref === 'MI_PAGO').map(e => ({
             id: e.id,
-            name: e.debtor,
+            debtor: e.debtor,
             amount: e.amount,
             category: e.guarantor, 
             payDate: e.start_date,
@@ -229,7 +229,7 @@ function extractProtocolInterests() {
 
         return {
             id: `protocol-${loan.id}-${pending.id}`,
-            person: loan.debtor,
+            debtor: loan.debtor,
             amount: pending.amount,
             reason: `Interés Préstamo #${loan.id.substring(0,4)}`,
             interest: loan.interest,
@@ -374,14 +374,16 @@ function renderDashboard() {
 }
 
 function renderStudioSync() {
-    const totalFacturado = state.receipts.reduce((acc, r) => acc + r.totalAmount, 0);
+    const totalFacturado = state.receipts.reduce((acc, r) => acc + parseFloat(r.totalAmount || 0), 0);
+    const pendingReceipts = state.receipts.filter(r => r.status === 'Pendiente');
+    const totalPendiente = pendingReceipts.reduce((acc, r) => acc + parseFloat(r.totalAmount || 0), 0);
 
     return `
         <div class="sv-nexus-elite flex flex-col p-8 space-y-10 pb-32">
             <header class="flex justify-between items-center">
                 <div class="greeting">
                     <span class="text-[10px] font-black text-blue-500 tracking-[0.3em] uppercase">Billing Protocol</span>
-                    <h1 class="text-3xl font-black text-white uppercase tracking-tighter">Gestión de Recibos</h1>
+                    <h1 class="text-3xl font-black text-white uppercase tracking-tighter">Clientes de Video</h1>
                 </div>
                 <div class="flex gap-4">
                     <button id="btn-google-auth" class="btn-pro ghost py-2 relative" onclick="window.app.handleGoogleAuth()" title="Google Drive Sync">
@@ -395,40 +397,69 @@ function renderStudioSync() {
                 </div>
             </header>
 
-            <section class="card-nexus p-16 text-center border-blue-500/20">
-                <p class="text-[11px] font-black text-blue-500 uppercase tracking-[0.4em] mb-4">Total Neto Facturado</p>
-                <h2 class="mega-kpi-main" style="background: linear-gradient(180deg, #fff 30%, #3b82f6 100%); -webkit-background-clip: text;">${formatCurrency(totalFacturado)}</h2>
-                <div class="flex justify-center gap-6 mt-6">
-                    <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest bg-white/5 px-4 py-1 rounded-full">Emitidos: ${state.receipts.length}</span>
-                    <span class="text-[9px] font-black text-blue-500 uppercase tracking-widest bg-blue-500/10 px-4 py-1 rounded-full">Status: Active Sync</span>
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="card-nexus p-10 text-center border-blue-500/20">
+                    <p class="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-2">Total Facturado Bruto</p>
+                    <h2 class="text-4xl font-black text-white">${formatCurrency(totalFacturado)}</h2>
+                </div>
+                <div class="card-nexus p-10 text-center border-amber-500/20 bg-amber-500/5">
+                    <p class="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-2">Cuentas por Cobrar</p>
+                    <h2 class="text-4xl font-black text-amber-500">${formatCurrency(totalPendiente)}</h2>
                 </div>
             </section>
 
-            <main class="space-y-6">
-                <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest ml-2 flex items-center gap-2">
-                    <i data-lucide="archive" class="w-3 h-3"></i> Registro de Operaciones
-                </h4>
-                <div class="space-y-4">
-                    ${state.receipts.length === 0 ? `
-                        <div class="py-20 text-center opacity-20"><p class="font-black uppercase tracking-widest text-xs">Sin registros históricos</p></div>
-                    ` : state.receipts.map(r => `
-                        <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer group" onclick="window.app.navigate('receiptDetail', '${r.id}')">
-                            <div class="flex items-center gap-5">
-                                <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-black transition-all">
-                                    <i data-lucide="file-text"></i>
+            <main class="space-y-10">
+                ${pendingReceipts.length > 0 ? `
+                    <section class="space-y-6">
+                        <h4 class="text-xs font-black text-amber-500 uppercase tracking-widest ml-2 flex items-center gap-2">
+                            <i data-lucide="clock" class="w-3 h-3"></i> Saldos Pendientes de Clientes
+                        </h4>
+                        <div class="space-y-4">
+                            ${pendingReceipts.map(r => `
+                                <div class="card-nexus p-6 flex justify-between items-center border-l-4 border-l-amber-500 bg-amber-500/5 hover:bg-amber-500/10 cursor-pointer" onclick="window.app.navigate('receiptDetail', '${r.id}')">
+                                    <div class="flex items-center gap-5">
+                                        <div class="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500 font-black">${r.clientName.substring(0, 2).toUpperCase()}</div>
+                                        <div>
+                                            <h3 class="text-lg font-black text-white uppercase">${r.clientName}</h3>
+                                            <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${r.brandName || 'Video Edition'} • Pendiente</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xl font-black text-amber-500">${formatCurrency(r.totalAmount)}</span>
+                                        <p class="text-[9px] font-black uppercase text-gray-600">${r.receiptId}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 class="text-lg font-black text-white uppercase">${r.clientName}</h3>
-                                    <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${r.brandName || 'Marca Independiente'} • ${formatDate(r.date)}</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-xl font-black text-white">${formatCurrency(r.totalAmount, r.totals?.USD > 0 ? '$' : (r.totals?.EUR > 0 ? '€' : 'Bs.'))}</span>
-                                <p class="text-[9px] font-black uppercase text-blue-500 tracking-tighter">${r.receiptId}</p>
-                            </div>
+                            `).join('')}
                         </div>
-                    `).join('')}
-                </div>
+                    </section>
+                ` : ''}
+
+                <section class="space-y-6">
+                    <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest ml-2 flex items-center gap-2">
+                        <i data-lucide="check-circle" class="w-3 h-3"></i> Historial de Cobros Finalizados
+                    </h4>
+                    <div class="space-y-4">
+                        ${state.receipts.filter(r => r.status !== 'Pendiente').length === 0 ? `
+                            <div class="py-10 text-center opacity-20"><p class="font-black uppercase tracking-widest text-[10px]">Sin cobros finalizados</p></div>
+                        ` : state.receipts.filter(r => r.status !== 'Pendiente').map(r => `
+                            <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer group" onclick="window.app.navigate('receiptDetail', '${r.id}')">
+                                <div class="flex items-center gap-5">
+                                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-black transition-all">
+                                        <i data-lucide="file-text"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-black text-white uppercase">${r.clientName}</h3>
+                                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${r.brandName || 'Edición Pro'} • ${formatDate(r.date)}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xl font-black text-white">${formatCurrency(r.totalAmount, r.totals?.USD > 0 ? '$' : (r.totals?.EUR > 0 ? '€' : 'Bs.'))}</span>
+                                    <p class="text-[9px] font-black uppercase text-blue-500 tracking-tighter">${r.receiptId}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </section>
             </main>
         </div>
     `;
@@ -987,11 +1018,11 @@ async function render() {
             case 'debtEdit': content = renderDebtEdit(); break;
             case 'expenseDetail': content = renderExpenseDetail(); break;
             case 'expenseEdit': content = renderExpenseEdit(); break;
-            case 'studioSync': content = renderStudioSync(); break;
+            case 'studio-sync': content = renderStudioSync(); break;
             case 'receiptRegister': content = renderReceiptRegister(); break;
             case 'receiptDetail': content = renderReceiptDetail(); break;
             case 'receiptEdit': content = renderReceiptEdit(); break;
-            case 'nexus': content = await renderSovereignNexus(); break;
+            case 'sovereign-nexus': content = await renderSovereignNexus(); break;
             default: content = renderDashboard();
         }
     } catch (e) {
@@ -1320,114 +1351,129 @@ function renderDebtDetail() {
 }
 
 function renderDebts() {
-    const manualDebts = state.debts;
-    const protocolInterests = extractProtocolInterests();
-    const combinedDebts = [...manualDebts, ...protocolInterests];
-    
-    // Alertas Proactivas (2 días)
-    const today = new Date();
-    const upcoming = combinedDebts.filter(d => {
-        if (!d.start_date) return false;
-        const startDay = new Date(d.start_date).getDate();
-        const collectionDate = new Date(today.getFullYear(), today.getMonth(), startDay);
-        const diffDays = Math.ceil((collectionDate - today) / (1000 * 60 * 60 * 24));
-        return diffDays >= 0 && diffDays <= 2;
-    });
+    try {
+        const manualDebts = state.debts || [];
+        const protocolInterests = extractProtocolInterests() || [];
+        const combinedDebts = [...manualDebts, ...protocolInterests];
+        
+        // Alertas Proactivas (2 días) - Refined logic
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        
+        const upcoming = combinedDebts.filter(d => {
+            if (!d.start_date) return false;
+            const sDate = new Date(d.start_date);
+            if (isNaN(sDate)) return false;
+            
+            const startDay = sDate.getDate();
+            const collectionDate = new Date(today.getFullYear(), today.getMonth(), startDay);
+            const diffTime = collectionDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays >= 0 && diffDays <= 2;
+        });
 
-    const totalMonthlyInterest = combinedDebts.reduce((acc, d) => {
-        if (d.isProtocol) return acc + parseFloat(d.amount);
-        const rate = parseFloat(d.interest || 0) / 100;
-        return acc + (parseFloat(d.amount || 0) * rate);
-    }, 0);
+        const totalMonthlyInterest = combinedDebts.reduce((acc, d) => {
+            if (d.isProtocol) return acc + parseFloat(d.amount || 0);
+            const rate = parseFloat(d.interest || 0) / 100;
+            return acc + (parseFloat(d.amount || 0) * rate);
+        }, 0);
 
-    const totalManualCapital = manualDebts.reduce((acc, d) => acc + parseFloat(d.amount || 0), 0);
+        const totalManualCapital = manualDebts.reduce((acc, d) => acc + parseFloat(d.amount || 0), 0);
 
-    return `
-        <div class="sv-nexus-elite flex flex-col p-8 space-y-10 pb-32">
-            <header class="flex justify-between items-center">
-                <div class="greeting">
-                    <span class="text-[10px] font-black text-emerald-500 tracking-[0.3em] uppercase">Collection Protocol</span>
-                    <h1 class="text-3xl font-black text-white uppercase tracking-tighter">Control de Deudores</h1>
-                </div>
-                <button class="btn-pro emerald py-2" onclick="window.app.navigate('add_debt')">+ Nueva Deuda</button>
-            </header>
-
-            <section class="card-nexus p-16 text-center">
-                <p class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-4">Intereses a Recaudar</p>
-                <h2 class="mega-kpi-main">${formatCurrency(totalMonthlyInterest)}</h2>
-                <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mt-4">Capital en Riesgo: ${formatCurrency(totalManualCapital)}</p>
-            </section>
-
-            ${upcoming.length > 0 ? `
-                <section class="space-y-4">
-                    <h4 class="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] ml-2">⚠️ Alertas de Cobro Inmediato</h4>
-                    <div class="grid grid-cols-1 gap-3">
-                        ${upcoming.map(d => `
-                            <div class="card-nexus p-4 border-amber-500/30 bg-amber-500/5 flex justify-between items-center animate-pulse">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-2 h-2 bg-amber-500 rounded-full"></div>
-                                    <p class="text-xs font-black text-white uppercase">${d.debtor} <span class="text-gray-500 ml-2">Vence en ${Math.ceil((new Date(today.getFullYear(), today.getMonth(), new Date(d.start_date).getDate()) - today) / (1000 * 60 * 60 * 24))} días</span></p>
-                                </div>
-                                <button class="text-[9px] font-black text-amber-500 uppercase tracking-widest border border-amber-500/20 px-3 py-1 rounded-lg" onclick="window.app.navigate('debtDetail', '${d.id}')">Gestionar</button>
-                            </div>
-                        `).join('')}
+        return `
+            <div class="sv-nexus-elite flex flex-col p-8 space-y-10 pb-32">
+                <header class="flex justify-between items-center">
+                    <div class="greeting">
+                        <span class="text-[10px] font-black text-emerald-500 tracking-[0.3em] uppercase">Collection Protocol</span>
+                        <h1 class="text-3xl font-black text-white uppercase tracking-tighter">Control de Deudores</h1>
                     </div>
-                </section>
-            ` : ''}
+                    <button class="btn-pro emerald py-2" onclick="window.app.navigate('debtRegister')">+ Nueva Deuda</button>
+                </header>
 
-            <main class="space-y-10">
-                <!-- PROTOCOLO NEXUS -->
-                <section class="space-y-6">
-                    <h4 class="text-xs font-black text-blue-500 uppercase tracking-widest ml-2 flex items-center gap-2">
-                        <i data-lucide="layers" class="w-3 h-3"></i> Intereses Protocolo Nexus
-                    </h4>
-                    <div class="space-y-4">
-                        ${combinedDebts.filter(d => d.isProtocol).map(debt => `
-                            <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer border-l-4 border-l-blue-500" 
-                                 onclick="window.app.navigate('details', '${debt.projectId}')">
-                                <div class="flex items-center gap-5">
-                                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 font-black">${debt.debtor.substring(0, 2).toUpperCase()}</div>
-                                    <div>
-                                        <h3 class="text-lg font-black text-white uppercase">${debt.debtor}</h3>
-                                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Contrato Nexus • ${formatDate(debt.start_date)}</p>
+                <section class="card-nexus p-16 text-center">
+                    <p class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-4">Intereses a Recaudar</p>
+                    <h2 class="mega-kpi-main">${formatCurrency(totalMonthlyInterest)}</h2>
+                    <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mt-4">Capital en Riesgo: ${formatCurrency(totalManualCapital)}</p>
+                </section>
+
+                ${upcoming.length > 0 ? `
+                    <section class="space-y-4">
+                        <h4 class="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] ml-2">⚠️ Alertas de Cobro Inmediato</h4>
+                        <div class="grid grid-cols-1 gap-3">
+                            ${upcoming.map(d => {
+                                const sDate = new Date(d.start_date);
+                                const collectionDate = new Date(today.getFullYear(), today.getMonth(), sDate.getDate());
+                                const dDays = Math.ceil((collectionDate - today) / (1000 * 60 * 60 * 24));
+                                return `
+                                <div class="card-nexus p-4 border-amber-500/30 bg-amber-500/5 flex justify-between items-center animate-pulse">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-2 h-2 bg-amber-500 rounded-full"></div>
+                                        <p class="text-xs font-black text-white uppercase">${d.debtor || 'Sin Nombre'} <span class="text-gray-500 ml-2">Vence en ${dDays} días</span></p>
+                                    </div>
+                                    <button class="text-[9px] font-black text-amber-500 uppercase tracking-widest border border-amber-500/20 px-3 py-1 rounded-lg" onclick="${d.isProtocol ? `window.app.navigate('details', '${d.originalLoanId}')` : `window.app.navigate('debtDetail', '${d.id}')`}">Gestionar</button>
+                                </div>
+                            `}).join('')}
+                        </div>
+                    </section>
+                ` : ''}
+
+                <main class="space-y-10">
+                    <!-- PROTOCOLO NEXUS -->
+                    <section class="space-y-6">
+                        <h4 class="text-xs font-black text-blue-500 uppercase tracking-widest ml-2 flex items-center gap-2">
+                            <i data-lucide="layers" class="w-3 h-3"></i> Intereses Protocolo Nexus
+                        </h4>
+                        <div class="space-y-4">
+                            ${combinedDebts.filter(d => d.isProtocol).map(debt => `
+                                <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer border-l-4 border-l-blue-500" 
+                                     onclick="window.app.navigate('details', '${debt.originalLoanId}')">
+                                    <div class="flex items-center gap-5">
+                                        <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 font-black">${(debt.debtor || '??').substring(0, 2).toUpperCase()}</div>
+                                        <div>
+                                            <h3 class="text-lg font-black text-white uppercase">${debt.debtor || 'Sin Nombre'}</h3>
+                                            <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Contrato Nexus • ${formatDate(debt.start_date)}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xl font-black text-white">${formatCurrency(debt.amount)}</span>
+                                        <p class="text-[9px] font-black uppercase text-blue-500">Recurrente</p>
                                     </div>
                                 </div>
-                                <div class="text-right">
-                                    <span class="text-xl font-black text-white">${formatCurrency(debt.amount)}</span>
-                                    <p class="text-[9px] font-black uppercase text-blue-500">Recurrente</p>
-                                </div>
-                            </div>
-                        `).join('') || '<p class="text-center py-10 opacity-20 text-[10px] font-black uppercase tracking-widest">Sin intereses de protocolo</p>'}
-                    </div>
-                </section>
+                            `).join('') || '<p class="text-center py-10 opacity-20 text-[10px] font-black uppercase tracking-widest">Sin intereses de protocolo</p>'}
+                        </div>
+                    </section>
 
-                <!-- CARTERA PERSONAL -->
-                <section class="space-y-6">
-                    <h4 class="text-xs font-black text-emerald-500 uppercase tracking-widest ml-2 flex items-center gap-2">
-                        <i data-lucide="user" class="w-3 h-3"></i> Cartera de Deudores Personal
-                    </h4>
-                    <div class="space-y-4">
-                        ${combinedDebts.filter(d => !d.isProtocol).map(debt => `
-                            <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer border-l-4 border-l-emerald-500" 
-                                 onclick="window.app.navigate('debtDetail', '${debt.id}')">
-                                <div class="flex items-center gap-5">
-                                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black">${debt.debtor.substring(0, 2).toUpperCase()}</div>
-                                    <div>
-                                        <h3 class="text-lg font-black text-white uppercase">${debt.debtor}</h3>
-                                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Préstamo Directo • ${formatDate(debt.start_date)}</p>
+                    <!-- CARTERA PERSONAL -->
+                    <section class="space-y-6">
+                        <h4 class="text-xs font-black text-emerald-500 uppercase tracking-widest ml-2 flex items-center gap-2">
+                            <i data-lucide="user" class="w-3 h-3"></i> Cartera de Deudores Personal
+                        </h4>
+                        <div class="space-y-4">
+                            ${combinedDebts.filter(d => !d.isProtocol).map(debt => `
+                                <div class="card-nexus p-6 flex justify-between items-center hover:bg-white/[0.02] cursor-pointer border-l-4 border-l-emerald-500" 
+                                     onclick="window.app.navigate('debtDetail', '${debt.id}')">
+                                    <div class="flex items-center gap-5">
+                                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black">${(debt.debtor || '??').substring(0, 2).toUpperCase()}</div>
+                                        <div>
+                                            <h3 class="text-lg font-black text-white uppercase">${debt.debtor || 'Sin Nombre'}</h3>
+                                            <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Préstamo Directo • ${formatDate(debt.start_date)}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xl font-black text-white">${formatCurrency(debt.amount)}</span>
+                                        <p class="text-[9px] font-black uppercase text-emerald-500">${debt.interest || 0}% Int. Mensual</p>
                                     </div>
                                 </div>
-                                <div class="text-right">
-                                    <span class="text-xl font-black text-white">${formatCurrency(debt.amount)}</span>
-                                    <p class="text-[9px] font-black uppercase text-emerald-500">${debt.interest || 0}% Int. Mensual</p>
-                                </div>
-                            </div>
-                        `).join('') || '<p class="text-center py-10 opacity-20 text-[10px] font-black uppercase tracking-widest">Sin deudores personales</p>'}
-                    </div>
-                </section>
-            </main>
-        </div>
-    `;
+                            `).join('') || '<p class="text-center py-10 opacity-20 text-[10px] font-black uppercase tracking-widest">Sin deudores personales</p>'}
+                        </div>
+                    </section>
+                </main>
+            </div>
+        `;
+    } catch (err) {
+        console.error("Debts Render Crash:", err);
+        return `<div class="p-20 text-center"><p class="text-amber-500 font-black">Error en el protocolo de deudores. Reiniciando...</p></div>`;
+    }
 }
 
 
