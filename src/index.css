@@ -1,487 +1,217 @@
-/* 
-    SOVEREIGN: ONYX RESERVE DESIGN SYSTEM 
-    Professional, Elegant, and Executive Minimalist UI
-*/
-
 :root {
-    --bg-main: #050505;
-    --bg-card: #0d0d0d;
-    --bg-hover: #161616;
-    --accent: #FFB800;
-    --accent-glow: rgba(255, 184, 0, 0.15);
-    --text-main: #ffffff;
-    --text-dim: #888888;
-    --border: rgba(255, 255, 255, 0.05);
-    --border-bright: rgba(255, 255, 255, 0.12);
-    --glass: rgba(13, 13, 13, 0.7);
-    --radius-lg: 16px;
-    --radius-md: 10px;
-    --font-jakarta: 'Plus Jakarta Sans', sans-serif;
+    --bg-main: #0F0F11;
+    --bg-card: #161618;
+    --bg-input: #1C1C1F;
+    --border: #242426;
+    --text-main: #E1E1E6;
+    --text-dim: #8E8E93;
+    --accent: #F59E0B; /* Ámbar Técnico */
+    --accent-dim: rgba(245, 158, 11, 0.1);
+    --radius: 12px;
+    --font-pro: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
+    font-family: var(--font-pro);
 }
 
 body {
     background-color: var(--bg-main);
     color: var(--text-main);
-    font-family: var(--font-jakarta);
+    -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
-    line-height: 1.5;
 }
 
-/* --- SCROLLBAR --- */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
-
-/* --- REUSABLE UTILITIES --- */
-.onyx-card {
-    background: var(--bg-card);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 24px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.onyx-card:hover {
-    border-color: var(--border-bright);
-    background: var(--bg-hover);
-    transform: translateY(-2px);
-}
-
-.onyx-button {
-    background: var(--text-main);
-    color: var(--bg-main);
-    padding: 10px 20px;
-    border-radius: var(--radius-md);
-    font-weight: 700;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.onyx-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-}
-
-.onyx-button-outline {
-    background: transparent;
-    color: var(--text-main);
-    border: 0.5px solid var(--border-bright);
-    padding: 10px 20px;
-    border-radius: var(--radius-md);
-    font-weight: 700;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.onyx-button-outline:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.onyx-input {
-    background: #0f0f0f;
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-md);
-    color: white;
-    padding: 12px 16px;
-    font-size: 13px;
-    width: 100%;
-    outline: none;
-    transition: all 0.3s ease;
-}
-
-.onyx-input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 15px var(--accent-glow);
-}
-
-/* --- TAB BAR REVOLUTION --- */
-.tab-pill-container {
-    background: rgba(13, 13, 13, 0.85);
-    backdrop-filter: blur(20px);
-    border: 0.5px solid var(--border-bright);
-    padding: 6px;
-    border-radius: 24px;
+/* --- LAYOUT ESTRUCTURAL --- */
+.app-container {
     display: flex;
-    gap: 4px;
+    min-height: 100vh;
 }
 
-.tab-pill {
-    padding: 10px 18px;
-    border-radius: 18px;
-    border: none;
-    background: transparent;
-    color: var(--text-dim);
-    cursor: pointer;
-    transition: all 0.4s ease;
+.sidebar {
+    width: 260px;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    align-items: center;
+    position: fixed;
+    height: 100vh;
+    z-index: 100;
 }
 
-.tab-pill.active {
-    background: var(--text-main);
-    color: var(--bg-main);
+.main-content {
+    flex: 1;
+    margin-left: 260px;
+    padding: 2rem 3rem;
+    max-width: 1400px;
 }
 
-.tab-pill.active i { color: var(--bg-main); }
-
-/* --- VIEW HEADERS --- */
-.view-header {
-    padding: 32px 24px 16px;
+/* --- COMPONENTES PROFESIONALES --- */
+.sidebar-logo {
+    padding: 2.5rem 2rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 12px;
 }
 
-.view-title {
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
+.logo-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.view-subtitle {
+.nav-group {
+    padding: 1rem;
+    flex: 1;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.85rem 1.25rem;
     color: var(--text-dim);
-    font-size: 12px;
-}
-
-/* --- ANIMATIONS --- */
-.animate-reveal {
-    animation: reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes reveal {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* --- STATUS BADGES --- */
-.badge-gold { background: var(--accent-glow); color: var(--accent); padding: 4px 10px; border-radius: 20px; font-size: 9px; font-weight: 800; text-transform: uppercase; border: 0.5px solid rgba(255, 184, 0, 0.2); }
-.badge-emerald { background: rgba(34, 197, 94, 0.1); color: #22c55e; padding: 4px 10px; border-radius: 20px; font-size: 9px; font-weight: 800; text-transform: uppercase; border: 0.5px solid rgba(34, 197, 94, 0.2); }
-.badge-crimson { background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 4px 10px; border-radius: 20px; font-size: 9px; font-weight: 800; text-transform: uppercase; border: 0.5px solid rgba(239, 68, 68, 0.2); }
-
-/* --- MODAL ELITE --- */
-.modal-content-onyx {
-    background: #0a0a0a;
-    border: 1px solid var(--border-bright);
-    padding: 32px;
-    border-radius: 24px;
-    width: 90%;
-    max-width: 500px;
-    box-shadow: 0 30px 60px rgba(0,0,0,0.8);
-    position: relative;
-}
-
-/* --- LIST ITEMS --- */
-.onyx-list-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    border-bottom: 0.5px solid var(--border);
-    transition: background 0.3s ease;
-}
-
-.onyx-list-item:hover { background: rgba(255, 255, 255, 0.02); }
-
-/* --- ELYSIAN STUDIO OS DESIGN SYSTEM --- */
-:root {
-    --elysian-bg: #0c0c0c;
-    --elysian-card: #151515;
-    --elysian-border: rgba(255, 255, 255, 0.05);
-    --elysian-accent: #ffffff;
-    --elysian-text-muted: #666666;
-    --elysian-status-green: #00ff88;
-}
-
-.elysian-top-nav {
-    height: 64px;
-    background: #000;
-    border-bottom: 1px solid var(--elysian-border);
-    display: flex;
-    align-items: center;
-    padding: 0 24px;
-    gap: 32px;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-}
-
-.nav-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--elysian-text-muted);
-    font-size: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-    padding: 8px 16px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
     border-radius: 8px;
     transition: all 0.2s ease;
-}
-
-.nav-item.active {
-    background: #1a1a1a;
-    color: #fff;
-}
-
-.elysian-session-header {
-    padding: 32px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    border-bottom: 1px solid var(--elysian-border);
-    margin-bottom: 32px;
-}
-
-.session-info-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.info-label {
-    font-size: 8px;
-    font-weight: 800;
-    color: var(--elysian-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-}
-
-.info-value {
-    font-size: 22px;
-    font-weight: 800;
-    color: #fff;
-}
-
-.status-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    background: #1a1a1a;
-    border-radius: 6px;
-    font-size: 8px;
-    font-weight: 800;
-    color: var(--elysian-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-}
-
-.dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 0 10px rgba(255,255,255,0.5);
-}
-
-.elysian-card {
-    background: var(--elysian-card);
-    border: 1px solid var(--elysian-border);
-    border-radius: 20px;
-    padding: 24px;
-    position: relative;
-    overflow: hidden;
-}
-
-.elysian-btn-primary {
-    background: #fff;
-    color: #000;
-    padding: 12px 28px;
-    border-radius: 12px;
-    font-size: 10px;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.elysian-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255,255,255,0.1); }
-.elysian-btn-primary:active { transform: translateY(0); }
-
-/* --- TOOLS RESTORATION --- */
-.status-picker {
-    display: flex;
-    gap: 12px;
-    margin: 20px 0;
-}
-
-.status-option {
-    flex: 1;
-    padding: 16px;
-    border-radius: 12px;
-    background: #1a1a1a;
-    border: 1px solid var(--elysian-border);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    margin-bottom: 4px;
 }
 
-.status-option i { width: 20px; height: 20px; color: var(--elysian-text-muted); }
-.status-option span { font-size: 8px; font-weight: 800; color: var(--elysian-text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
-
-.status-option.active.paid { border-color: var(--elysian-status-green); background: rgba(0, 255, 136, 0.05); }
-.status-option.active.paid i, .status-option.active.paid span { color: var(--elysian-status-green); }
-
-.status-option.active.pending { border-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
-.status-option.active.pending i, .status-option.active.pending span { color: #f59e0b; }
-
-.elysian-input-group {
-    position: relative;
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
+.nav-link:hover {
+    background: rgba(255,255,255,0.03);
+    color: var(--text-main);
 }
 
-.elysian-input-icon {
-    position: absolute;
-    left: 20px;
-    color: var(--elysian-text-muted);
+.nav-link.active {
+    background: var(--accent-dim);
+    color: var(--accent);
 }
 
-.elysian-input {
+/* --- CARDS & GRIDS --- */
+.exec-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.exec-card:hover {
+    border-color: #323235;
+}
+
+.kpi-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.kpi-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #fff;
+}
+
+/* --- FORMS & BUTTONS --- */
+.exec-input {
     width: 100%;
-    background: #1a1a1a;
-    border: 1px solid var(--elysian-border);
-    border-radius: 14px;
-    padding: 18px 20px 18px 56px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    padding: 0.85rem 1rem;
+    border-radius: 8px;
     color: #fff;
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 14px;
     outline: none;
-    transition: all 0.2s ease;
+    transition: border-color 0.2s;
 }
 
-.elysian-input:focus { border-color: rgba(255,255,255,0.2); background: #222; }
+.exec-input:focus {
+    border-color: var(--accent);
+}
 
-.photo-uploader {
-    background: #1a1a1a;
-    border: 1px dashed var(--elysian-border);
-    border-radius: 16px;
-    height: 140px;
+.exec-btn-primary {
+    background: var(--accent);
+    color: #000;
+    font-weight: 600;
+    padding: 0.85rem 1.5rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    gap: 8px;
+    transition: opacity 0.2s;
 }
 
-.photo-uploader:hover { border-color: rgba(255,255,255,0.2); background: #222; }
-.photo-uploader i { width: 32px; height: 32px; color: var(--elysian-text-muted); }
-.photo-uploader span { font-size: 8px; font-weight: 800; color: var(--elysian-text-muted); text-transform: uppercase; }
-
-.mega-value {
-    font-size: 56px;
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    line-height: 1;
+.exec-btn-primary:hover {
+    opacity: 0.9;
 }
 
-.view-header-pro {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 40px;
+/* --- TABLES & LISTS --- */
+.pro-table {
+    width: 100%;
+    border-collapse: collapse;
 }
 
-/* --- RESPONSIVE OPTIMIZATIONS (ELYSIAN STUDIO OS) --- */
+.pro-table th {
+    text-align: left;
+    padding: 1rem;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+}
 
+.pro-table td {
+    padding: 1.25rem 1rem;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Status Badges */
+.status-pill {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-paid { background: #065f46; color: #34d399; }
+.status-pending { background: #78350f; color: #fbbf24; }
+
+/* MODALS */
+.modal-overlay {
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(8px);
+}
+
+/* RESPONSIVE */
 @media (max-width: 1024px) {
-    .elysian-session-header {
-        flex-direction: column;
-        gap: 2rem;
-        height: auto;
-        padding: 2rem;
-        align-items: flex-start;
-    }
-    
-    .elysian-session-header .flex.gap-16 {
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .grid-cols-4, .grid-cols-3, .grid-cols-2 {
-        grid-template-columns: 1fr !important;
-    }
-
-    .col-span-2, .col-span-3 {
-        grid-column: span 1 / span 1 !important;
-    }
-    
-    .mega-value {
-        font-size: 2.5rem;
-    }
+    .sidebar { width: 80px; }
+    .nav-link span, .sidebar-logo span { display: none; }
+    .main-content { margin-left: 80px; }
 }
 
-@media (max-width: 768px) {
-    .elysian-top-nav {
-        padding: 0 1rem;
-        overflow-x: auto;
-        justify-content: flex-start;
-    }
-    
-    .elysian-top-nav::-webkit-scrollbar {
-        display: none;
-    }
-
-    .nav-item span {
-        display: none;
-    }
-    
-    .nav-item {
-        padding: 0 1rem;
-    }
-
-    main {
-        padding: 1rem !important;
-    }
-
-    .view-header-pro {
-        flex-direction: column;
-        gap: 1.5rem;
-        align-items: flex-start;
-    }
-    
-    .mega-value {
-        font-size: 2rem;
-    }
-}
-
-/* Fix for Editor Pro (Nexus) Styles in Elysian */
-.nexus-card {
-    background: #0f0f0f;
-    border: 1px solid rgba(255,255,255,0.03);
-    border-radius: 20px;
-    padding: 2rem;
-    transition: all 0.3s ease;
-}
-
-.nexus-card:hover {
-    border-color: rgba(255,255,255,0.1);
+@media (max-width: 640px) {
+    .app-container { flex-direction: column; }
+    .sidebar { position: relative; width: 100%; height: auto; flex-direction: row; }
+    .main-content { margin-left: 0; padding: 1.5rem; }
 }
